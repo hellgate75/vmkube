@@ -1,3 +1,6 @@
+ifeq (run,$(firstword $(MAKECMDGOALS)))
+    RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+endif
 help:
 	@echo "make [all|test|build|exe|run|clean|install]"
 	@echo "all: test build exe run"
@@ -14,7 +17,8 @@ build:
 exe:
 	@go build --buildmode exe .
 run:
-	@go run main.go
+	@go run main.go $(RUN_ARGS)
+	exit 0
 install:
 	@go install
 clean:

@@ -60,3 +60,7 @@ func ImportXMLInfrastructure(file string) (model.Infrastructure, error) {
 		return  infrastructure, error
 	}
 }
+
+func GuidedConfigCreation(args []string) bool {
+	return  false
+}
