@@ -33,8 +33,11 @@ func ParseCommandLine(args []string) (CmdRequest, error) {
 	request := CmdRequest{}
 	arguments, error := ParseCommandArguments(args)
 	if error == nil  {
+		request.TypeStr = arguments.Cmd
 		request.Type = arguments.CmdType
+		request.SubTypeStr = arguments.SubCmd
 		request.SubType = arguments.SubCmdType
+		request.HelpType = arguments.SubCmdHelpType
 		//request.CmdElementType = ??
 		request.Arguments = arguments.Options
 	}
@@ -44,12 +47,13 @@ func ParseCommandLine(args []string) (CmdRequest, error) {
 
 func PrintCommandHelper(command	string, subCommand string) {
 	helper := RecoverCommandHelper(command)
-	fmt.Fprintln(os.Stdout, "vmkube Command [SubCommand] [OPTIONS]")
-	fmt.Fprintln(os.Stdout, "Required Command:", command)
-	fmt.Fprintln(os.Stdout, "Parsed Command:", helper.Command)
+	//fmt.Fprintln(os.Stdout, "vmkube Command [SubCommand] [OPTIONS]")
+	//fmt.Fprintln(os.Stdout, "Required Command:", command)
+	//fmt.Fprintln(os.Stdout, "Parsed Command:", helper.Command)
 	fmt.Fprintln(os.Stdout, "Help: vmkube", helper.LineHelp)
+	fmt.Fprintln(os.Stdout, "Action:", helper.Description)
 	found := false
-	if "" !=  strings.TrimSpace(strings.ToLower(subCommand)) && "help" !=  strings.TrimSpace(strings.ToLower(subCommand))   {
+	if "" !=  strings.TrimSpace(strings.ToLower(subCommand)) && "help" !=  strings.TrimSpace(strings.ToLower(subCommand)) {
 		fmt.Fprintln(os.Stdout, "Selected Sub-Command: " + subCommand)
 		for _,option := range helper.SubCommands {
 			if option[0] == strings.TrimSpace(strings.ToLower(subCommand)) {
@@ -61,7 +65,7 @@ func PrintCommandHelper(command	string, subCommand string) {
 			fmt.Fprintln(os.Stdout, "Sub-Command Not found!!")
 			fmt.Fprintln(os.Stdout, "Please type: vmkube","help", command,"for full Sub-Command List")
 		}
-	} else {
+	}  else {
 		found = true
 		if len(helper.SubCommands) > 0  {
 			if len(helper.SubCmdTypes) > 0 {

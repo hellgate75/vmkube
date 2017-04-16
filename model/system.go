@@ -17,6 +17,7 @@ const (
 	ListInfrastructure			CmdRequestType = iota + 1;
 	ListInfrastructures			CmdRequestType = iota + 1;
 	ListConfigs							CmdRequestType = iota + 1;
+	StatusConfig							CmdRequestType = iota + 1;
 	ImportConfig						CmdRequestType = iota + 1;
 	ExportConfig						CmdRequestType = iota + 1;
 	DefineConfig						CmdRequestType = iota + 1;
@@ -49,18 +50,22 @@ const (
 
 
 type CmdRequest struct {
+	TypeStr					string
 	Type						CmdRequestType
+	SubTypeStr			string
 	SubType					CmdSubRequestType
+	HelpType				CmdRequestType
 	CmdElementType	CmdElementType
 	Arguments				[][]string
 }
 
 type CmdArguments struct {
-	Cmd					string
-	CmdType			CmdRequestType
-	SubCmd			string
-	SubCmdType	CmdSubRequestType
-	Options			[][]string
+	Cmd							string
+	CmdType					CmdRequestType
+	SubCmd					string
+	SubCmdType			CmdSubRequestType
+	SubCmdHelpType	CmdRequestType
+	Options					[][]string
 }
 
 type CmdParser interface {
@@ -72,19 +77,65 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 		command, error := utils.CmdParse(args[0])
 		ArgCmd.Cmd = command
 		if error == nil {
-			fmt.Fprintf(os.Stdout, "Arguments: %v\n", args)
+			//fmt.Fprintf(os.Stdout, "Arguments: %v\n", args)
 			helper := RecoverCommandHelper(command)
-			fmt.Fprintf(os.Stdout, "Helper: %v\n", helper)
+			//fmt.Fprintf(os.Stdout, "Helper: %v\n", helper)
 			ArgCmd.Cmd = helper.Command
 			ArgCmd.CmdType = helper.CmdType
-			if len(args) > 1  && helper.CmdType != NoCommand  {
+			ArgCmd.SubCmd = ""
+			ArgCmd.SubCmdType = NoSubCommand
+			ArgCmd.SubCmdHelpType = NoCommand
+			if len(args) > 1 && len(helper.SubCommands) > 0  {
 				var SubCommand string
 				var  index int
 				SubCommand, index, error = utils.CmdParseOption(args[1], helper.SubCommands)
-				fmt.Fprintf(os.Stdout, "Index: %d\n", index)
+				//fmt.Fprintf(os.Stdout, "Index: %d\n", index)
 				if error == nil  {
 					ArgCmd.SubCmd = SubCommand
-					ArgCmd.SubCmdType = helper.SubCmdTypes[index]
+					if ArgCmd.CmdType != NoCommand {
+						ArgCmd.SubCmdType = helper.SubCmdTypes[index]
+					} else  {
+						ArgCmd.SubCmdHelpType = helper.SubCmdHelperTypes[index]
+					}
+					if len(args) > 2 {
+						optsArgs  := args[2:]
+						options  := make([][]string, 0)
+						passed := true
+						for index, option := range optsArgs {
+							if index % 2 == 0 && len(optsArgs) > index + 1 {
+								key, value, error := utils.OptionsParse(optsArgs[index], optsArgs[index+1])
+								if error != nil {
+									passed = false
+									fmt.Fprintln(os.Stdout, "Unable to parse option", option[index],"for Command",command,"and Sub-Command",SubCommand)
+								} else {
+									options = append(options, []string{
+										key,
+										value,
+									})
+								}
+							} else if len(optsArgs) <= index + 1 {
+								passed = false
+								fmt.Fprintln(os.Stdout, "Uncompleted option", option[index],"for Command",command,"and Sub-Command",SubCommand)
+							}
+						}
+						if passed  {
+							ArgCmd.Options = options
+							fmt.Fprintf(os.Stdout, "Executing command %s ...\n", command)
+							return  true
+						} else  {
+							fmt.Fprintln(os.Stderr, "One or more options parse failed!!")
+							PrintCommandHelper(command, SubCommand)
+							return  false
+						}
+					}
+				} else {
+					fmt.Fprintln(os.Stderr, "Error:", error)
+					PrintCommandHelper(command, SubCommand)
+					return  false
+				}
+				return  true
+			} else if len(args) >= 1 && len(helper.SubCommands) == 0 {
+				if len(args) > 1 {
 					optsArgs  := args[1:]
 					options  := make([][]string, 0)
 					passed := true
@@ -93,7 +144,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 							key, value, error := utils.OptionsParse(optsArgs[index], optsArgs[index+1])
 							if error != nil {
 								passed = false
-								fmt.Fprintln(os.Stdout, "Unable to parse option", option[index],"for Command",command,"and Sub-Command",SubCommand)
+								fmt.Fprintln(os.Stdout, "Unable to parse option", option[index],"for Command",command)
 							} else {
 								options = append(options, []string{
 									key,
@@ -102,20 +153,21 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 							}
 						} else if len(optsArgs) <= index + 1 {
 							passed = false
-							fmt.Fprintln(os.Stdout, "Uncompleted option", option[index],"for Command",command,"and Sub-Command",SubCommand)
+							fmt.Fprintln(os.Stdout, "Uncompleted option", option[index],"for Command",command)
 						}
 					}
 					if passed  {
 						ArgCmd.Options = options
+						fmt.Fprintf(os.Stdout, "Executing command %s ...\n", command)
 						return  true
 					} else  {
 						fmt.Fprintln(os.Stderr, "One or more options parse failed!!")
-						PrintCommandHelper(command, SubCommand)
+						PrintCommandHelper(command, "")
+						return  false
 					}
-				} else {
-					fmt.Fprintln(os.Stderr, "Error:", error)
-					PrintCommandHelper(command, SubCommand)
 				}
+				fmt.Fprintf(os.Stdout, "Executing command %s ...\n", command)
+				return  true
 			} else if len(args) >= 1 {
 				fmt.Fprintln(os.Stderr, "Error: Unable to parse Sub-Command...")
 				PrintCommandHelper(command, "")

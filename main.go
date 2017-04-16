@@ -18,7 +18,15 @@ func init() {
 func main() {
 	request, error := model.ParseCommandLine(os.Args)
 	if error == nil  {
-		fmt.Printf("Sucessfully Parser Command : %v", request)
+		//fmt.Fprintf(os.Stdout, "Successfully Parser Command : %v\n", request)
+		response := model.ExecuteRequest(request)
+		if response  {
+			fmt.Fprintln(os.Stdout, "Successfully Executed Command!!")
+			os.Exit(0)
+		} else  {
+			fmt.Fprintln(os.Stderr, "Errors During Command Execution!!")
+			os.Exit(1)
+		}
 	} else  {
 		os.Exit(1)
 	}
