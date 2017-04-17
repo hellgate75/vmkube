@@ -198,6 +198,15 @@ func ServerInspect(name string, id string) ([]byte, error) {
 	return  executeCommand(command)
 }
 
+func ServerIPAddr(name string, id string) ([]byte, error) {
+	var command []string = make([]string, 0)
+	command = append( command,  "docker-machine")
+	command = append( command,  "ip")
+	command = append( command,  name + "-" + id)
+	fmt.Println(os.Stdout,"Running Inspect command : '" + strings.Join(command, " ") + "'")
+	return  executeCommand(command)
+}
+
 func executeCommand(command []string) ([]byte, error) {
 	//cmd := exec.Command(command[0], command[1:]...)
 	cmd := exec.Command(command[0], command[1:]...)

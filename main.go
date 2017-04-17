@@ -68,9 +68,15 @@ func main() {
 	//fmt.Fprintf(os.Stdout, "Status Server Message: %s\n", message2)
 	//fmt.Fprintf(os.Stdout, "Status Server Error: %s\n", err2)
 	//
-	//message3, err3 :=  procedures.RemoveServer(server.Name, server.Id)
-	//fmt.Fprintf(os.Stdout, "Delete Server Message: %s\n", message3)
-	//fmt.Fprintf(os.Stdout, "Delete Server Error: %s\n", err3)
+	//message3, err3 :=  procedures.ServerIPAddr(server.Name, server.Id)
+	//fmt.Fprintf(os.Stdout, "IPAddress Server Message: %s\n", message3)
+	//fmt.Fprintf(os.Stdout, "IPAddress Server Error: %s\n", err3)
+	//if err != nil {
+	//	os.Exit(0)
+	//}
+	//message4, err4 :=  procedures.RemoveServer(server.Name, server.Id)
+	//fmt.Fprintf(os.Stdout, "Delete Server Message: %s\n", message4)
+	//fmt.Fprintf(os.Stdout, "Delete Server Error: %s\n", err4)
 	//if err != nil {
 	//	os.Exit(0)
 	//}
