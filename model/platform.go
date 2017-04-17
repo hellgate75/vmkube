@@ -14,18 +14,22 @@ Describe Disk feature, contains
   * Size  (int)     Disk Size in MB
 */
 type Disk struct {
-	Id   string  `json:"uid",xml:"uid"`
-	Name string `json:"name",xml:"name"`
-	Type    int `json:"type",xml:"type"`
-	Size    int `json:"size",xml:"size"`
+	Id   string  `json:"Id",xml:"Id"`
+	Name string `json:"Name",xml:"Name"`
+	Type    int `json:"Type",xml:"Type"`
+	Size    int `json:"Size",xml:"Size"`
 }
 
 /*
 Describe Swarm Cluster feature, contains
-	
+
+  * Enabled      		(bool)      Enable Swarm Features
+
+  * Host      			(string)    Swarm discovery Address (tcp://0.0.0.0:3376)
+
   * UseAddress      (bool)      Use Machine IP Address
   
-  * UseDiscovery    (bool)      Use Swarm Discovery Option
+   * DiscoveryToken  (bool)    	Use Swarm Discovery Option (token://<token>)
   
   * UseExperimental (bool)      Use Docker Experimental Features
   
@@ -37,12 +41,13 @@ Describe Swarm Cluster feature, contains
   
   * Strategy        (string)    Swarm Strategy
   
-  * TLSSan          ([]string)  Swarm TLS SAN Options
+  * TLSSan          ([]string)  Swarm TLS Specific Options (No overwrite, be sure of syntax)
 */
 type SwarmOpt struct {
+	Enabled       		bool    `json:"Enabled",xml:"Enabled"`
 	Host              string  `json:"Host",xml:"Host"`
 	UseAddress        bool    `json:"UseAddress",xml:"UseAddress"`
-	UseDiscovery      bool    `json:"UseDiscovery",xml:"UseDiscovery"`
+	DiscoveryToken    string   `json:"DiscoveryToken",xml:"DiscoveryToken"`
 	UseExperimental   bool    `json:"UseExperimental",xml:"UseExperimental"`
 	IsMaster          bool    `json:"IsMaster",xml:"IsMaster"`
 	Image             string  `json:"Image",xml:"Image"`
@@ -57,7 +62,9 @@ Describe Docker Engine options, contains
   * Environment       ([]string)  Environment variables
   
   * InsecureRegistry  ([]string)  Insecure Registry Options
-  
+
+  * RegistryMirror		([]string)	Registry Mirror Options
+
   * StorageDriver     (string)    Storage Driver
   
   * InstallURL        (string)    Docker Install URL (e.g.: https://get.docker.com)
@@ -69,6 +76,7 @@ Describe Docker Engine options, contains
 type EngineOpt struct {
 	Environment       []string  `json:"Environment",xml:"Environment"`
 	InsecureRegistry  []string  `json:"InsecureRegistry",xml:"InsecureRegistry"`
+	RegistryMirror  	[]string  `json:"RegistryMirror",xml:"RegistryMirror"`
 	StorageDriver       string  `json:"StorageDriver",xml:"StorageDriver"`
 	InstallURL          string  `json:"InstallURL",xml:"InstallURL"`
 	Labels            []string  `json:"Labels",xml:"Labels"`
@@ -99,7 +107,7 @@ Describe Server options, contains
   
   * NoShare   (string)     Do not mount home as shared folder
   
-  * Options   ([][]string) Specific vendor option in format key value pairs array without signs (e.g.: --)
+  * Options   ([][]string) Specific vendor option in format key value pairs array without signs (e.g.: --<driver>)
   
   * Hostname  (string)     Logical Server Hostname
 */
@@ -134,10 +142,10 @@ Describe Cloud Server options, contains
 	Refers to : https://docs.docker.com/machine/drivers/
 */
 type CloudServer struct {
-	Id        string      `json:"uid",xml:"uid"`
-	Type      string      `json:"type",xml:"type"`
-	Hostname  string      `json:"hostname",xml:"hostname"`
-	Options   [][]string  `json:"options",xml:"options"`
+	Id        string      `json:"Id",xml:"Id"`
+	Type      string      `json:"Type",xml:"Type"`
+	Hostname  string      `json:"Hostname",xml:"Hostname"`
+	Options   [][]string  `json:"Options",xml:"Options"`
 }
 
 /*
@@ -225,18 +233,18 @@ Describe Server Installation options, contains
   * LogsPath  		(string)     			Path to Log file
 */
 type Installation struct {
-	Id          	string            `json:"uid",xml:"uid"`
-	ServerId    	int               `json:"serverid",xml:"serverid"`
-	IsCloud     	bool              `json:"iscloud",xml:"iscloud"`
-	Type        	InstallationType  `json:"type",xml:"type"`
-	Environment 	RoleType          `json:"environment",xml:"environment"`
-	Role        	EnvironmentType   `json:"role",xml:"role"`
-	Plan					InstallationPlan	`json:"plan",xml:"plan"`
-	LastExecution	time.Timer 				`json:"lastexecution",xml:"lastexecution"`
-	Success     	bool       				`json:"success",xml:"success"`
-	Errors      	bool       				`json:"haserrors",xml:"haserrors"`
-	LastMessage 	string     				`json:"lastmessage",xml:"lastmessage"`
-	LogsPath 			string     				`json:"logspath",xml:"logspath"`
+	Id          	string            `json:"Id",xml:"Id"`
+	ServerId    	int               `json:"ServerId",xml:"ServerId"`
+	IsCloud     	bool              `json:"IsCloud",xml:"IsCloud"`
+	Type        	InstallationType  `json:"Type",xml:"Type"`
+	Environment 	RoleType          `json:"Environment",xml:"Environment"`
+	Role        	EnvironmentType   `json:"Role",xml:"Role"`
+	Plan					InstallationPlan	`json:"Plan",xml:"Plan"`
+	LastExecution	time.Timer 				`json:"LastExecution",xml:"LastExecution"`
+	Success     	bool       				`json:"Success",xml:"Success"`
+	Errors      	bool       				`json:"Errors",xml:"Errors"`
+	LastMessage 	string     				`json:"LastMessage",xml:"LastMessage"`
+	LogsPath 			string     				`json:"LogsPath",xml:"LogsPath"`
 }
 
 /*
@@ -253,11 +261,11 @@ Describe Network options, contains
   * Installations ([]Installation)  Server Installations
 */
 type Network struct {
-	Id          	string          `json:"uid",xml:"uid"`
-	Name          string          `json:"name",xml:"name"`
-	Servers       []Server        `json:"servers",xml:"servers"`
-	CServers      []CloudServer   `json:"cloudservers",xml:"cloudservers"`
-	Installations []Installation  `json:"installations",xml:"installations"`
+	Id          	string          `json:"Id",xml:"Id"`
+	Name          string          `json:"Name",xml:"Name"`
+	Servers       []Server        `json:"Servers",xml:"Servers"`
+	CServers      []CloudServer   `json:"CServers",xml:"CServers"`
+	Installations []Installation  `json:"Installations",xml:"Installations"`
 }
 
 /*
@@ -270,9 +278,9 @@ Describe domain options, contains
   * Networks      ([]Networks)      Networks List
 */
 type Domain struct {
-	Id          string           `json:"uid",xml:"uid"`
-	Name        string          `json:"name",xml:"name"`
-	Networks    []Network       `json:"networks",xml:"networks"`
+	Id          string          `json:"Id",xml:"Id"`
+	Name        string          `json:"Name",xml:"Name"`
+	Networks    []Network       `json:"Networks",xml:"Networks"`
 }
 
 /*
@@ -305,19 +313,19 @@ Describe Server State, contains
   * LastMessage  (string)     Last Alternation Message
 */
 type ServerState struct {
-	Id          string     `json:"uid",xml:"uid"`
-	Hostname    string     `json:"hostname",xml:"hostname"`
-	IPAddresses []string   `json:"ipaddresses",xml:"ipaddresses"`
-	ServerId    int        `json:"serverid",xml:"serverid"`
-	IsCloud     bool       `json:"iscloud",xml:"iscloud"`
-	NetworkId   int        `json:"networkid",xml:"networkid"`
-	DomainId    int        `json:"domainid",xml:"domainid"`
-	Creation    time.Timer `json:"creation",xml:"creation"`
-	Modified 		time.Timer `json:"modified",xml:"modified"`
-	Created     bool       `json:"wascreated",xml:"wascreated"`
-	Altered     bool       `json:"wasaltered",xml:"wasaltered"`
-	Errors      bool       `json:"haserrors",xml:"haserrors"`
-	LastMessage string     `json:"lastmessage",xml:"lastmessage"`
+	Id          string     `json:"Id",xml:"Id"`
+	Hostname    string     `json:"Hostname",xml:"Hostname"`
+	IPAddresses []string   `json:"IPAddresses",xml:"IPAddresses"`
+	ServerId    int        `json:"ServerId",xml:"ServerId"`
+	IsCloud     bool       `json:"IsCloud",xml:"IsCloud"`
+	NetworkId   int        `json:"NetworkId",xml:"NetworkId"`
+	DomainId    int        `json:"DomainId",xml:"DomainId"`
+	Creation    time.Timer `json:"Creation",xml:"Creation"`
+	Modified 		time.Timer `json:"Modified",xml:"Modified"`
+	Created     bool       `json:"Created",xml:"Created"`
+	Altered     bool       `json:"Altered",xml:"Altered"`
+	Errors      bool       `json:"Errors",xml:"Errors"`
+	LastMessage string     `json:"LastMessage",xml:"LastMessage"`
 }
 
 /*
@@ -344,16 +352,16 @@ Describe Network State, contains
   * LastMessage  (string)         Last Alternation Message
 */
 type NetworkState struct {
-	Id          string     			`json:"uid",xml:"uid"`
-	NetworkId   int             `json:"networkid",xml:"networkid"`
-	DomainId    int             `json:"domainid",xml:"domainid"`
-	Servers     []ServerState   `json:"servers",xml:"servers"`
-	Creation    time.Timer      `json:"creation",xml:"creation"`
-	Modified 		time.Timer      `json:"modified",xml:"modified"`
-	Created     bool            `json:"wascreated",xml:"wascreated"`
-	Altered     bool            `json:"wasaltered",xml:"wasaltered"`
-	Errors      bool            `json:"haserrors",xml:"haserrors"`
-	LastMessage string          `json:"lastmessage",xml:"lastmessage"`
+	Id          string     			`json:"Id",xml:"Id"`
+	NetworkId   int             `json:"NetworkId",xml:"NetworkId"`
+	DomainId    int             `json:"DomainId",xml:"DomainId"`
+	Servers     []ServerState   `json:"Servers",xml:"Servers"`
+	Creation    time.Timer      `json:"Creation",xml:"Creation"`
+	Modified 		time.Timer      `json:"Modified",xml:"Modified"`
+	Created     bool            `json:"Created",xml:"Created"`
+	Altered     bool            `json:"Altered",xml:"Altered"`
+	Errors      bool            `json:"Errors",xml:"Errors"`
+	LastMessage string          `json:"LastMessage",xml:"LastMessage"`
 }
 
 /*
@@ -378,15 +386,15 @@ Describe Domain State, contains
   * LastMessage  (string)         Last Alternation Message
 */
 type DomainState struct {
-	Id          string     			`json:"uid",xml:"uid"`
-	DomainId    int             `json:"domainid",xml:"domainid"`
-	Networks    []NetworkState  `json:"networks",xml:"networks"`
-	Creation    time.Timer      `json:"creation",xml:"creation"`
-	Modified 		time.Timer      `json:"modified",xml:"modified"`
-	Created     bool            `json:"wascreated",xml:"wascreated"`
-	Altered     bool            `json:"wasaltered",xml:"wasaltered"`
-	Errors      bool            `json:"haserrors",xml:"haserrors"`
-	LastMessage string          `json:"lastmessage",xml:"lastmessage"`
+	Id          string     			`json:"Id",xml:"Id"`
+	DomainId    int             `json:"DomainId",xml:"DomainId"`
+	Networks    []NetworkState  `json:"Networks",xml:"Networks"`
+	Creation    time.Timer      `json:"Creation",xml:"Creation"`
+	Modified 		time.Timer      `json:"Modified",xml:"Modified"`
+	Created     bool            `json:"Created",xml:"Created"`
+	Altered     bool            `json:"Altered",xml:"Altered"`
+	Errors      bool            `json:"Errors",xml:"Errors"`
+	LastMessage string          `json:"LastMessage",xml:"LastMessage"`
 }
 
 /*
@@ -409,14 +417,14 @@ Describe State, contains
   * LastMessage  (string)         Last Alternation Message
 */
 type State struct {
-	Id          string     			`json:"uid",xml:"uid"`
-	Domains     []DomainState   `json:"domains",xml:"domains"`
-	Creation    time.Timer      `json:"creation",xml:"creation"`
-	Modified 		time.Timer      `json:"modified",xml:"modified"`
-	Created     bool            `json:"wascreated",xml:"wascreated"`
-	Altered     bool            `json:"wasaltered",xml:"wasaltered"`
-	Errors      bool            `json:"haserrors",xml:"haserrors"`
-	LastMessage string          `json:"lastmessage",xml:"lastmessage"`
+	Id          string     			`json:"Id",xml:"Id"`
+	Domains     []DomainState   `json:"Domains",xml:"Domains"`
+	Creation    time.Timer      `json:"Creation",xml:"Creation"`
+	Modified 		time.Timer      `json:"Modified",xml:"Modified"`
+	Created     bool            `json:"Created",xml:"Created"`
+	Altered     bool            `json:"Altered",xml:"Altered"`
+	Errors      bool            `json:"Errors",xml:"Errors"`
+	LastMessage string          `json:"LastMessage",xml:"LastMessage"`
 }
 
 /*
@@ -443,14 +451,14 @@ Describe Entire Infrastructure, contains
   * LastMessage  (string)    	Last Alternation Message
 */
 type Infrastructure struct {
-	Id          string     				`json:"uid",xml:"uid"`
-	Name     		string  					`json:"name",xml:"name"`
-	Domains     []Domain  				`json:"domains",xml:"domains"`
-	State       State     				`json:"state",xml:"state"`
-	Creation    time.Timer      	`json:"creation",xml:"creation"`
-	Modified 		time.Timer      	`json:"modified",xml:"modified"`
-	Created     bool      				`json:"wascreated",xml:"wascreated"`
-	Altered     bool      				`json:"wasaltered",xml:"wasaltered"`
-	Errors      bool      				`json:"haserrors",xml:"haserrors"`
-	LastMessage string    				`json:"lastmessage",xml:"lastmessage"`
+	Id          string     				`json:"Id",xml:"Id"`
+	Name     		string  					`json:"Name",xml:"Name"`
+	Domains     []Domain  				`json:"Domains",xml:"Domains"`
+	State       State     				`json:"State",xml:"State"`
+	Creation    time.Timer      	`json:"Creation",xml:"Creation"`
+	Modified 		time.Timer      	`json:"Modified",xml:"Modified"`
+	Created     bool      				`json:"Created",xml:"Created"`
+	Altered     bool      				`json:"Altered",xml:"Altered"`
+	Errors      bool      				`json:"Errors",xml:"Errors"`
+	LastMessage string    				`json:"LastMessage",xml:"LastMessage"`
 }

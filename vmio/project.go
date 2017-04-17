@@ -23,7 +23,7 @@ func (info *ProjectInfo) Read() (model.Project, error) {
 	var project model.Project
 	home := model.VMBaseFolder()
 	folder := home + "/metadata/" + info.ProjectId
-	os.MkdirAll(folder, 0777)
+	os.MkdirAll(folder, 0666)
 	fileName := folder + "/project.ser"
 	err := project.Load(fileName)
 	return  project, err
@@ -32,7 +32,7 @@ func (info *ProjectInfo) Read() (model.Project, error) {
 func (info *ProjectInfo) Write(project model.Project) bool {
 	home := model.VMBaseFolder()
 	folder := home + "/metadata/" + info.ProjectId
-	os.MkdirAll(folder, 0777)
+	os.MkdirAll(folder, 0666)
 	fileName := folder + "/project.ser"
 	err := project.Save(fileName)
 	return err == nil

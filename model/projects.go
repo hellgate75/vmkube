@@ -6,9 +6,13 @@ import "time"
 /*
 Describe Swarm Cluster feature, contains
 	
+  * Enabled      		(bool)      Enable Swarm Features
+
+  * Host      			(string)    Swarm discovery Address (tcp://0.0.0.0:3376)
+
   * UseAddress      (bool)      Use Machine IP Address
-  
-  * UseDiscovery    (bool)      Use Swarm Discovery Option
+
+  * DiscoveryToken  (bool)    	Use Swarm Discovery Option (token://<token>)
   
   * UseExperimental (bool)      Use Docker Experimental Features
   
@@ -20,12 +24,13 @@ Describe Swarm Cluster feature, contains
   
   * Strategy        (string)    Swarm Strategy
   
-  * TLSSan          ([]string)  Swarm TLS SAN Options
+  * TLSSan          ([]string)  Swarm TLS Specific Options (No overwrite, be sure of syntax)
 */
 type ProjectSwarmOpt struct {
+	Enabled       		bool    `json:"Enabled",xml:"Enabled"`
 	Host              string  `json:"Host",xml:"Host"`
 	UseAddress        bool    `json:"UseAddress",xml:"UseAddress"`
-	UseDiscovery      bool    `json:"UseDiscovery",xml:"UseDiscovery"`
+	DiscoveryToken    string   `json:"DiscoveryToken",xml:"DiscoveryToken"`
 	UseExperimental   bool    `json:"UseExperimental",xml:"UseExperimental"`
 	IsMaster          bool    `json:"IsMaster",xml:"IsMaster"`
 	Image             string  `json:"Image",xml:"Image"`
@@ -40,6 +45,8 @@ Describe Docker Engine options, contains
   * Environment       ([]string)  Environment variables
   
   * InsecureRegistry  ([]string)  Insecure Registry Options
+
+  * RegistryMirror		([]string)	Registry Mirror Options
   
   * StorageDriver     (string)    Storage Driver
   
@@ -52,6 +59,7 @@ Describe Docker Engine options, contains
 type ProjectEngineOpt struct {
 	Environment       []string  `json:"Environment",xml:"Environment"`
 	InsecureRegistry  []string  `json:"InsecureRegistry",xml:"InsecureRegistry"`
+	RegistryMirror  	[]string  `json:"RegistryMirror",xml:"RegistryMirror"`
 	StorageDriver       string  `json:"StorageDriver",xml:"StorageDriver"`
 	InstallURL          string  `json:"InstallURL",xml:"InstallURL"`
 	Labels            []string  `json:"Labels",xml:"Labels"`
@@ -62,7 +70,7 @@ type ProjectEngineOpt struct {
 /*
 Describe Server options, contains
 	
-  * Id        (int)        Unique Identifier
+  * Id        (string)     Unique Identifier
   
   * Name      (string)     Server Local Name
   
@@ -82,12 +90,12 @@ Describe Server options, contains
   
   * NoShare   (string)     Do not mount home as shared folder
   
-  * Options   ([][]string) Specific vendor option in format key value pairs array without signs (e.g.: --)
+  * Options   ([][]string) Specific vendor option in format key value pairs array without signs (e.g.: --<driver>)
   
   * Hostname  (string)     Logical Server Hostname
 */
 type ProjectServer struct {
-	Id      	  	  		 int    `json:"Id",xml:"Id"`
+	Id      	  	  	string    `json:"Id",xml:"Id"`
 	Name    		  		string    `json:"Name",xml:"Name"`
 	Roles   				[]string    `json:"Roles",xml:"Roles"`
 	Driver   		 			string    `json:"Driver",xml:"Driver"`
@@ -106,7 +114,7 @@ type ProjectServer struct {
 /*
 Describe Cloud Server options, contains
 	
-  * Id        (int)         Unique Identifier
+  * Id        (string)      Unique Identifier
   
   * Type      (string)      Cloud Server Type ()
   
@@ -117,7 +125,7 @@ Describe Cloud Server options, contains
 	Refers to : https://docs.docker.com/machine/drivers/
 */
 type ProjectCloudServer struct {
-	Id          int       `json:"Id",xml:"Id"`
+	Id        string       `json:"Id",xml:"Id"`
 	Type      string      `json:"Type",xml:"Type"`
 	Hostname  string      `json:"Hostname",xml:"Hostname"`
 	Options   [][]string  `json:"Options",xml:"Options"`
@@ -277,6 +285,8 @@ Describe Project, contains
 
   * Name      	(string)  	 				Project Name
 
+	* Open       	(bool)      				Writable State
+
   * Domains      ([]ProjectDomain)  List Of Domains
 
   * State        (State)     				Creation State
@@ -292,6 +302,7 @@ Describe Project, contains
 type Project struct {
 	Id          string            `json:"Id",xml:"Id"`
 	Name     		string  					`json:"Name",xml:"Name"`
+	Open      	bool      				`json:"Open",xml:"Open"`
 	Domains     []ProjectDomain  	`json:"Domains",xml:"Domains"`
 	Created     time.Timer      	`json:"Created",xml:"Created"`
 	Modified    time.Timer      	`json:"Modified",xml:"Modified"`
@@ -302,16 +313,28 @@ type Project struct {
 /*
 Describe Project State in Index, contains
 
-  * Id          (string)            Unique Identifier
+  * Id          (string)            Project Unique Identifier
 
   * Name      	(string)  	 				Project Name
 
+  * InfraId     (string)            Infrastructure Unique Identifier
+
+  * InfraName   (string)  	 				Infrastructure Project Name
+
+	* Open       	(bool)      				Project Writable State
+
   * Active      (bool)						  Active State of Project
+
+  * Synced      (bool)						  Sync State of Project
 */
 type ProjectsDescriptor struct {
 	Id          string            `json:"Id",xml:"Id"`
 	Name     		string  					`json:"Name",xml:"Name"`
-	Active     bool  							`json:"Active",xml:"Active"`
+	InfraId     string            `json:"InfraId",xml:"InfraId"`
+	InfraName   string  					`json:"InfraName",xml:"InfraName"`
+	Active      bool  						`json:"Active",xml:"Active"`
+	Open      	bool  						`json:"Open",xml:"Open"`
+	Synced      bool  						`json:"Synced",xml:"Synced"`
 }
 
 /*

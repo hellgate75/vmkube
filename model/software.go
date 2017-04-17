@@ -36,6 +36,14 @@ func VMBaseFolder() string {
 type MachineActions interface {
 	Download(v string) bool
 	Check(v string) bool
+	Path(v string) string
+}
+
+func (isoTemplate *MachineISO)	Path(version string) string {
+	home := VMBaseFolder()
+	folder := home + "/images/" + isoTemplate.FolderName
+	fileName := folder + "/" + isoTemplate.FinalNamePrefix + version + isoTemplate.FinalNameSuffix
+	return fileName
 }
 
 func (isoTemplate *MachineISO)	Check(version string) bool {
@@ -50,7 +58,7 @@ func (isoTemplate *MachineISO)	Download(version string) bool {
 	url := isoTemplate.BaseURL + version + isoTemplate.ISOName
 	home := VMBaseFolder()
 	folder := home + "/images/" + isoTemplate.FolderName
-	os.MkdirAll(folder, 0777)
+	os.MkdirAll(folder, 0666)
 	fileName := folder + "/" + isoTemplate.FinalNamePrefix + version + isoTemplate.FinalNameSuffix
 	fmt.Println("Downloading", url, "to", fileName)
 

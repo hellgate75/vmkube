@@ -23,7 +23,7 @@ func (info *InfrastructureInfo) Read() (model.Infrastructure, error) {
 	var project model.Infrastructure
 	home := model.VMBaseFolder()
 	folder := home + "/metadata/" + info.InfrastructureId
-	os.MkdirAll(folder, 0777)
+	os.MkdirAll(folder, 0666)
 	fileName := folder + "/project.ser"
 	err := project.Load(fileName)
 	return  project, err
@@ -32,7 +32,7 @@ func (info *InfrastructureInfo) Read() (model.Infrastructure, error) {
 func (info *InfrastructureInfo) Write(project model.Infrastructure) bool {
 	home := model.VMBaseFolder()
 	folder := home + "/metadata/" + info.InfrastructureId
-	os.MkdirAll(folder, 0777)
+	os.MkdirAll(folder, 0666)
 	fileName := folder + "/project.ser"
 	err := project.Save(fileName)
 	return err == nil

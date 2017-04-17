@@ -29,12 +29,13 @@ const (
 	ListInfrastructure			CmdRequestType = iota + 1;
 	ListInfrastructures			CmdRequestType = iota + 1;
 	ListConfigs							CmdRequestType = iota + 1;
-	StatusConfig							CmdRequestType = iota + 1;
+	StatusConfig						CmdRequestType = iota + 1;
 	ImportConfig						CmdRequestType = iota + 1;
 	ExportConfig						CmdRequestType = iota + 1;
 	DefineConfig						CmdRequestType = iota + 1;
 	DeleteConfig						CmdRequestType = iota + 1;
 	AlterConfig							CmdRequestType = iota + 1;
+	FinaliseConfig					CmdRequestType = iota + 1;
 )
 
 type CmdSubRequestType int
@@ -44,9 +45,8 @@ const (
 	Create 				CmdSubRequestType = iota + 1;
 	Remove 				CmdSubRequestType = iota + 1;
 	Alter  				CmdSubRequestType= iota + 1;
-	Finalize  		CmdSubRequestType= iota + 1;
-	Export  			CmdSubRequestType= iota + 1;
-	Import  			CmdSubRequestType= iota + 1;
+	Close  				CmdSubRequestType= iota + 1;
+	Open  				CmdSubRequestType= iota + 1;
 )
 
 type CmdElementType int

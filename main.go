@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"vmkube/action"
 	"strings"
+	"vmkube/model"
+	"vmkube/procedures"
 )
 
 func init() {
@@ -17,6 +19,61 @@ func init() {
 }
 
 func main() {
+	//server := model.ProjectServer{
+	//	Memory: 2048,
+	//	Cpus: 2,
+	//	Roles: []string{"server","rancher"},
+	//	Name: "MyServer",
+	//	Driver: "virtualbox",
+	//	Hostname: "myserver",
+	//	OSType: "rancheros",
+	//	OSVersion: "1.0.0",
+	//	NoShare: false,
+	//	Id: action.NewUUIDString(),
+	//	Options: [][]string{},
+	//	DiskSize: 60000,
+	//	Engine: model.ProjectEngineOpt{
+	//		Options: []string{},
+	//		Environment: []string{},
+	//		InsecureRegistry: []string{},
+	//		InstallURL: "",
+	//		Labels: []string{},
+	//		StorageDriver: "",
+	//	},
+	//	Swarm: model.ProjectSwarmOpt{
+	//		Host: "",
+	//		Image: "",
+	//		IsMaster: false,
+	//		JoinOpts: []string{},
+	//		Strategy: "",
+	//		TLSSan: []string{},
+	//		UseAddress: false,
+	//		DiscoveryToken: "",
+	//		UseExperimental: false,
+	//	},
+	//}
+	//message, err := procedures.CreateServer(server)
+	//fmt.Fprintf(os.Stdout, "Create Server Message: %s\n", message)
+	//fmt.Fprintf(os.Stdout, "Create Server Error: %s\n", err)
+	//
+	//message0, err0 := procedures.ServerStatus(server.Name, server.Id)
+	//fmt.Fprintf(os.Stdout, "Status Server Message: %s\n", message0)
+	//fmt.Fprintf(os.Stdout, "Status Server Error: %s\n", err0)
+	//
+	//message1, err1 := procedures.ServerEnv(server.Name, server.Id)
+	//fmt.Fprintf(os.Stdout, "Status Server Message: %s\n", message1)
+	//fmt.Fprintf(os.Stdout, "Status Server Error: %s\n", err1)
+	//
+	//message2, err2 := procedures.ServerInspect(server.Name, server.Id)
+	//fmt.Fprintf(os.Stdout, "Status Server Message: %s\n", message2)
+	//fmt.Fprintf(os.Stdout, "Status Server Error: %s\n", err2)
+	//
+	//message3, err3 :=  procedures.RemoveServer(server.Name, server.Id)
+	//fmt.Fprintf(os.Stdout, "Delete Server Message: %s\n", message3)
+	//fmt.Fprintf(os.Stdout, "Delete Server Error: %s\n", err3)
+	//if err != nil {
+	//	os.Exit(0)
+	//}
 	//server := model.Server{
 	//	Memory: 2048,
 	//	Cpus: 2,

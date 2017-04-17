@@ -3,6 +3,7 @@ package utils
 import (
 	"strings"
 	"errors"
+	"strconv"
 )
 
 func StrPad(instr string, capping int) string {
@@ -67,5 +68,14 @@ func OptionsParse(key string, val string) (string, string, error) {
 
 func CorrectInput(input string) string {
 	return  strings.TrimSpace(strings.ToLower(input))
+}
+
+
+func StringToInt(s string) (int,error) {
+	return strconv.Atoi(s)
+}
+
+func IntToString(n int) string {
+	return strconv.Itoa(n)
 }
 

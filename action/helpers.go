@@ -148,6 +148,16 @@ var(
 		SubCmdHelperTypes: []CmdRequestType{},
 		Options:	[][]string{},
 	}
+	BuildProject CommandHelper = CommandHelper{
+		Command: "build-project",
+		Description: "Build and existing project and create/modify an infrstructure",
+		CmdType: FinaliseConfig,
+		LineHelp: "build-project [OPTIONS]",
+		SubCommands: [][]string{},
+		SubCmdTypes: []CmdSubRequestType{},
+		SubCmdHelperTypes: []CmdRequestType{},
+		Options:	[][]string{},
+	}
 	ImportProject CommandHelper = CommandHelper{
 		Command: "import-project",
 		Description: "Import a new project from file",
@@ -161,7 +171,7 @@ var(
 	ExportProject CommandHelper = CommandHelper{
 		Command: "export-project",
 		Description: "Export an existing project to file",
-		CmdType: ImportConfig,
+		CmdType: ExportConfig,
 		LineHelp: "export-project [OPTIONS]",
 		SubCommands: [][]string{},
 		SubCmdTypes: []CmdSubRequestType{},
@@ -185,6 +195,7 @@ func InitHelpers() {
 		[]string{"define-project", "Define new project"},
 		[]string{"alter-project", "Alter existing project, e.g.: open, close, finalize, or simply change nodes"},
 		[]string{"delete-project", "Delete existing closed project"},
+		[]string{"build-project", "Build and existing project and create/modify an infrstructure"},
 		[]string{"import-project", "Import project from existing configuration"},
 		[]string{"export-project", "Export existing project configuration"},
 	)
@@ -239,7 +250,34 @@ func InitHelpers() {
 		[]string{"force", " bool", "Flag defining to force define project, no confirmation will be prompted", "false"},
 	)
 
+	//Build Project
+	BuildProject.Options = append(BuildProject.Options,
+		[]string{"name", " <project name>", "Project name", "true"},
+	)
+
+	BuildProject.Options = append(BuildProject.Options,
+		[]string{"override", " bool", "Flag defining to override existing infrastructure (default: false)", "false"},
+	)
+
+	BuildProject.Options = append(BuildProject.Options,
+		[]string{"force", " bool", "Flag defining to force modify infrastructure, no confirmation will be prompted", "false"},
+	)
 	//Change Project
+	AlterProject.SubCommands = append(AlterProject.SubCommands,
+		[]string{"create", "Create a project item"},
+		[]string{"modify", "Alter a project item"},
+		[]string{"delete", "Delete a project item"},
+		[]string{"close", "Close a project for deletion or build"},
+		[]string{"open", "Re-Open a closed project and eventually deactivate infrastructure"},
+	)
+	AlterProject.SubCmdTypes = append(AlterProject.SubCmdTypes,
+		Create,
+		Alter,
+		Remove,
+		Close,
+		Open,
+	)
+
 	AlterProject.Options = append(AlterProject.Options,
 		[]string{"name", " <project name>", "Project name", "true"},
 	)
@@ -253,7 +291,7 @@ func InitHelpers() {
 	)
 
 	AlterProject.Options = append(AlterProject.Options,
-		[]string{"elem-type", " <infra element type>", "Type of entity to create/modify in the project (allowed: Server, Cloud-Server, Network, Domain, Infrastructure)", "true"},
+		[]string{"elem-type", " <infra element type>", "Type of entity to create/modify/delete in the project (allowed: Server, Cloud-Server, Network, Domain)", "false"},
 	)
 
 	AlterProject.Options = append(AlterProject.Options,
