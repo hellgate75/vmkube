@@ -24,7 +24,7 @@ Describe Swarm Cluster feature, contains
   
   * Strategy        (string)    Swarm Strategy
   
-  * TLSSan          ([]string)  Swarm TLS Specific Options (No overwrite, be sure of syntax)
+  * TLSSan          ([]string)  Swarm TLS Specific Options (No overwrite, be sure of syntax, eg: ["--my-tls-key my-tls-value"])
 */
 type ProjectSwarmOpt struct {
 	Enabled       		bool    `json:"Enabled",xml:"Enabled"`
