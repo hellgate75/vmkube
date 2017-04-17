@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"encoding/xml"
+	"bufio"
+	"os"
 )
 
 func DownloadISO(machineType string, version string) bool {
@@ -61,6 +63,14 @@ func ImportXMLInfrastructure(file string) (model.Infrastructure, error) {
 	}
 }
 
-func GuidedConfigCreation(args []string) bool {
-	return  false
+func RequestConfirmation(reason string) bool {
+	text := ""
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Fprintf("%s.Confirm [y/n] :", reason)
+	text, _ = reader.ReadString('\n')
+	if text != "Y" && text != "y" && text != "N" && text != "n" {
+		fmt.Fprintln("Current text is not allowed :", text)
+		return  RequestConfirmation(reason)
+	}
+	return false
 }

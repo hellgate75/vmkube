@@ -1,10 +1,22 @@
-package model
+package action
 
 import (
 	"vmkube/utils"
 	"fmt"
 	"os"
+	"time"
+	"strings"
 )
+
+type CmdRequest struct {
+	TypeStr					string
+	Type						CmdRequestType
+	SubTypeStr			string
+	SubType					CmdSubRequestType
+	HelpType				CmdRequestType
+	Element					CmdElementType
+	Arguments				*CmdArguments
+}
 
 type CmdRequestType int
 
@@ -29,12 +41,12 @@ type CmdSubRequestType int
 
 const (
 	NoSubCommand	CmdSubRequestType = iota;
-	Create 		CmdSubRequestType = iota + 1;
-	Remove 		CmdSubRequestType = iota + 1;
-	List 			CmdSubRequestType = iota + 1;
-	Add  			CmdSubRequestType= iota + 1;
-	Finalize  CmdSubRequestType= iota + 1;
-	Export  	CmdSubRequestType= iota + 1;
+	Create 				CmdSubRequestType = iota + 1;
+	Remove 				CmdSubRequestType = iota + 1;
+	Alter  				CmdSubRequestType= iota + 1;
+	Finalize  		CmdSubRequestType= iota + 1;
+	Export  			CmdSubRequestType= iota + 1;
+	Import  			CmdSubRequestType= iota + 1;
 )
 
 type CmdElementType int
@@ -49,23 +61,15 @@ const (
 )
 
 
-type CmdRequest struct {
-	TypeStr					string
-	Type						CmdRequestType
-	SubTypeStr			string
-	SubType					CmdSubRequestType
-	HelpType				CmdRequestType
-	CmdElementType	CmdElementType
-	Arguments				[][]string
-}
-
 type CmdArguments struct {
 	Cmd							string
 	CmdType					CmdRequestType
 	SubCmd					string
 	SubCmdType			CmdSubRequestType
 	SubCmdHelpType	CmdRequestType
+	Element					CmdElementType
 	Options					[][]string
+	Helper					CommandHelper
 }
 
 type CmdParser interface {
@@ -80,6 +84,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 			//fmt.Fprintf(os.Stdout, "Arguments: %v\n", args)
 			helper := RecoverCommandHelper(command)
 			//fmt.Fprintf(os.Stdout, "Helper: %v\n", helper)
+			ArgCmd.Helper = helper
 			ArgCmd.Cmd = helper.Command
 			ArgCmd.CmdType = helper.CmdType
 			ArgCmd.SubCmd = ""
@@ -102,20 +107,37 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 						options  := make([][]string, 0)
 						passed := true
 						for index, option := range optsArgs {
-							if index % 2 == 0 && len(optsArgs) > index + 1 {
+							if index % 2 == 0 && len(optsArgs) >= index + 1 {
 								key, value, error := utils.OptionsParse(optsArgs[index], optsArgs[index+1])
 								if error != nil {
 									passed = false
-									fmt.Fprintln(os.Stdout, "Unable to parse option", option[index],"for Command",command,"and Sub-Command",SubCommand)
+									fmt.Fprintln(os.Stdout, "Error: Unable to parse option", option[index],"for Command",command,"and Sub-Command",SubCommand)
+									break
 								} else {
+									if "elem-type" == strings.ToLower(strings.TrimSpace(key)) {
+										elementType, error := CmdParseElement(key, value)
+										if error == nil && NoElement != elementType {
+											ArgCmd.Element = elementType
+										} else  {
+											fmt.Fprintln(os.Stdout, "Error: Invalid infrastructure element type", value,"for Command",command,"and Sub-Command",SubCommand)
+											if error != nil {
+												fmt.Fprintf(os.Stderr, "Details: %s \n", error.Error())
+											}
+											time.Sleep(100 * time.Millisecond)
+											PrintCommandHelper(command, SubCommand)
+											return  false
+										}
+									}
 									options = append(options, []string{
 										key,
 										value,
 									})
 								}
-							} else if len(optsArgs) <= index + 1 {
+							} else if len(optsArgs) < index + 1 {
 								passed = false
-								fmt.Fprintln(os.Stdout, "Uncompleted option", option[index],"for Command",command,"and Sub-Command",SubCommand)
+								fmt.Fprintln(os.Stdout, "Error: Uncomplete option", option[index],"for Command",command,"and Sub-Command",SubCommand)
+								time.Sleep(100 * time.Millisecond)
+								PrintCommandHelper(command, SubCommand)
 							}
 						}
 						if passed  {
@@ -124,12 +146,14 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 							return  true
 						} else  {
 							fmt.Fprintln(os.Stderr, "One or more options parse failed!!")
+							time.Sleep(100 * time.Millisecond)
 							PrintCommandHelper(command, SubCommand)
 							return  false
 						}
 					}
 				} else {
 					fmt.Fprintln(os.Stderr, "Error:", error)
+					time.Sleep(100 * time.Millisecond)
 					PrintCommandHelper(command, SubCommand)
 					return  false
 				}
@@ -140,47 +164,71 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 					options  := make([][]string, 0)
 					passed := true
 					for index, option := range optsArgs {
-						if index % 2 == 0 && len(optsArgs) > index + 1 {
+						if index % 2 == 0 && len(optsArgs) >= index + 1 {
 							key, value, error := utils.OptionsParse(optsArgs[index], optsArgs[index+1])
 							if error != nil {
 								passed = false
-								fmt.Fprintln(os.Stdout, "Unable to parse option", option[index],"for Command",command)
+								fmt.Fprintln(os.Stderr, "Error: Unable to parse option", option[index],"for Command",command)
+								break
 							} else {
+								if "elem-type" == strings.ToLower(strings.TrimSpace(key)) {
+									elementType, error := CmdParseElement(key, value)
+									if error == nil && NoElement != elementType {
+										ArgCmd.Element = elementType
+									} else  {
+										fmt.Fprintln(os.Stderr, "Error: Invalid infrastructure element type", value,"for Command",command)
+										if error != nil {
+											fmt.Fprintf(os.Stderr, "Details: %s \n", error.Error())
+										}
+										time.Sleep(100 * time.Millisecond)
+										PrintCommandHelper(command, "")
+										return  false
+									}
+								}
 								options = append(options, []string{
 									key,
 									value,
 								})
 							}
-						} else if len(optsArgs) <= index + 1 {
+						} else if len(optsArgs) < index + 1 {
 							passed = false
-							fmt.Fprintln(os.Stdout, "Uncompleted option", option[index],"for Command",command)
+							fmt.Fprintln(os.Stdout, "Error: Uncomplete option", option[index],"for Command",command)
+							time.Sleep(100 * time.Millisecond)
+							PrintCommandHelper(command, "")
 						}
 					}
 					if passed  {
 						ArgCmd.Options = options
 						fmt.Fprintf(os.Stdout, "Executing command %s ...\n", command)
+						time.Sleep(100 * time.Millisecond)
 						return  true
 					} else  {
-						fmt.Fprintln(os.Stderr, "One or more options parse failed!!")
+						fmt.Fprintln(os.Stderr, "Error: One or more options parse failed!!")
+						time.Sleep(100 * time.Millisecond)
 						PrintCommandHelper(command, "")
 						return  false
 					}
 				}
 				fmt.Fprintf(os.Stdout, "Executing command %s ...\n", command)
+				time.Sleep(100 * time.Millisecond)
 				return  true
 			} else if len(args) >= 1 {
 				fmt.Fprintln(os.Stderr, "Error: Unable to parse Sub-Command...")
+				time.Sleep(100 * time.Millisecond)
 				PrintCommandHelper(command, "")
 			} else  {
 				fmt.Fprintln(os.Stderr, "Error: Unable to parse any parameter...")
+				time.Sleep(100 * time.Millisecond)
 				PrintCommandHelper(command, "")
 			}
 		} else {
 			fmt.Fprintln(os.Stderr, "Error: Unable to parse command =",args[0])
+			time.Sleep(100 * time.Millisecond)
 			PrintCommandHelper("help", "")
 		}
 	} else {
 		fmt.Fprintln(os.Stderr, "Error: Insufficient arguments =",len(args))
+		time.Sleep(100 * time.Millisecond)
 		PrintCommandHelper("help", "")
 	}
 	return  false

@@ -29,7 +29,7 @@ func CmdParse(key string) (string, error) {
 		} else	if strings.Index(key, "-") == 0  {
 			return key, errors.New("Invalid Argument : " + key)
 		} else  {
-			return  strings.TrimSpace(strings.ToLower(key)), nil
+			return  CorrectInput(key), nil
 		}
 	} else  {
 		return  key, errors.New("Unable to parse Agument : " + key)
@@ -44,8 +44,8 @@ func CmdParseOption(key string, options [][]string) (string, int, error) {
 			return key, -1, errors.New("Invalid Argument (wrong character: -) : " + key)
 		} else  {
 			for index,opts := range options {
-				if strings.TrimSpace(strings.ToLower(key)) == opts[0]  {
-					return  strings.TrimSpace(strings.ToLower(key)), index, nil
+				if CorrectInput(key) == opts[0]  {
+					return  CorrectInput(key), index, nil
 				}
 			}
 			return  key, -1, errors.New("Invalid Argument : " + key)
@@ -55,15 +55,17 @@ func CmdParseOption(key string, options [][]string) (string, int, error) {
 	}
 }
 
-
 func OptionsParse(key string, val string) (string, string, error) {
 	if strings.Index(key, "--") == 0  {
-		return  strings.TrimSpace(strings.ToLower(key[2:])), val, nil
+		return  CorrectInput(key[2:]), val, nil
 	} else	if strings.Index(key, "-") == 0  {
-		return  strings.TrimSpace(strings.ToLower(key[1:])), val, nil
+		return  CorrectInput(key[1:]), val, nil
 	} else  {
 		return  key, val, errors.New("Unable to parse Agument : " + key)
 	}
 }
 
+func CorrectInput(input string) string {
+	return  strings.TrimSpace(strings.ToLower(input))
+}
 
