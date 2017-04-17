@@ -23,15 +23,15 @@ Describe Swarm Cluster feature, contains
   * TLSSan          ([]string)  Swarm TLS SAN Options
 */
 type ProjectSwarmOpt struct {
-	Host              string  `json:"swarmhost",xml:"swarmhost"`
-	UseAddress        bool    `json:"useaddress",xml:"useaddress"`
-	UseDiscovery      bool    `json:"usediscovery",xml:"usediscovery"`
-	UseExperimental   bool    `json:"useexperimental",xml:"useexperimental"`
-	IsMaster          bool    `json:"ismaster",xml:"ismaster"`
-	Image             string  `json:"swarmimage",xml:"swarmimage"`
-	JoinOpts        []string  `json:"joinopts",xml:"joinopts"`
-	Strategy          string  `json:"swarmstrategy",xml:"swarmstrategy"`
-	TLSSan          []string  `json:"swarmtlssan",xml:"swarmtlssan"`
+	Host              string  `json:"Host",xml:"Host"`
+	UseAddress        bool    `json:"UseAddress",xml:"UseAddress"`
+	UseDiscovery      bool    `json:"UseDiscovery",xml:"UseDiscovery"`
+	UseExperimental   bool    `json:"UseExperimental",xml:"UseExperimental"`
+	IsMaster          bool    `json:"IsMaster",xml:"IsMaster"`
+	Image             string  `json:"Image",xml:"Image"`
+	JoinOpts        []string  `json:"JoinOpts",xml:"JoinOpts"`
+	Strategy          string  `json:"Strategy",xml:"Strategy"`
+	TLSSan          []string  `json:"TLSSan",xml:"TLSSan"`
 }
 
 /*
@@ -50,12 +50,12 @@ Describe Docker Engine options, contains
   * Options           ([]string)  Engine Options
 */
 type ProjectEngineOpt struct {
-	Environment       []string  `json:"environment",xml:"environment"`
-	InsecureRegistry  []string  `json:"insecureregistry",xml:"insecureregistry"`
-	StorageDriver       string  `json:"storagedriver",xml:"storagedriver"`
-	InstallURL          string  `json:"installurl",xml:"installurl"`
-	Labels            []string  `json:"labels",xml:"labels"`
-	Options           []string  `json:"options",xml:"options"`
+	Environment       []string  `json:"Environment",xml:"Environment"`
+	InsecureRegistry  []string  `json:"InsecureRegistry",xml:"InsecureRegistry"`
+	StorageDriver       string  `json:"StorageDriver",xml:"StorageDriver"`
+	InstallURL          string  `json:"InstallURL",xml:"InstallURL"`
+	Labels            []string  `json:"Labels",xml:"Labels"`
+	Options           []string  `json:"Options",xml:"Options"`
 }
 
 
@@ -87,20 +87,20 @@ Describe Server options, contains
   * Hostname  (string)     Logical Server Hostname
 */
 type ProjectServer struct {
-	Id      	  	  		 int    `json:"uid",xml:"uid"`
-	Name    		  		string    `json:"name",xml:"name"`
-	Roles   				[]string    `json:"roles",xml:"roles"`
-	Driver   		 			string    `json:"driver",xml:"driver"`
-	Memory      				int     `json:"memory",xml:"memory"`
-	Cpus        				int     `json:"cpus",xml:"cpus"`
-	Disk    						int 		`json:"disksize",xml:"disksize"`
-	Swarm   ProjectSwarmOpt     `json:"swarm",xml:"swarm"`
-	Engine 	ProjectEngineOpt    `json:"engine",xml:"engine"`
-	OSType    			string      `json:"ostype",xml:"ostype"`
-	OSVersion 			string      `json:"osversion",xml:"osversion"`
-	NoShare     			bool      `json:"noshare",xml:"noshare"`
-	Options   	[][]string  		`json:"options",xml:"options"`
-	Hostname  			string      `json:"hostname",xml:"hostname"`
+	Id      	  	  		 int    `json:"Id",xml:"Id"`
+	Name    		  		string    `json:"Name",xml:"Name"`
+	Roles   				[]string    `json:"Roles",xml:"Roles"`
+	Driver   		 			string    `json:"Driver",xml:"Driver"`
+	Memory      				int     `json:"Memory",xml:"Memory"`
+	Cpus        				int     `json:"Cpus",xml:"Cpus"`
+	DiskSize 						int 		`json:"DiskSize",xml:"DiskSize"`
+	Swarm   ProjectSwarmOpt     `json:"Swarm",xml:"Swarm"`
+	Engine 	ProjectEngineOpt    `json:"Engine",xml:"Engine"`
+	OSType    			string      `json:"OSType",xml:"OSType"`
+	OSVersion 			string      `json:"OSVersion",xml:"OSVersion"`
+	NoShare     			bool      `json:"NoShare",xml:"NoShare"`
+	Options   	[][]string  		`json:"Options",xml:"Options"`
+	Hostname  			string      `json:"Hostname",xml:"Hostname"`
 }
 
 /*
@@ -117,10 +117,10 @@ Describe Cloud Server options, contains
 	Refers to : https://docs.docker.com/machine/drivers/
 */
 type ProjectCloudServer struct {
-	Id          int       `json:"uid",xml:"uid"`
-	Type      string      `json:"type",xml:"type"`
-	Hostname  string      `json:"hostname",xml:"hostname"`
-	Options   [][]string  `json:"options",xml:"options"`
+	Id          int       `json:"Id",xml:"Id"`
+	Type      string      `json:"Type",xml:"Type"`
+	Hostname  string      `json:"Hostname",xml:"Hostname"`
+	Options   [][]string  `json:"Options",xml:"Options"`
 }
 
 /*
@@ -222,16 +222,16 @@ Describe Server Installation Plan, contains
   * ProvisionCommandRef (string)			Location of provision commands
 */
 type InstallationPlan struct {
-	Id          		string          `json:"uid",xml:"uid"`
-	ServerId    		int             `json:"serverid",xml:"serverid"`
-	IsCloud     		bool            `json:"iscloud",xml:"iscloud"`
-	Type        	InstallationRole  `json:"type",xml:"type"`
-	Environment 				SystemRole  `json:"environment",xml:"environment"`
-	Role        ProjectEnvironment	`json:"role",xml:"role"`
-	MainCommandSet  		CommandSet	`json:"cmdset",xml:"cmdset"`
-	MainCommandRef		  string			`json:"commandref",xml:"commandref"`
-	ProvisionCommandSet CommandSet	`json:"provisionset",xml:"provisionset"`
-	ProvisionCommandRef	string			`json:"provisionref",xml:"provisionref"`
+	Id          		string          `json:"Id",xml:"Id"`
+	ServerId    		int             `json:"ServerId",xml:"ServerId"`
+	IsCloud     		bool            `json:"IsCloud",xml:"IsCloud"`
+	Type        	InstallationRole  `json:"Type",xml:"Type"`
+	Environment 				SystemRole  `json:"Environment",xml:"Environment"`
+	Role        ProjectEnvironment	`json:"Role",xml:"Role"`
+	MainCommandSet  		CommandSet	`json:"MainCommandSet",xml:"MainCommandSet"`
+	MainCommandRef		  string			`json:"MainCommandRef",xml:"MainCommandRef"`
+	ProvisionCommandSet CommandSet	`json:"ProvisionCommandSet",xml:"ProvisionCommandSet"`
+	ProvisionCommandRef	string			`json:"ProvisionCommandRef",xml:"ProvisionCommandRef"`
 }
 
 /*
@@ -248,11 +248,11 @@ Describe Network options, contains
   * Installations ([]InstallationPlan)  	Server Installation Plans
 */
 type ProjectNetwork struct {
-	Id            string             			`json:"uid",xml:"uid"`
-	Name          string          				`json:"name",xml:"name"`
-	Servers       []ProjectServer        	`json:"servers",xml:"servers"`
-	CServers      []ProjectCloudServer   	`json:"cloudservers",xml:"cloudservers"`
-	Installations []InstallationPlan  		`json:"installations",xml:"installations"`
+	Id            string             			`json:"Id",xml:"Id"`
+	Name          string          				`json:"Name",xml:"Name"`
+	Servers       []ProjectServer        	`json:"Servers",xml:"Servers"`
+	CServers      []ProjectCloudServer   	`json:"CServers",xml:"CServers"`
+	Installations []InstallationPlan  		`json:"Installations",xml:"Installations"`
 }
 
 /*
@@ -265,9 +265,9 @@ Describe domain options, contains
   * Networks      ([]ProjectNetwork)	Networks List
 */
 type ProjectDomain struct {
-	Id          string            `json:"uid",xml:"uid"`
-	Name        string          	`json:"name",xml:"name"`
-	Networks    []ProjectNetwork	`json:"networks",xml:"networks"`
+	Id          string            `json:"Id",xml:"Id"`
+	Name        string          	`json:"Name",xml:"Name"`
+	Networks    []ProjectNetwork	`json:"Networks",xml:"Networks"`
 }
 
 /*
@@ -290,11 +290,35 @@ Describe Project, contains
   * LastMessage  (string)    				Last Alternation Message
 */
 type Project struct {
-	Id          string            `json:"uid",xml:"uid"`
-	Name     		string  					`json:"name",xml:"name"`
-	Domains     []ProjectDomain  	`json:"domains",xml:"domains"`
-	Created     time.Timer      	`json:"creation",xml:"creation"`
-	Modified    time.Timer      	`json:"modified",xml:"modified"`
-	Errors      bool      `json:"haserrors",xml:"haserrors"`
-	LastMessage string    `json:"lastmessage",xml:"lastmessage"`
+	Id          string            `json:"Id",xml:"Id"`
+	Name     		string  					`json:"Name",xml:"Name"`
+	Domains     []ProjectDomain  	`json:"Domains",xml:"Domains"`
+	Created     time.Timer      	`json:"Created",xml:"Created"`
+	Modified    time.Timer      	`json:"Modified",xml:"Modified"`
+	Errors      bool      				`json:"Errors",xml:"Errors"`
+	LastMessage string    				`json:"LastMessage",xml:"LastMessage"`
+}
+
+/*
+Describe Project State in Index, contains
+
+  * Id          (string)            Unique Identifier
+
+  * Name      	(string)  	 				Project Name
+
+  * Active      (bool)						  Active State of Project
+*/
+type ProjectsDescriptor struct {
+	Id          string            `json:"Id",xml:"Id"`
+	Name     		string  					`json:"Name",xml:"Name"`
+	Active     bool  							`json:"Active",xml:"Active"`
+}
+
+/*
+Describe Projects Index, contains
+
+  * Projects    ([]ProjectsDescriptor)     Projects indexed in VMKube
+*/
+type ProjectsIndex struct {
+	Projects		[]ProjectsDescriptor 		`json:"Projects",xml:"Projects"`
 }
