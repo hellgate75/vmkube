@@ -41,8 +41,8 @@ See [Docker-Machine Drivers](https://docs.docker.com/machine/drivers/)
 
 To compile and run this project you have to check availability of following software:
 * [Go](https://golang.org/dl/) (tested with version 1.8)
-* Docker and Docker-Machine
-* Test and Utility GOLang packages (github.com/satori/go.uuid and github.com/stretchr/testify)
+* [Docker](https://www.docker.com/get-docker) and [Docker-Machine](https://docs.docker.com/machine/install-machine/)
+* Test and Utility GOLang packages ([UUID Package](https://github.com/satori/go.uuid) and [Unit Test](https://github.com/stretchr/testify))
 
 
 ## Architecture
