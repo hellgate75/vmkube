@@ -66,27 +66,27 @@ var cloudServerSample model.ProjectCloudServer = model.ProjectCloudServer{
 
 var installationPlan model.InstallationPlan = model.InstallationPlan{
 	Id: "",
-	Environment: model.MasterRole,
+	Environment: model.KubernetesEnv,
 	IsCloud: false,
 	ServerId: "MyServer",
 	MainCommandRef: "https://site.to.my/myrepo/something/mycommand.git",
 	MainCommandSet: model.AnsibleCmdSet,
 	ProvisionCommandRef: "https://site.to.my.commands/something/mycommand.tgz",
 	ProvisionCommandSet: model.HelmCmdSet,
-	Role: model.KubernetesEnv,
+	Role: model.MasterRole,
 	Type: model.HostRole,
 }
 
 var installationPlan2 model.InstallationPlan = model.InstallationPlan{
 	Id: "",
-	Environment: model.StandAloneRole,
+	Environment: model.CattleEnv,
 	IsCloud: true,
 	ServerId: "MyCloudServer",
 	MainCommandRef: "https://site.to.my/myrepo/something/mycommand.git",
 	MainCommandSet: model.AnsibleCmdSet,
 	ProvisionCommandRef: "https://site.to.my.commands/something/mycommand.tgz",
 	ProvisionCommandSet: model.VirtKubeCmdSet,
-	Role: model.CattleEnv,
+	Role: model.StandAloneRole,
 	Type: model.ServerRole,
 }
 

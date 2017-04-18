@@ -251,8 +251,8 @@ type Installation struct {
 	InstanceId    string            `json:"InstanceId",xml:"InstanceId"`
 	IsCloud     	bool              `json:"IsCloud",xml:"IsCloud"`
 	Type        	InstallationType  `json:"Type",xml:"Type"`
-	Environment 	RoleType          `json:"Environment",xml:"Environment"`
-	Role        	EnvironmentType   `json:"Role",xml:"Role"`
+	Environment 	EnvironmentType   `json:"Environment",xml:"Environment"`
+	Role        	RoleType          `json:"Role",xml:"Role"`
 	Plan					InstallationPlan	`json:"Plan",xml:"Plan"`
 	LastExecution	time.Time  				`json:"LastExecution",xml:"LastExecution"`
 	Success     	bool       				`json:"Success",xml:"Success"`

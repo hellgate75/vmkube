@@ -5,7 +5,8 @@ import (
 	"time"
 )
 
-const tagName = "mandatory"
+const TagMandatoryName = "mandatory"
+const TagScriptionName = "descr"
 
 
 func NewUUIDString()	string {
