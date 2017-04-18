@@ -11,42 +11,40 @@ type ProjectInfo struct {
 }
 
 type ProjectStream interface {
-	Read()		(model.Project, error)
-	Write(project model.Project) 	bool
-	Export(project model.Project, prettify bool) 	([]byte, error)
-	Import(file string, format string) 	(model.Project, error)
+	Read()		error
+	Write() 	bool
+	Export(prettify bool) 	([]byte, error)
+	Import(file string, format string) 	error
 }
 
-func (info *ProjectInfo) Read() (model.Project, error) {
-	var project model.Project
+func (info *ProjectInfo) Read() error {
 	home := model.VMBaseFolder()
 	folder := home + "/metadata/" + info.Project.Id
 	model.MakeFolderIfNotExists(folder)
 	fileName := folder + "/project.ser"
-	err := project.Load(fileName)
-	return  project, err
+	err := info.Project.Load(fileName)
+	return err
 }
 
-func (info *ProjectInfo) Write(project model.Project) bool {
+func (info *ProjectInfo) Write() bool {
 	home := model.VMBaseFolder()
 	folder := home + "/metadata/" + info.Project.Id
 	model.MakeFolderIfNotExists(folder)
 	fileName := folder + "/project.ser"
-	err := project.Save(fileName)
+	err := info.Project.Save(fileName)
 	return err == nil
 }
 
-func (info *ProjectInfo) Import(file string, format string) (model.Project, error) {
-	var project model.Project
-	err := project.Import(file, format)
-	return  project, err
+func (info *ProjectInfo) Import(file string, format string) error {
+	err := info.Project.Import(file, format)
+	return  err
 }
 
-func (info *ProjectInfo) Export(project model.Project, prettify bool) ([]byte, error) {
+func (info *ProjectInfo) Export(prettify bool) ([]byte, error) {
 	if "json" == info.Format {
-		return  GetJSONFromObj(project, prettify)
+		return  GetJSONFromObj(info.Project, prettify)
 	} else if "xml" == info.Format {
-		return  GetXMLFromObj(project, prettify)
+		return  GetXMLFromObj(info.Project, prettify)
 	} else {
 		return  []byte{}, errors.New("Format type : "+info.Format+" not known ...")
 	}

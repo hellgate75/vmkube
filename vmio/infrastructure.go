@@ -11,42 +11,40 @@ type InfrastructureInfo struct {
 }
 
 type InfrastructureStream interface {
-	Read()		(model.Infrastructure, error)
-	Write(project model.Infrastructure) 	bool
-	Export(project model.Infrastructure, prettify bool) 	([]byte, error)
-	Import(file string, format string) 	(model.Infrastructure, error)
+	Read()		error
+	Write() 	bool
+	Export(prettify bool) 	([]byte, error)
+	Import(file string, format string) 	error
 }
 
-func (info *InfrastructureInfo) Read() (model.Infrastructure, error) {
-	var project model.Infrastructure
+func (info *InfrastructureInfo) Read() error {
 	home := model.VMBaseFolder()
 	folder := home + "/metadata/" + info.Infra.ProjectId
 	model.MakeFolderIfNotExists(folder)
 	fileName := folder + "/infrastructure.ser"
-	err := project.Load(fileName)
-	return  project, err
+	err := info.Infra.Load(fileName)
+	return  err
 }
 
-func (info *InfrastructureInfo) Write(project model.Infrastructure) bool {
+func (info *InfrastructureInfo) Write() bool {
 	home := model.VMBaseFolder()
 	folder := home + "/metadata/" + info.Infra.ProjectId
 	model.MakeFolderIfNotExists(folder)
 	fileName := folder + "/infrastructure.ser"
-	err := project.Save(fileName)
+	err := info.Infra.Save(fileName)
 	return err == nil
 }
 
-func (info *InfrastructureInfo) Import(file string, format string) (model.Infrastructure, error) {
-	var project model.Infrastructure
-	err := project.Import(file, format)
-	return  project, err
+func (info *InfrastructureInfo) Import(file string, format string) error {
+	err := info.Infra.Import(file, format)
+	return  err
 }
 
-func (info *InfrastructureInfo) Export(project model.Infrastructure, prettify bool) ([]byte, error) {
+func (info *InfrastructureInfo) Export(prettify bool) ([]byte, error) {
 	if "json" == info.Format {
-		return  GetJSONFromObj(project, prettify)
+		return  GetJSONFromObj(info.Infra, prettify)
 	} else if "xml" == info.Format {
-		return  GetXMLFromObj(project, prettify)
+		return  GetXMLFromObj(info.Infra, prettify)
 	} else {
 		return  []byte{}, errors.New("Format type : "+info.Format+" not known ...")
 	}
