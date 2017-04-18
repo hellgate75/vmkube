@@ -27,7 +27,7 @@ Provided features:
 
 * Infrastructure/Project inspection procedures
 
-* Custom Deployment plan with main providers (VMKubelet, Ansible, Helm, ...)
+* Custom Deployment plans with main providers (VMKubelet, Ansible, Helm, ...)
 
 * Digital Control and multi vendor instances (Server and Cloud-Servers can be defined)
 
