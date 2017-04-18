@@ -35,6 +35,7 @@ const (
 	DefineConfig						CmdRequestType = iota + 1;
 	DeleteConfig						CmdRequestType = iota + 1;
 	AlterConfig							CmdRequestType = iota + 1;
+	InfoConfig							CmdRequestType = iota + 1;
 	FinaliseConfig					CmdRequestType = iota + 1;
 )
 
@@ -47,6 +48,8 @@ const (
 	Alter  				CmdSubRequestType= iota + 1;
 	Close  				CmdSubRequestType= iota + 1;
 	Open  				CmdSubRequestType= iota + 1;
+	List  				CmdSubRequestType= iota + 1;
+	Detail  				CmdSubRequestType= iota + 1;
 )
 
 type CmdElementType int
