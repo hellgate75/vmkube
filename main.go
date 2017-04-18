@@ -78,7 +78,7 @@ func main() {
 	//if err != nil {
 	//	os.Exit(0)
 	//}
-	//server := model.Server{
+	//server := model.Instance{
 	//	Memory: 2048,
 	//	Cpus: 2,
 	//	Roles: []string{},

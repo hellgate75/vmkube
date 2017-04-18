@@ -74,6 +74,8 @@ Describe Server options, contains
   
   * Name      (string)     Server Local Name
   
+  * Roles     ([]string)   Roles used in the deployment plan
+  
   * Driver    (string)     Server Driver (virtualbox,vmware,hyperv) ref: https://docs.docker.com/machine/drivers/
   
   * Memory    (int)        Memory Size MB
@@ -116,18 +118,24 @@ Describe Cloud Server options, contains
 	
   * Id        (string)      Unique Identifier
   
-  * Type      (string)      Cloud Server Type ()
+  * Name      (string)      Cloud Instance Name
+  
+  * Driver    (string)      Cloud Server Driver (amazonec2, digitalocean, azure, etc...)
   
   * Hostname  (string)      Logical Server Hostname
+  
+  * Roles     ([]string)    Roles used in the deployment plan
   
   * Options   ([][]string)  Cloud Server Options
   
 	Refers to : https://docs.docker.com/machine/drivers/
 */
 type ProjectCloudServer struct {
-	Id        string       `json:"Id",xml:"Id"`
-	Type      string      `json:"Type",xml:"Type"`
+	Id        string      `json:"Id",xml:"Id"`
+	Name      string      `json:"Name",xml:"Name"`
+	Driver    string      `json:"Driver",xml:"Driver"`
 	Hostname  string      `json:"Hostname",xml:"Hostname"`
+	Roles   	[]string    `json:"Roles",xml:"Roles"`
 	Options   [][]string  `json:"Options",xml:"Options"`
 }
 
@@ -254,6 +262,8 @@ Describe Network options, contains
   * CServers      ([]ProjectCloudServer)  Cloud Server List
   
   * Installations ([]InstallationPlan)  	Server Installation Plans
+  
+  * Options       ([][]string)            Specific Network information (eg. cloud provider info or local info)
 */
 type ProjectNetwork struct {
 	Id            string             			`json:"Id",xml:"Id"`
@@ -261,6 +271,7 @@ type ProjectNetwork struct {
 	Servers       []ProjectServer        	`json:"Servers",xml:"Servers"`
 	CServers      []ProjectCloudServer   	`json:"CServers",xml:"CServers"`
 	Installations []InstallationPlan  		`json:"Installations",xml:"Installations"`
+	Options     [][]string                `json:"Options",xml:"Options"`
 }
 
 /*
@@ -271,11 +282,14 @@ Describe domain options, contains
   * Name          (string)          	Domain Name
   
   * Networks      ([]ProjectNetwork)	Networks List
+
+  * Options       ([][]string)        Specific Domain information (eg. cloud provider info or local info)
 */
 type ProjectDomain struct {
 	Id          string            `json:"Id",xml:"Id"`
 	Name        string          	`json:"Name",xml:"Name"`
 	Networks    []ProjectNetwork	`json:"Networks",xml:"Networks"`
+	Options     [][]string        `json:"Options",xml:"Options"`
 }
 
 /*

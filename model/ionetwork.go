@@ -87,6 +87,18 @@ func (element *ProjectNetwork) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
+	if err == nil {
+		element.Id=NewUUIDString()
+		for _,server := range element.Servers {
+			server.Id = NewUUIDString()
+		}
+		for _,server := range element.CServers {
+			server.Id = NewUUIDString()
+		}
+		for _,installPlan := range element.Installations {
+			installPlan.Id = NewUUIDString()
+		}
+	}
 	return err
 }
 

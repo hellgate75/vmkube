@@ -7,8 +7,10 @@ import (
 	"encoding/json"
 	"encoding/xml"
 )
-
-func (element *Server) Load(file string) error {
+func (element *Instance) Validate() error {
+	return nil
+}
+func (element *Instance) Load(file string) error {
 	if ! existsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
@@ -24,7 +26,7 @@ func (element *Server) Load(file string) error {
 	return err
 }
 
-func (element *Server) Import(file string, format string) error {
+func (element *Instance) Import(file string, format string) error {
 	if ! existsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
@@ -43,7 +45,7 @@ func (element *Server) Import(file string, format string) error {
 	return err
 }
 
-func (element *Server) Save(file string) error {
+func (element *Instance) Save(file string) error {
 	byteArray, err := json.Marshal(element)
 	if err != nil {
 		return  err
@@ -86,6 +88,9 @@ func (element *ProjectServer) Import(file string, format string) error {
 		err = json.Unmarshal(byteArray, &element)
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
+	}
+	if err == nil {
+		element.Id=NewUUIDString()
 	}
 	return err
 }

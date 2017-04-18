@@ -40,6 +40,24 @@ func (element *Project) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
+	if err == nil {
+		element.Id=NewUUIDString()
+		for _,domain := range element.Domains {
+			domain.Id = NewUUIDString()
+			for _,network := range domain.Networks {
+				network.Id = NewUUIDString()
+				for _,server := range network.Servers {
+					server.Id = NewUUIDString()
+				}
+				for _,server := range network.CServers {
+					server.Id = NewUUIDString()
+				}
+				for _,installPlan := range network.Installations {
+					installPlan.Id = NewUUIDString()
+				}
+			}
+		}
+	}
 	return err
 }
 

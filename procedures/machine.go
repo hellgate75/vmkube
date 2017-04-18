@@ -42,6 +42,25 @@ func RequestConfirmation(reason string) bool {
 	return false
 }
 
+func CreateCloudServer(server model.ProjectCloudServer) ([]byte, error) {
+	name, driver, hostname, uuid, options, roles := server.Name, server.Driver, server.Hostname, server.Id, server.Options, server.Roles
+	var command []string = make([]string, 0)
+	command = append( command,  "docker-machine")
+	command = append( command,  "create")
+	command = append( command,  "-d")
+	command = append( command,  driver)
+	// Custom Driver Options
+	for _,option := range options {
+		command = append( command,  "--"+strings.ToLower(driver)+"-"+option[0]+"")
+		command = append( command,  option[1])
+	}
+	command = append( command,  name + "-" + uuid)
+	
+	fmt.Println(os.Stdout,"Running Create for hostname: " + hostname + " - Roles "+strings.Join(roles, ",")+" - command : '" + strings.Join(command, " ") + "'")
+	return  executeCommand(command)
+}
+
+
 func CreateServer(server model.ProjectServer) ([]byte, error) {
 	driver, disksize, cpus, hostname, noshare := server.Driver, server.DiskSize, server.Cpus, server.Hostname, server.NoShare
 	name, memory, osname, osver, roles := server.Name, server.Memory, server.OSType, server.OSVersion, server.Roles

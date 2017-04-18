@@ -8,7 +8,7 @@ import (
 	"encoding/xml"
 )
 
-func (element *ServerState) Load(file string) error {
+func (element *InstanceState) Load(file string) error {
 	if ! existsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
@@ -24,7 +24,7 @@ func (element *ServerState) Load(file string) error {
 	return err
 }
 
-func (element *ServerState) Import(file string, format string) error {
+func (element *InstanceState) Import(file string, format string) error {
 	if ! existsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
@@ -43,7 +43,7 @@ func (element *ServerState) Import(file string, format string) error {
 	return err
 }
 
-func (element *ServerState) Save(file string) error {
+func (element *InstanceState) Save(file string) error {
 	byteArray, err := json.Marshal(element)
 	if err != nil {
 		return  err
