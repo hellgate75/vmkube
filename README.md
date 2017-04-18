@@ -7,7 +7,11 @@ Go-Lang Virtual Machine environment manager. This package allow to define projec
 
 ## Goals
 
-Define a virtual machine remote/local manager based on docker-machine drivers. It define a smart and simple command-line/web interface to manage environment. It expose output and deployment plans for infrastructures and applications. Domain, Network and Host management level and hierarchy are main elements in the VMKube philosophy. WMKube provides a development and deployment environments, with an initial project you can manager the network and a staging phase when you close the project to build and run the infrastructure.
+Define a virtual machine remote/local manager based on docker-machine drivers. It defines a smart and simple command-line/web interface to manage environment. 
+It exposes project and deployment plans for infrastructures and applications. 
+Domain, Network and Host management level and hierarchy are main concepts in the VMKube philosophy.
+WMKube provides a development and deployment environments: You have to define an initial project, you can manager the networks, domains, hosts and a staging phase. 
+When you close the project, you are ready to delete or build and run the infrastructure.
 
 ## What is provided?
 
