@@ -7,6 +7,7 @@ import (
 
 const TagMandatoryName = "mandatory"
 const TagScriptionName = "descr"
+const TagTypeName = "type"
 
 
 func NewUUIDString()	string {
