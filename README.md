@@ -2,13 +2,36 @@
 
 # Go Virtual Machine Kube (vmkube)
 
-Go-Lang Virtual environment manager. This package allow to define projects and build infrastructures on local or remote environments
+Go-Lang Virtual Machine environment manager. This package allow to define projects and build infrastructures on local or remote cloud providers
 
 
 ## Goals
 
-Define a virtual machine remote/local manager based on docker-machine drives.
+Define a virtual machine remote/local manager based on docker-machine drivers. It define a smart and simple command-line/web interface to manage environment. It expose output and deployment plans for infrastructures and applications. Domain, Network and Host management level and hierarchy are main elements in the VMKube philosophy. WMKube provides a development and deployment environments, with an initial project you can manager the network and a staging phase when you close the project to build and run the infrastructure.
 
+## What is provided?
+
+Provided fetures:
+
+* Project definition procedures
+
+* Project staging/un-staging procedures
+
+* Project build procedures
+
+* Infrastructure build procedures
+
+* Infrastructure/Project inspection procedures
+
+* Custom Deployment plan with main providers (VMKubelet, Ansible, Helm, ...)
+
+* Digital Control and multi vendor (Server and Cloud-Servers can be defined)
+
+* Multiple project/infrastructure information export formats
+
+Machine Providers:
+
+See [Docker-Machine Drivers](https://docs.docker.com/machine/drivers/)
 
 ## Pre-requisites
 
