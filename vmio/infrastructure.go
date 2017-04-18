@@ -6,10 +6,8 @@ import (
 )
 
 type InfrastructureInfo struct {
-	InfrastructureId 		string
-	InfrastructureName 	string
-	Format  						string
-	ProjectId 					string
+	Format  	string
+	Infra			model.Infrastructure
 }
 
 type InfrastructureStream interface {
@@ -22,7 +20,7 @@ type InfrastructureStream interface {
 func (info *InfrastructureInfo) Read() (model.Infrastructure, error) {
 	var project model.Infrastructure
 	home := model.VMBaseFolder()
-	folder := home + "/metadata/" + info.ProjectId
+	folder := home + "/metadata/" + info.Infra.ProjectId
 	model.MakeFolderIfNotExists(folder)
 	fileName := folder + "/infrastructure.ser"
 	err := project.Load(fileName)
@@ -31,7 +29,7 @@ func (info *InfrastructureInfo) Read() (model.Infrastructure, error) {
 
 func (info *InfrastructureInfo) Write(project model.Infrastructure) bool {
 	home := model.VMBaseFolder()
-	folder := home + "/metadata/" + info.ProjectId
+	folder := home + "/metadata/" + info.Infra.ProjectId
 	model.MakeFolderIfNotExists(folder)
 	fileName := folder + "/infrastructure.ser"
 	err := project.Save(fileName)

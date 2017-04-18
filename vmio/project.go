@@ -2,13 +2,11 @@ package vmio
 
 import (
 	"vmkube/model"
-	"os"
 	"errors"
 )
 
 type ProjectInfo struct {
-	ProjectId 	string
-	ProjectName 	string
+	Project 			model.Project
 	Format  			string
 }
 
@@ -22,7 +20,7 @@ type ProjectStream interface {
 func (info *ProjectInfo) Read() (model.Project, error) {
 	var project model.Project
 	home := model.VMBaseFolder()
-	folder := home + "/metadata/" + info.ProjectId
+	folder := home + "/metadata/" + info.Project.Id
 	model.MakeFolderIfNotExists(folder)
 	fileName := folder + "/project.ser"
 	err := project.Load(fileName)
@@ -31,7 +29,7 @@ func (info *ProjectInfo) Read() (model.Project, error) {
 
 func (info *ProjectInfo) Write(project model.Project) bool {
 	home := model.VMBaseFolder()
-	folder := home + "/metadata/" + info.ProjectId
+	folder := home + "/metadata/" + info.Project.Id
 	model.MakeFolderIfNotExists(folder)
 	fileName := folder + "/project.ser"
 	err := project.Save(fileName)
