@@ -1,4 +1,4 @@
-<p align="center" style="width: 100%"><img width="200" height="200" src="/images/golang.png" /></p>
+<p align="center" style="width: 100%"><img width="200" height="200" src="/images/golang.png" />&nbsp;<img width="168" height="200" src="/images/docker-machine.png" /></p>
 
 # Go Virtual Machine Kube (vmkube)
 
