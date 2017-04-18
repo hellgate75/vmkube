@@ -27,16 +27,16 @@ Describe Swarm Cluster feature, contains
   * TLSSan          ([]string)  Swarm TLS Specific Options (No overwrite, be sure of syntax, eg: ["--my-tls-key my-tls-value"])
 */
 type ProjectSwarmOpt struct {
-	Enabled       		bool    `json:"Enabled",xml:"Enabled"`
-	Host              string  `json:"Host",xml:"Host"`
-	UseAddress        bool    `json:"UseAddress",xml:"UseAddress"`
-	DiscoveryToken    string   `json:"DiscoveryToken",xml:"DiscoveryToken"`
-	UseExperimental   bool    `json:"UseExperimental",xml:"UseExperimental"`
-	IsMaster          bool    `json:"IsMaster",xml:"IsMaster"`
-	Image             string  `json:"Image",xml:"Image"`
-	JoinOpts        []string  `json:"JoinOpts",xml:"JoinOpts"`
-	Strategy          string  `json:"Strategy",xml:"Strategy"`
-	TLSSan          []string  `json:"TLSSan",xml:"TLSSan"`
+	Enabled       		bool    `json:"Enabled",xml:"Enabled",mandatory:"yes"`
+	Host              string  `json:"Host",xml:"Host",mandatory:"no"`
+	UseAddress        bool    `json:"UseAddress",xml:"UseAddress",mandatory:"no"`
+	DiscoveryToken    string   `json:"DiscoveryToken",xml:"DiscoveryToken",mandatory:"no"`
+	UseExperimental   bool    `json:"UseExperimental",xml:"UseExperimental",mandatory:"no"`
+	IsMaster          bool    `json:"IsMaster",xml:"IsMaster",mandatory:"no"`
+	Image             string  `json:"Image",xml:"Image",mandatory:"no"`
+	JoinOpts        []string  `json:"JoinOpts",xml:"JoinOpts",mandatory:"no"`
+	Strategy          string  `json:"Strategy",xml:"Strategy",mandatory:"no"`
+	TLSSan          []string  `json:"TLSSan",xml:"TLSSan",mandatory:"no"`
 }
 
 /*
@@ -57,13 +57,13 @@ Describe Docker Engine options, contains
   * Options           ([]string)  Engine Options
 */
 type ProjectEngineOpt struct {
-	Environment       []string  `json:"Environment",xml:"Environment"`
-	InsecureRegistry  []string  `json:"InsecureRegistry",xml:"InsecureRegistry"`
-	RegistryMirror  	[]string  `json:"RegistryMirror",xml:"RegistryMirror"`
-	StorageDriver       string  `json:"StorageDriver",xml:"StorageDriver"`
-	InstallURL          string  `json:"InstallURL",xml:"InstallURL"`
-	Labels            []string  `json:"Labels",xml:"Labels"`
-	Options           []string  `json:"Options",xml:"Options"`
+	Environment       []string  `json:"Environment",xml:"Environment",mandatory:"no"`
+	InsecureRegistry  []string  `json:"InsecureRegistry",xml:"InsecureRegistry",mandatory:"no"`
+	RegistryMirror  	[]string  `json:"RegistryMirror",xml:"RegistryMirror",mandatory:"no"`
+	StorageDriver       string  `json:"StorageDriver",xml:"StorageDriver",mandatory:"no"`
+	InstallURL          string  `json:"InstallURL",xml:"InstallURL",mandatory:"no"`
+	Labels            []string  `json:"Labels",xml:"Labels",mandatory:"no"`
+	Options           []string  `json:"Options",xml:"Options",mandatory:"no"`
 }
 
 
@@ -97,20 +97,20 @@ Describe Server options, contains
   * Hostname  (string)     Logical Server Hostname
 */
 type ProjectServer struct {
-	Id      	  	  	string    `json:"Id",xml:"Id"`
-	Name    		  		string    `json:"Name",xml:"Name"`
-	Roles   				[]string    `json:"Roles",xml:"Roles"`
-	Driver   		 			string    `json:"Driver",xml:"Driver"`
-	Memory      				int     `json:"Memory",xml:"Memory"`
-	Cpus        				int     `json:"Cpus",xml:"Cpus"`
-	DiskSize 						int 		`json:"DiskSize",xml:"DiskSize"`
-	Swarm   ProjectSwarmOpt     `json:"Swarm",xml:"Swarm"`
-	Engine 	ProjectEngineOpt    `json:"Engine",xml:"Engine"`
-	OSType    			string      `json:"OSType",xml:"OSType"`
-	OSVersion 			string      `json:"OSVersion",xml:"OSVersion"`
-	NoShare     			bool      `json:"NoShare",xml:"NoShare"`
-	Options   	[][]string  		`json:"Options",xml:"Options"`
-	Hostname  			string      `json:"Hostname",xml:"Hostname"`
+	Id      	  	  	string    `json:"Id",xml:"Id",mandatory:"yes"`
+	Name    		  		string    `json:"Name",xml:"Name",mandatory:"yes"`
+	Roles   				[]string    `json:"Roles",xml:"Roles",mandatory:"no"`
+	Driver   		 			string    `json:"Driver",xml:"Driver",mandatory:"yes"`
+	Memory      				int     `json:"Memory",xml:"Memory",mandatory:"no"`
+	Cpus        				int     `json:"Cpus",xml:"Cpus",mandatory:"no"`
+	DiskSize 						int 		`json:"DiskSize",xml:"DiskSize",mandatory:"no"`
+	Swarm   ProjectSwarmOpt     `json:"Swarm",xml:"Swarm",mandatory:"no"`
+	Engine 	ProjectEngineOpt    `json:"Engine",xml:"Engine",mandatory:"no"`
+	OSType    			string      `json:"OSType",xml:"OSType",mandatory:"yes"`
+	OSVersion 			string      `json:"OSVersion",xml:"OSVersion",mandatory:"yes"`
+	NoShare     			bool      `json:"NoShare",xml:"NoShare",mandatory:"no"`
+	Options   	[][]string  		`json:"Options",xml:"Options",mandatory:"no"`
+	Hostname  			string      `json:"Hostname",xml:"Hostname",mandatory:"yes"`
 }
 
 /*
@@ -131,12 +131,12 @@ Describe Cloud Server options, contains
 	Refers to : https://docs.docker.com/machine/drivers/
 */
 type ProjectCloudServer struct {
-	Id        string      `json:"Id",xml:"Id"`
-	Name      string      `json:"Name",xml:"Name"`
-	Driver    string      `json:"Driver",xml:"Driver"`
-	Hostname  string      `json:"Hostname",xml:"Hostname"`
-	Roles   	[]string    `json:"Roles",xml:"Roles"`
-	Options   [][]string  `json:"Options",xml:"Options"`
+	Id        string      `json:"Id",xml:"Id",mandatory:"yes"`
+	Name      string      `json:"Name",xml:"Name",mandatory:"yes"`
+	Driver    string      `json:"Driver",xml:"Driver",mandatory:"yes"`
+	Hostname  string      `json:"Hostname",xml:"Hostname",mandatory:"yes"`
+	Roles   	[]string    `json:"Roles",xml:"Roles",mandatory:"no"`
+	Options   [][]string  `json:"Options",xml:"Options",mandatory:"yes"`
 }
 
 /*
@@ -266,12 +266,12 @@ Describe Network options, contains
   * Options       ([][]string)            Specific Network information (eg. cloud provider info or local info)
 */
 type ProjectNetwork struct {
-	Id            string             			`json:"Id",xml:"Id"`
-	Name          string          				`json:"Name",xml:"Name"`
-	Servers       []ProjectServer        	`json:"Servers",xml:"Servers"`
-	CServers      []ProjectCloudServer   	`json:"CServers",xml:"CServers"`
-	Installations []InstallationPlan  		`json:"Installations",xml:"Installations"`
-	Options     [][]string                `json:"Options",xml:"Options"`
+	Id            string             			`json:"Id",xml:"Id",mandatory:"yes"`
+	Name          string          				`json:"Name",xml:"Name",mandatory:"yes"`
+	Servers       []ProjectServer        	`json:"Servers",xml:"Servers",mandatory:"yes"`
+	CServers      []ProjectCloudServer   	`json:"CServers",xml:"CServers",mandatory:"yes"`
+	Installations []InstallationPlan  		`json:"Installations",xml:"Installations",mandatory:"no"`
+	Options     [][]string                `json:"Options",xml:"Options",mandatory:"no"`
 }
 
 /*
@@ -286,10 +286,10 @@ Describe domain options, contains
   * Options       ([][]string)        Specific Domain information (eg. cloud provider info or local info)
 */
 type ProjectDomain struct {
-	Id          string            `json:"Id",xml:"Id"`
-	Name        string          	`json:"Name",xml:"Name"`
-	Networks    []ProjectNetwork	`json:"Networks",xml:"Networks"`
-	Options     [][]string        `json:"Options",xml:"Options"`
+	Id          string            `json:"Id",xml:"Id",mandatory:"yes"`
+	Name        string          	`json:"Name",xml:"Name",mandatory:"yes"`
+	Networks    []ProjectNetwork	`json:"Networks",xml:"Networks",mandatory:"yes"`
+	Options     [][]string        `json:"Options",xml:"Options",mandatory:"no"`
 }
 
 /*
@@ -312,14 +312,14 @@ Describe Project, contains
   * LastMessage  (string)    				Last Alternation Message
 */
 type Project struct {
-	Id          string            `json:"Id",xml:"Id"`
-	Name     		string  					`json:"Name",xml:"Name"`
-	Open      	bool      				`json:"Open",xml:"Open"`
-	Domains     []ProjectDomain  	`json:"Domains",xml:"Domains"`
-	Created     time.Time       	`json:"Created",xml:"Created"`
-	Modified    time.Time       	`json:"Modified",xml:"Modified"`
-	Errors      bool      				`json:"Errors",xml:"Errors"`
-	LastMessage string    				`json:"LastMessage",xml:"LastMessage"`
+	Id          string            `json:"Id",xml:"Id",mandatory:"yes"`
+	Name     		string  					`json:"Name",xml:"Name",mandatory:"yes"`
+	Open      	bool      				`json:"Open",xml:"Open",mandatory:"no"`
+	Domains     []ProjectDomain  	`json:"Domains",xml:"Domains",mandatory:"yes"`
+	Created     time.Time       	`json:"Created",xml:"Created",mandatory:"no"`
+	Modified    time.Time       	`json:"Modified",xml:"Modified",mandatory:"no"`
+	Errors      bool      				`json:"Errors",xml:"Errors",mandatory:"no"`
+	LastMessage string    				`json:"LastMessage",xml:"LastMessage",mandatory:"no"`
 }
 
 /*
@@ -332,9 +332,9 @@ Describe Project Import Model, contains
   * Domains      ([]ProjectDomain)  List Of Domains
 */
 type ProjectImport struct {
-	Id          string            `json:"Id",xml:"Id"`
-	Name     		string  					`json:"Name",xml:"Name"`
-	Domains     []ProjectDomain  	`json:"Domains",xml:"Domains"`
+	Id          string            `json:"Id",xml:"Id",mandatory:"yes"`
+	Name     		string  					`json:"Name",xml:"Name",mandatory:"yes"`
+	Domains     []ProjectDomain  	`json:"Domains",xml:"Domains",mandatory:"yes"`
 }
 
 
@@ -356,13 +356,13 @@ Describe Project State in Index, contains
   * Synced      (bool)						  Sync State of Project
 */
 type ProjectsDescriptor struct {
-	Id          string            `json:"Id",xml:"Id"`
-	Name     		string  					`json:"Name",xml:"Name"`
-	InfraId     string            `json:"InfraId",xml:"InfraId"`
-	InfraName   string  					`json:"InfraName",xml:"InfraName"`
-	Active      bool  						`json:"Active",xml:"Active"`
-	Open      	bool  						`json:"Open",xml:"Open"`
-	Synced      bool  						`json:"Synced",xml:"Synced"`
+	Id          string            `json:"Id",xml:"Id",mandatory:"yes"`
+	Name     		string  					`json:"Name",xml:"Name",mandatory:"yes"`
+	InfraId     string            `json:"InfraId",xml:"InfraId",mandatory:"yes"`
+	InfraName   string  					`json:"InfraName",xml:"InfraName",mandatory:"yes"`
+	Active      bool  						`json:"Active",xml:"Active",mandatory:"yes"`
+	Open      	bool  						`json:"Open",xml:"Open",mandatory:"yes"`
+	Synced      bool  						`json:"Synced",xml:"Synced",mandatory:"no"`
 }
 
 /*
@@ -371,5 +371,5 @@ Describe Projects Index, contains
   * Projects    ([]ProjectsDescriptor)     Projects indexed in VMKube
 */
 type ProjectsIndex struct {
-	Projects		[]ProjectsDescriptor 		`json:"Projects",xml:"Projects"`
+	Projects		[]ProjectsDescriptor 		`json:"Projects",xml:"Projects",mandatory:"yes"`
 }
