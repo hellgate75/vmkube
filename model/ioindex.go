@@ -6,7 +6,30 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
+	"vmkube/vmio"
 )
+
+func (element *ProjectsDescriptor) Validate() []error {
+	errorList := make([]error, 0)
+	if element.Id == "" {
+		errorList = append(errorList, errors.New("Unassigned Project Unique Identifier field"))
+	}
+	if element.InfraId == "" {
+		errorList = append(errorList, errors.New("Unassigned Infrastructure Unique Identifier field"))
+	}
+	if element.InfraName == "" {
+		errorList = append(errorList, errors.New("Unassigned Infrastructure Name field"))
+	}
+	if element.Name == "" {
+		errorList = append(errorList, errors.New("Unassigned Project Name field"))
+	}
+	if len(errorList) > 0 {
+		bytes := []byte(`Errors reported in json : `)
+		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		errorList = append(errorList, errors.New(string(bytes)))
+	}
+	return errorList
+}
 
 func (element *ProjectsDescriptor) Load(file string) error {
 	if ! existsFile(file) {
@@ -53,6 +76,22 @@ func (element *ProjectsDescriptor) Save(file string) error {
 	newBytes := []byte(value)
 	err = ioutil.WriteFile(file, newBytes , 0666)
 	return  err
+}
+
+func (element *ProjectsIndex) Validate() []error {
+	errorList := make([]error, 0)
+	if len(element.Projects) == 0 {
+		errorList = append(errorList, errors.New("Unassigned Project Descriptors List fields"))
+	}
+	for _,index := range element.Projects {
+		errorList = append(errorList, index.Validate()...)
+	}
+	if len(errorList) > 0 {
+		bytes := []byte(`Errors reported in json : `)
+		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		errorList = append(errorList, errors.New(string(bytes)))
+	}
+	return errorList
 }
 
 func (element *ProjectsIndex) Load(file string) error {

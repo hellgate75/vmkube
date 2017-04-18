@@ -6,7 +6,25 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
+	"vmkube/vmio"
 )
+
+func (element *Installation) Validate() []error {
+	errorList := make([]error, 0)
+	if element.Id == "" {
+		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
+	}
+	if element.InstanceId == "" {
+		errorList = append(errorList, errors.New("Unassigned Instance Unique Identifier field"))
+	}
+	errorList = append(errorList, element.Plan.Validate()...)
+	if len(errorList) > 0 {
+		bytes := []byte(`Errors reported in json : `)
+		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		errorList = append(errorList, errors.New(string(bytes)))
+	}
+	return errorList
+}
 
 func (element *Installation) Load(file string) error {
 	if ! existsFile(file) {
@@ -53,6 +71,22 @@ func (element *Installation) Save(file string) error {
 	newBytes := []byte(value)
 	err = ioutil.WriteFile(file, newBytes , 0666)
 	return  err
+}
+
+func (element *InstallationPlan) Validate() []error {
+	errorList := make([]error, 0)
+	if element.Id == "" {
+		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
+	}
+	if element.ServerId == "" {
+		errorList = append(errorList, errors.New("Unassigned Server Unique Identifier field"))
+	}
+	if len(errorList) > 0 {
+		bytes := []byte(`Errors reported in json : `)
+		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		errorList = append(errorList, errors.New(string(bytes)))
+	}
+	return errorList
 }
 
 func (element *InstallationPlan) Load(file string) error {

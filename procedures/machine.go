@@ -74,15 +74,21 @@ func CreateServer(server model.ProjectServer) ([]byte, error) {
 	command = append( command,  "create")
 	command = append( command,  "-d")
 	command = append( command,  driver)
-	cpus_str := utils.IntToString(cpus)
-	command = append( command,  "--"+strings.ToLower(driver)+"-cpu-count")
-	command = append( command,  cpus_str)
-	disksize_str := utils.IntToString(disksize)
-	command = append( command,  "--"+strings.ToLower(driver)+"-disk-size")
-	command = append( command,  disksize_str)
-	memory_str := utils.IntToString(memory)
-	command = append( command,  "--"+strings.ToLower(driver)+"-memory")
-	command = append( command,  memory_str)
+	if cpus > 0 {
+		cpus_str := utils.IntToString(cpus)
+		command = append( command,  "--"+strings.ToLower(driver)+"-cpu-count")
+		command = append( command,  cpus_str)
+	}
+	if disksize > 0 {
+		disksize_str := utils.IntToString(disksize)
+		command = append( command,  "--"+strings.ToLower(driver)+"-disk-size")
+		command = append( command,  disksize_str)
+	}
+	if memory > 0 {
+		memory_str := utils.IntToString(memory)
+		command = append( command,  "--"+strings.ToLower(driver)+"-memory")
+		command = append( command,  memory_str)
+	}
 	if "virtualbox" == strings.ToLower(driver) && noshare {
 		command = append( command,  "virtualbox-no-share")
 	}

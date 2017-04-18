@@ -224,7 +224,7 @@ Describe Server Installation options, contains
 	
   * Id          	(string)            Unique Identifier
   
-  * InstanceId    (int)               Target Instance Id
+  * InstanceId    (string)            Target Instance Id
   
   * IsCloud     	(bool)              Is A Cloud Instance
   
@@ -240,15 +240,15 @@ Describe Server Installation options, contains
 
   * Success      	(bool)       				Success State
 
-  * Errors       (bool)       				Error State
+  * Errors        (bool)       				Error State
 
-  * LastMessage  (string)     			Last Error Message
+  * LastMessage   (string)     			Last Error Message
 
   * LogsPath  		(string)     			Path to Log file
 */
 type Installation struct {
 	Id          	string            `json:"Id",xml:"Id"`
-	InstanceId    int               `json:"InstanceId",xml:"InstanceId"`
+	InstanceId    string            `json:"InstanceId",xml:"InstanceId"`
 	IsCloud     	bool              `json:"IsCloud",xml:"IsCloud"`
 	Type        	InstallationType  `json:"Type",xml:"Type"`
 	Environment 	RoleType          `json:"Environment",xml:"Environment"`
@@ -313,13 +313,13 @@ Describe Server State, contains
   
   * IPAddresses  ([]string)   Computed IP Address
   
-  * InstanceId   (int)        Target Instance Id
+  * InstanceId   (string)     Target Instance Id
   
   * IsCloud      (bool)       Is A Cloud Server
   
-  * NetworkId    (int)        Target Network Id
+  * NetworkId    (string)     Target Network Id
   
-  * DomainId     (int)        Target Domain Id
+  * DomainId     (string)     Target Domain Id
 
   * Creation     (time.Timer) Creation Date
 
@@ -337,10 +337,10 @@ type InstanceState struct {
 	Id          string     `json:"Id",xml:"Id"`
 	Hostname    string     `json:"Hostname",xml:"Hostname"`
 	IPAddresses []string   `json:"IPAddresses",xml:"IPAddresses"`
-	InstanceId  int        `json:"InstanceId",xml:"InstanceId"`
+	InstanceId  string     `json:"InstanceId",xml:"InstanceId"`
 	IsCloud     bool       `json:"IsCloud",xml:"IsCloud"`
-	NetworkId   int        `json:"NetworkId",xml:"NetworkId"`
-	DomainId    int        `json:"DomainId",xml:"DomainId"`
+	NetworkId   string     `json:"NetworkId",xml:"NetworkId"`
+	DomainId    string     `json:"DomainId",xml:"DomainId"`
 	Creation    time.Timer `json:"Creation",xml:"Creation"`
 	Modified 		time.Timer `json:"Modified",xml:"Modified"`
 	Created     bool       `json:"Created",xml:"Created"`
@@ -354,9 +354,9 @@ Describe Network State, contains
 	
   * Id              (string)         State Unique Identifier
   
-  * NetworkId       (int)            Target Network Id
+  * NetworkId       (string)         Target Network Id
   
-  * DomainId        (int)            Target Domain Id
+  * DomainId        (string)         Target Domain Id
   
   * InstanceStates  ([]ServerState)  List Of Instance States
 
@@ -374,8 +374,8 @@ Describe Network State, contains
 */
 type NetworkState struct {
 	Id              string     			`json:"Id",xml:"Id"`
-	NetworkId       int             `json:"NetworkId",xml:"NetworkId"`
-	DomainId        int             `json:"DomainId",xml:"DomainId"`
+	NetworkId       string          `json:"NetworkId",xml:"NetworkId"`
+	DomainId        string          `json:"DomainId",xml:"DomainId"`
 	InstanceStates  []InstanceState `json:"InstanceStates",xml:"InstanceStates"`
 	Creation        time.Timer      `json:"Creation",xml:"Creation"`
 	Modified 		    time.Timer      `json:"Modified",xml:"Modified"`
@@ -390,7 +390,7 @@ Describe Domain State, contains
 	
   * Id            (string)          State Unique Identifier
   
-  * DomainId      (int)             Target Domain Id
+  * DomainId      (string)          Target Domain Id
   
   * NetworkStates ([]NetworkState)  List Of Network States
 
@@ -408,7 +408,7 @@ Describe Domain State, contains
 */
 type DomainState struct {
 	Id            string     			`json:"Id",xml:"Id"`
-	DomainId      int             `json:"DomainId",xml:"DomainId"`
+	DomainId      string          `json:"DomainId",xml:"DomainId"`
 	NetworkStates []NetworkState  `json:"NetworkStates",xml:"NetworkStates"`
 	Creation      time.Timer      `json:"Creation",xml:"Creation"`
 	Modified 		  time.Timer      `json:"Modified",xml:"Modified"`

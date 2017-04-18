@@ -29,7 +29,7 @@ type IONature interface {
 	Load(file string) error
 	Import(file string, format string) error
 	Save(file string) error
-	Validate() error
+	Validate() []error
 }
 
 func GetLockFile(id string) string {

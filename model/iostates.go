@@ -6,7 +6,36 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
+	"vmkube/vmio"
 )
+
+func (element *InstanceState) Validate() []error {
+	errorList := make([]error, 0)
+	if element.Id == "" {
+		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
+	}
+	if element.Hostname == "" {
+		errorList = append(errorList, errors.New("Unassigned host name field"))
+	}
+	if element.IPAddresses == "" {
+		errorList = append(errorList, errors.New("Unassigned IP address field"))
+	}
+	if element.InstanceId == "" {
+		errorList = append(errorList, errors.New("Unassigned Instance Unique Identifier field"))
+	}
+	if element.NetworkId == "" {
+		errorList = append(errorList, errors.New("Unassigned Network Unique Identifier field"))
+	}
+	if element.DomainId == "" {
+		errorList = append(errorList, errors.New("Unassigned Domain Unique Identifier field"))
+	}
+	if len(errorList) > 0 {
+		bytes := []byte(`Errors reported in json : `)
+		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		errorList = append(errorList, errors.New(string(bytes)))
+	}
+	return errorList
+}
 
 func (element *InstanceState) Load(file string) error {
 	if ! existsFile(file) {
@@ -53,6 +82,31 @@ func (element *InstanceState) Save(file string) error {
 	newBytes := []byte(value)
 	err = ioutil.WriteFile(file, newBytes , 0666)
 	return  err
+}
+
+func (element *NetworkState) Validate() []error {
+	errorList := make([]error, 0)
+	if element.Id == "" {
+		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
+	}
+	if element.NetworkId == "" {
+		errorList = append(errorList, errors.New("Unassigned Network Unique Identifier field"))
+	}
+	if element.DomainId == "" {
+		errorList = append(errorList, errors.New("Unassigned Domain Unique Identifier field"))
+	}
+	if len(element.InstanceStates) == 0 {
+		errorList = append(errorList, errors.New("Unassigned Instance States List fields"))
+	}
+	for _,state := range element.InstanceStates {
+		errorList = append(errorList, state.Validate()...)
+	}
+	if len(errorList) > 0 {
+		bytes := []byte(`Errors reported in json : `)
+		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		errorList = append(errorList, errors.New(string(bytes)))
+	}
+	return errorList
 }
 
 func (element *NetworkState) Load(file string) error {
@@ -102,6 +156,27 @@ func (element *NetworkState) Save(file string) error {
 	return  err
 }
 
+func (element *DomainState) Validate() []error {
+	errorList := make([]error, 0)
+	if element.Id == "" {
+		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
+	}
+	if element.DomainId == "" {
+		errorList = append(errorList, errors.New("Unassigned Domain Unique Identifier field"))
+	}
+	if len(element.NetworkStates) == 0 {
+		errorList = append(errorList, errors.New("Unassigned Network States List fields"))
+	}
+	for _,state := range element.NetworkStates {
+		errorList = append(errorList, state.Validate()...)
+	}
+	if len(errorList) > 0 {
+		bytes := []byte(`Errors reported in json : `)
+		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		errorList = append(errorList, errors.New(string(bytes)))
+	}
+	return errorList
+}
 
 func (element *DomainState) Load(file string) error {
 	if ! existsFile(file) {
@@ -150,6 +225,24 @@ func (element *DomainState) Save(file string) error {
 	return  err
 }
 
+func (element *State) Validate() []error {
+	errorList := make([]error, 0)
+	if element.Id == "" {
+		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
+	}
+	if len(element.DomainStates) == 0 {
+		errorList = append(errorList, errors.New("Unassigned Domain States List fields"))
+	}
+	for _,state := range element.DomainStates {
+		errorList = append(errorList, state.Validate()...)
+	}
+	if len(errorList) > 0 {
+		bytes := []byte(`Errors reported in json : `)
+		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		errorList = append(errorList, errors.New(string(bytes)))
+	}
+	return errorList
+}
 
 func (element *State) Load(file string) error {
 	if ! existsFile(file) {

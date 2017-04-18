@@ -219,7 +219,7 @@ Describe Server Installation Plan, contains
 	
   * Id          	(string)              Unique Identifier
   
-  * ServerId    	(int)               	Target Server Id
+  * ServerId    	(string)              Target Server Id
   
   * IsCloud     	(bool)              	Is A Cloud Server
   
@@ -239,7 +239,7 @@ Describe Server Installation Plan, contains
 */
 type InstallationPlan struct {
 	Id          		string          `json:"Id",xml:"Id"`
-	ServerId    		int             `json:"ServerId",xml:"ServerId"`
+	ServerId    		string          `json:"ServerId",xml:"ServerId"`
 	IsCloud     		bool            `json:"IsCloud",xml:"IsCloud"`
 	Type        	InstallationRole  `json:"Type",xml:"Type"`
 	Environment 				SystemRole  `json:"Environment",xml:"Environment"`

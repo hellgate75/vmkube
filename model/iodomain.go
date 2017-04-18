@@ -6,7 +6,30 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
+	"vmkube/vmio"
 )
+
+func (element *Domain) Validate() []error {
+	errorList := make([]error, 0)
+	if element.Id == "" {
+		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
+	}
+	if element.Name == "" {
+		errorList = append(errorList, errors.New("Unassigned Name field"))
+	}
+	if len(element.Networks) == 0 {
+		errorList = append(errorList, errors.New("Unassigned Networks List fields"))
+	}
+	for _,network := range element.Networks {
+		errorList = append(errorList, network.Validate()...)
+	}
+	if len(errorList) > 0 {
+		bytes := []byte(`Errors reported in json : `)
+		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		errorList = append(errorList, errors.New(string(bytes)))
+	}
+	return errorList
+}
 
 func (element *Domain) Load(file string) error {
 	if ! existsFile(file) {
@@ -55,6 +78,28 @@ func (element *Domain) Save(file string) error {
 	return  err
 }
 
+func (element *ProjectDomain) Validate() []error {
+	errorList := make([]error, 0)
+	if element.Id == "" {
+		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
+	}
+	if element.Name == "" {
+		errorList = append(errorList, errors.New("Unassigned Name field"))
+	}
+	if len(element.Networks) == 0 {
+		errorList = append(errorList, errors.New("Unassigned Networks List fields"))
+	}
+	for _,network := range element.Networks {
+		errorList = append(errorList, network.Validate()...)
+	}
+	if len(errorList) > 0 {
+		bytes := []byte(`Errors reported in json : `)
+		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		errorList = append(errorList, errors.New(string(bytes)))
+	}
+	return errorList
+}
+
 func (element *ProjectDomain) Load(file string) error {
 	if ! existsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
@@ -90,15 +135,52 @@ func (element *ProjectDomain) Import(file string, format string) error {
 	if err == nil {
 		element.Id=NewUUIDString()
 		for _,network := range element.Networks {
+			serverMap := make(map[string]string, 0)
 			network.Id = NewUUIDString()
 			for _,server := range network.Servers {
+				id := server.Id
+				if id == "" {
+					id = server.Name
+				}
+				if id != "" {
+					if _,ok := serverMap[id]; ok {
+						bytes := []byte(`Duplicate server Id/Name reference in json : `)
+						bytes = append(bytes,vmio.GetJSONFromObj(server, true))
+						return errors.New(string(bytes))
+					}
+				}
 				server.Id = NewUUIDString()
+				if id != "" {
+					serverMap[id] = server.Id
+				}
 			}
 			for _,server := range network.CServers {
+				id := server.Id
+				if id == "" {
+					id = server.Name
+				}
+				if id != "" {
+					if _,ok := serverMap[id]; ok {
+						bytes := []byte(`Duplicate cloud server or server Id/Name reference in json : `)
+						bytes = append(bytes,vmio.GetJSONFromObj(server, true))
+						return errors.New(string(bytes))
+					}
+				}
 				server.Id = NewUUIDString()
+				if id != "" {
+					serverMap[id] = server.Id
+				}
 			}
 			for _,installPlan := range network.Installations {
 				installPlan.Id = NewUUIDString()
+				oldId := installPlan.ServerId
+				if _,ok := serverMap[oldId]; ! ok || oldId == "" {
+					bytes := []byte(`Unable to locate cloud server or server Id/Name in installation plan reference in json : `)
+					bytes = append(bytes,vmio.GetJSONFromObj(installPlan, true))
+					return errors.New(string(bytes))
+				}
+				value, _ := serverMap[oldId]
+				installPlan.ServerId = value
 			}
 		}
 	}

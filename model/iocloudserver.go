@@ -6,7 +6,36 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
+	"vmkube/vmio"
 )
+
+func (element *CloudInstance) Validate() []error {
+	errorList := make([]error, 0)
+	if element.Id == "" {
+		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
+	}
+	if element.Name == "" {
+		errorList = append(errorList, errors.New("Unassigned Name field"))
+	}
+	if element.ServerId == "" {
+		errorList = append(errorList, errors.New("Unassigned Project Server Id field"))
+	}
+	if element.Driver == "" {
+		errorList = append(errorList, errors.New("Unassigned Driver field"))
+	}
+	if len(element.Options) == 0 {
+		errorList = append(errorList, errors.New("Unassigned Vendor specific Options field"))
+	}
+	if element.Hostname == "" {
+		errorList = append(errorList, errors.New("Unassigned host name field"))
+	}
+	if len(errorList) > 0 {
+		bytes := []byte(`Errors reported in json : `)
+		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		errorList = append(errorList, errors.New(string(bytes)))
+	}
+	return errorList
+}
 
 func (element *CloudInstance) Load(file string) error {
 	if ! existsFile(file) {
@@ -53,6 +82,31 @@ func (element *CloudInstance) Save(file string) error {
 	newBytes := []byte(value)
 	err = ioutil.WriteFile(file, newBytes , 0666)
 	return  err
+}
+
+func (element *ProjectCloudServer) Validate() []error {
+	errorList := make([]error, 0)
+	if element.Id == "" {
+		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
+	}
+	if element.Name == "" {
+		errorList = append(errorList, errors.New("Unassigned Name field"))
+	}
+	if element.Driver == "" {
+		errorList = append(errorList, errors.New("Unassigned Driver field"))
+	}
+	if len(element.Options) == 0 {
+		errorList = append(errorList, errors.New("Unassigned Vendor specific Options field"))
+	}
+	if element.Hostname == "" {
+		errorList = append(errorList, errors.New("Unassigned host name field"))
+	}
+	if len(errorList) > 0 {
+		bytes := []byte(`Errors reported in json : `)
+		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		errorList = append(errorList, errors.New(string(bytes)))
+	}
+	return errorList
 }
 
 func (element *ProjectCloudServer) Load(file string) error {

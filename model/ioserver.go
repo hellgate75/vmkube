@@ -6,10 +6,49 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
+	"vmkube/vmio"
 )
-func (element *Instance) Validate() error {
-	return nil
+
+func (element *Instance) Validate() []error {
+	errorList := make([]error, 0)
+	if element.Id == "" {
+		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
+	}
+	if element.Name == "" {
+		errorList = append(errorList, errors.New("Unassigned Name field"))
+	}
+	if element.ServerId == "" {
+		errorList = append(errorList, errors.New("Unassigned Project Server Id field"))
+	}
+	if element.Driver == "" {
+		errorList = append(errorList, errors.New("Unassigned Driver field"))
+	}
+	if element.Cpus == 0 {
+		errorList = append(errorList, errors.New("Unassigned Cpu Count field"))
+	}
+	if element.Memory == 0 {
+		errorList = append(errorList, errors.New("Unassigned Memory Size field"))
+	}
+	if len(element.Disks) == 0 {
+		errorList = append(errorList, errors.New("Unassigned Disks field"))
+	}
+	if element.Hostname == "" {
+		errorList = append(errorList, errors.New("Unassigned host name field"))
+	}
+	if element.OSType == "" {
+		errorList = append(errorList, errors.New("Unassigned OS type name field"))
+	}
+	if element.OSVersion == "" {
+		errorList = append(errorList, errors.New("Unassigned OS version field"))
+	}
+	if len(errorList) > 0 {
+		bytes := []byte(`Errors reported in json : `)
+		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		errorList = append(errorList, errors.New(string(bytes)))
+	}
+	return errorList
 }
+
 func (element *Instance) Load(file string) error {
 	if ! existsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
@@ -55,6 +94,44 @@ func (element *Instance) Save(file string) error {
 	newBytes := []byte(value)
 	err = ioutil.WriteFile(file, newBytes , 0666)
 	return  err
+}
+
+func (element *ProjectServer) Validate() []error {
+	errorList := make([]error, 0)
+	if element.Id == "" {
+		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
+	}
+	if element.Name == "" {
+		errorList = append(errorList, errors.New("Unassigned Name field"))
+	}
+	if element.Driver == "" {
+		errorList = append(errorList, errors.New("Unassigned Driver field"))
+	}
+	// Not mandatory, we can inspect one the assigned one in the machine inspection
+	//if element.Cpus == 0 {
+	//	errorList = append(errorList, errors.New("Unassigned Cpu Count field"))
+	//}
+	//if element.Memory == 0 {
+	//	errorList = append(errorList, errors.New("Unassigned Memory Size field"))
+	//}
+	//if element.DiskSize == 0 {
+	//	errorList = append(errorList, errors.New("Unassigned Disk Size field"))
+	//}
+	if element.Hostname == "" {
+		errorList = append(errorList, errors.New("Unassigned host name field"))
+	}
+	if element.OSType == "" {
+		errorList = append(errorList, errors.New("Unassigned OS type name field"))
+	}
+	if element.OSVersion == "" {
+		errorList = append(errorList, errors.New("Unassigned OS version field"))
+	}
+	if len(errorList) > 0 {
+		bytes := []byte(`Errors reported in json : `)
+		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		errorList = append(errorList, errors.New(string(bytes)))
+	}
+	return errorList
 }
 
 func (element *ProjectServer) Load(file string) error {
