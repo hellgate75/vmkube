@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
-	"vmkube/vmio"
+	"vmkube/utils"
 )
 
 func (element *Network) Validate() []error {
@@ -31,7 +31,7 @@ func (element *Network) Validate() []error {
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList
@@ -106,7 +106,7 @@ func (element *ProjectNetwork) Validate() []error {
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList
@@ -155,7 +155,7 @@ func (element *ProjectNetwork) Import(file string, format string) error {
 			if id != "" {
 				if _,ok := serverMap[id]; ok {
 					bytes := []byte(`Duplicate server Id/Name reference in json : `)
-					bytes = append(bytes,vmio.GetJSONFromObj(server, true))
+					bytes = append(bytes,utils.GetJSONFromObj(server, true)...)
 					return errors.New(string(bytes))
 				}
 			}
@@ -172,7 +172,7 @@ func (element *ProjectNetwork) Import(file string, format string) error {
 			if id != "" {
 				if _,ok := serverMap[id]; ok {
 					bytes := []byte(`Duplicate cloud server or server Id/Name reference in json : `)
-					bytes = append(bytes,vmio.GetJSONFromObj(server, true))
+					bytes = append(bytes,utils.GetJSONFromObj(server, true)...)
 					return errors.New(string(bytes))
 				}
 			}
@@ -186,7 +186,7 @@ func (element *ProjectNetwork) Import(file string, format string) error {
 			oldId := installPlan.ServerId
 			if _,ok := serverMap[oldId]; ! ok || oldId == "" {
 				bytes := []byte(`Unable to locate cloud server or server Id/Name in installation plan reference in json : `)
-				bytes = append(bytes,vmio.GetJSONFromObj(installPlan, true))
+				bytes = append(bytes,utils.GetJSONFromObj(installPlan, true)...)
 				return errors.New(string(bytes))
 			}
 			value, _ := serverMap[oldId]

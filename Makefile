@@ -1,5 +1,5 @@
 ifeq (run,$(firstword $(MAKECMDGOALS)))
-    RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 endif
 .RECIPEPREFIX = >
 help:
@@ -13,7 +13,7 @@ help:
 > @echo "run: exec the module code"
 > @echo "install: install the module in go libs"
 all: init test build exe run
-> @echo "Make all scopes"
+> @echo "All done!!"
 init:
 > @go get github.com/satori/go.uuid
 > @go get github.com/stretchr/testify

@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
-	"vmkube/vmio"
+	"vmkube/utils"
 )
 
 func (element *CloudInstance) Validate() []error {
@@ -31,7 +31,7 @@ func (element *CloudInstance) Validate() []error {
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList
@@ -103,7 +103,7 @@ func (element *ProjectCloudServer) Validate() []error {
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList

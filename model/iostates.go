@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
-	"vmkube/vmio"
+	"vmkube/utils"
 )
 
 func (element *InstanceState) Validate() []error {
@@ -17,8 +17,8 @@ func (element *InstanceState) Validate() []error {
 	if element.Hostname == "" {
 		errorList = append(errorList, errors.New("Unassigned host name field"))
 	}
-	if element.IPAddresses == "" {
-		errorList = append(errorList, errors.New("Unassigned IP address field"))
+	if len(element.IPAddresses) == 0 {
+		errorList = append(errorList, errors.New("Unassigned IP address list field"))
 	}
 	if element.InstanceId == "" {
 		errorList = append(errorList, errors.New("Unassigned Instance Unique Identifier field"))
@@ -31,7 +31,7 @@ func (element *InstanceState) Validate() []error {
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList
@@ -103,7 +103,7 @@ func (element *NetworkState) Validate() []error {
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList
@@ -172,7 +172,7 @@ func (element *DomainState) Validate() []error {
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList
@@ -238,7 +238,7 @@ func (element *State) Validate() []error {
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList

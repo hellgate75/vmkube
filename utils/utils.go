@@ -4,6 +4,8 @@ import (
 	"strings"
 	"errors"
 	"strconv"
+	"encoding/json"
+	"encoding/xml"
 )
 
 func StrPad(instr string, capping int) string {
@@ -78,4 +80,46 @@ func StringToInt(s string) (int,error) {
 func IntToString(n int) string {
 	return strconv.Itoa(n)
 }
+
+
+// go binary decoder
+func GetJSONFromObj(m interface{}, prettify bool) []byte {
+	if prettify {
+		bytes,err := json.MarshalIndent(m, "", "  ")
+		if err != nil {
+			return []byte{}
+		}
+		return bytes
+	}
+	bytes,err := json.Marshal(m)
+	if err != nil {
+		return []byte{}
+	}
+	return bytes
+}
+
+
+// go binary decoder
+func GetJSONFromElem(m interface{}, prettify bool) ([]byte, error) {
+	if prettify {
+		return  json.MarshalIndent(m, "", "  ")
+	}
+	return json.Marshal(m)
+}
+
+func GetXMLFromElem(m interface{}, prettify bool) ([]byte, error) {
+	if prettify {
+		return xml.MarshalIndent(m, "", "  ")
+	}
+	return xml.Marshal(m)
+}
+
+
+func ToMap(m interface{}) map[string]interface{} {
+	var inInterface interface{}
+	inrec, _ := json.Marshal(&m)
+	json.Unmarshal(inrec, &inInterface)
+	return  inInterface.(map[string]interface{})
+}
+
 

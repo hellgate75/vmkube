@@ -210,7 +210,7 @@ type CommandSet string
 const(
 	VirtKubeCmdSet   CommandSet = "VirtKube";
 	AnsibleCmdSet    CommandSet = "Ansible";
-	HelpCmdSet       CommandSet = "Helm";
+	HelmCmdSet       CommandSet = "Helm";
 )
 
 
@@ -238,16 +238,16 @@ Describe Server Installation Plan, contains
   * ProvisionCommandRef (string)			Location of provision commands
 */
 type InstallationPlan struct {
-	Id          		string          `json:"Id",xml:"Id"`
-	ServerId    		string          `json:"ServerId",xml:"ServerId"`
-	IsCloud     		bool            `json:"IsCloud",xml:"IsCloud"`
-	Type        	InstallationRole  `json:"Type",xml:"Type"`
-	Environment 				SystemRole  `json:"Environment",xml:"Environment"`
-	Role        ProjectEnvironment	`json:"Role",xml:"Role"`
-	MainCommandSet  		CommandSet	`json:"MainCommandSet",xml:"MainCommandSet"`
-	MainCommandRef		  string			`json:"MainCommandRef",xml:"MainCommandRef"`
-	ProvisionCommandSet CommandSet	`json:"ProvisionCommandSet",xml:"ProvisionCommandSet"`
-	ProvisionCommandRef	string			`json:"ProvisionCommandRef",xml:"ProvisionCommandRef"`
+	Id          		string          `json:"Id",xml:"Id",mandatory:"yes"`
+	ServerId    		string          `json:"ServerId",xml:"ServerId",mandatory:"yes"`
+	IsCloud     		bool            `json:"IsCloud",xml:"IsCloud",mandatory:"yes"`
+	Type        	InstallationRole  `json:"Type",xml:"Type",mandatory:"yes"`
+	Environment 				SystemRole  `json:"Environment",xml:"Environment",mandatory:"yes"`
+	Role        ProjectEnvironment	`json:"Role",xml:"Role",mandatory:"yes"`
+	MainCommandSet  		CommandSet	`json:"MainCommandSet",xml:"MainCommandSet",mandatory:"no"`
+	MainCommandRef		  string			`json:"MainCommandRef",xml:"MainCommandRef",mandatory:"no"`
+	ProvisionCommandSet CommandSet	`json:"ProvisionCommandSet",xml:"ProvisionCommandSet",mandatory:"no"`
+	ProvisionCommandRef	string			`json:"ProvisionCommandRef",xml:"ProvisionCommandRef",mandatory:"no"`
 }
 
 /*
@@ -303,11 +303,9 @@ Describe Project, contains
 
   * Domains      ([]ProjectDomain)  List Of Domains
 
-  * State        (State)     				Creation State
-
-  * Created      (time.Timer)      	Creation Date
+  * Created      (time.Time )      	Creation Date
 	
-  * Modified      (time.Timer)     	Last Modification Date
+  * Modified      (time.Time )     	Last Modification Date
 	
   * Errors       (bool)      				Error State
 	
@@ -318,11 +316,27 @@ type Project struct {
 	Name     		string  					`json:"Name",xml:"Name"`
 	Open      	bool      				`json:"Open",xml:"Open"`
 	Domains     []ProjectDomain  	`json:"Domains",xml:"Domains"`
-	Created     time.Timer      	`json:"Created",xml:"Created"`
-	Modified    time.Timer      	`json:"Modified",xml:"Modified"`
+	Created     time.Time       	`json:"Created",xml:"Created"`
+	Modified    time.Time       	`json:"Modified",xml:"Modified"`
 	Errors      bool      				`json:"Errors",xml:"Errors"`
 	LastMessage string    				`json:"LastMessage",xml:"LastMessage"`
 }
+
+/*
+Describe Project Import Model, contains
+
+  * Id          (string)            Unique Identifier
+
+  * Name      	(string)  	 				Project Name
+
+  * Domains      ([]ProjectDomain)  List Of Domains
+*/
+type ProjectImport struct {
+	Id          string            `json:"Id",xml:"Id"`
+	Name     		string  					`json:"Name",xml:"Name"`
+	Domains     []ProjectDomain  	`json:"Domains",xml:"Domains"`
+}
+
 
 /*
 Describe Project State in Index, contains

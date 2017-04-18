@@ -129,6 +129,15 @@ func ExecuteRequest(request CmdRequest) bool{
 		}
 		return  true
 	}
+	case InfoConfig: {
+		if ! request.CheckProject() {
+			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			return  false
+		} else  {
+			request.InfoProject()
+		}
+		return  true
+	}
 	default:
 		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 	}

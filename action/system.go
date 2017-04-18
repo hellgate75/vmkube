@@ -56,11 +56,12 @@ type CmdElementType int
 
 const (
 	NoElement					CmdElementType = iota;
-	LServer					CmdElementType = iota + 1;
+	LServer					  CmdElementType = iota + 1;
 	CLServer					CmdElementType = iota + 1;
-	SNetwork						CmdElementType = iota + 1;
+	SNetwork					CmdElementType = iota + 1;
 	SDomain						CmdElementType = iota + 1;
-	SInfrastructure		CmdElementType = iota + 1;
+	SProject		      CmdElementType = iota + 1;
+	SPlan   		      CmdElementType = iota + 1;
 )
 
 
@@ -114,7 +115,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 								key, value, error := utils.OptionsParse(optsArgs[index], optsArgs[index+1])
 								if error != nil {
 									passed = false
-									fmt.Fprintln(os.Stdout, "Error: Unable to parse option", option[index],"for Command",command,"and Sub-Command",SubCommand)
+									fmt.Fprintln(os.Stdout, "Error: Unable to parse option", optsArgs[index],"for Command",command,"and Sub-Command",SubCommand)
 									break
 								} else {
 									if "elem-type" == strings.ToLower(strings.TrimSpace(key)) {

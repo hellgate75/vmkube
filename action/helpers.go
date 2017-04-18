@@ -277,7 +277,7 @@ func InitHelpers() {
 	//Information on Project Definition
 	InfoProject.SubCommands = append(InfoProject.SubCommands,
 		[]string{"list", "List project elements, available for change commands"},
-		[]string{"elem-struct", "List of fields for a specific element, available for change commands"},
+		[]string{"details", "List of fields for a specific element, available for change commands"},
 	)
 	InfoProject.SubCmdTypes = append(InfoProject.SubCmdTypes,
 		List,
@@ -287,7 +287,11 @@ func InitHelpers() {
 	InfoProject.Options = append(InfoProject.Options,
 		[]string{"elem-type", " <infra element type>", "Type of entity to require field information (allowed: Server, Cloud-Server, Network, Domain,...)", "false"},
 	)
-
+	
+	InfoProject.Options = append(InfoProject.Options,
+		[]string{"sample", " <json|xml>", "Print a sample schema for a specified element type", "false"},
+	)
+	
 	//Change Project
 	AlterProject.SubCommands = append(AlterProject.SubCommands,
 		[]string{"create", "Create a project item"},
@@ -414,6 +418,7 @@ func ParseArgumentHelper() []CommandHelper {
 		ListProject,
 		DefineProject,
 		AlterProject,
+		InfoProject,
 		DeleteProject,
 		ImportProject,
 		ExportProject,

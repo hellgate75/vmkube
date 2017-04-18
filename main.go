@@ -123,7 +123,7 @@ func main() {
 		//fmt.Fprintf(os.Stdout, "Successfully Parser Command : %v\n", request)
 		response := action.ExecuteRequest(request)
 		if response  {
-			if len(os.Args) <= 1 || "help" != strings.TrimSpace(strings.ToLower(os.Args[1])) {
+			if len(os.Args) <= 1 || ("help" != strings.TrimSpace(strings.ToLower(os.Args[1])) && "info-project" != strings.TrimSpace(strings.ToLower(os.Args[1])) ) {
 				fmt.Fprintln(os.Stdout, "Successfully Executed Command!!")
 			}
 			os.Exit(0)

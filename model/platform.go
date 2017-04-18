@@ -236,7 +236,7 @@ Describe Server Installation options, contains
 
   * Plan     			(InstallationPlan) Reference to installation plan
 
-  * LastExecution	(time.Timer) 				Last Execution Date
+  * LastExecution	(time.Time ) 				Last Execution Date
 
   * Success      	(bool)       				Success State
 
@@ -254,7 +254,7 @@ type Installation struct {
 	Environment 	RoleType          `json:"Environment",xml:"Environment"`
 	Role        	EnvironmentType   `json:"Role",xml:"Role"`
 	Plan					InstallationPlan	`json:"Plan",xml:"Plan"`
-	LastExecution	time.Timer 				`json:"LastExecution",xml:"LastExecution"`
+	LastExecution	time.Time  				`json:"LastExecution",xml:"LastExecution"`
 	Success     	bool       				`json:"Success",xml:"Success"`
 	Errors      	bool       				`json:"Errors",xml:"Errors"`
 	LastMessage 	string     				`json:"LastMessage",xml:"LastMessage"`
@@ -321,9 +321,9 @@ Describe Server State, contains
   
   * DomainId     (string)     Target Domain Id
 
-  * Creation     (time.Timer) Creation Date
+  * Creation     (time.Time ) Creation Date
 
-  * Modified     (time.Timer) Last Modification Date
+  * Modified     (time.Time ) Last Modification Date
 
   * Created      (bool)       Creation State
   
@@ -341,8 +341,8 @@ type InstanceState struct {
 	IsCloud     bool       `json:"IsCloud",xml:"IsCloud"`
 	NetworkId   string     `json:"NetworkId",xml:"NetworkId"`
 	DomainId    string     `json:"DomainId",xml:"DomainId"`
-	Creation    time.Timer `json:"Creation",xml:"Creation"`
-	Modified 		time.Timer `json:"Modified",xml:"Modified"`
+	Creation    time.Time  `json:"Creation",xml:"Creation"`
+	Modified 		time.Time  `json:"Modified",xml:"Modified"`
 	Created     bool       `json:"Created",xml:"Created"`
 	Altered     bool       `json:"Altered",xml:"Altered"`
 	Errors      bool       `json:"Errors",xml:"Errors"`
@@ -360,9 +360,9 @@ Describe Network State, contains
   
   * InstanceStates  ([]ServerState)  List Of Instance States
 
-  * Creation        (time.Timer)     Creation Date
+  * Creation        (time.Time )     Creation Date
 
-  * Modified        (time.Timer)     Last Modification Date
+  * Modified        (time.Time )     Last Modification Date
 
   * Created         (bool)           Creation State
   
@@ -377,8 +377,8 @@ type NetworkState struct {
 	NetworkId       string          `json:"NetworkId",xml:"NetworkId"`
 	DomainId        string          `json:"DomainId",xml:"DomainId"`
 	InstanceStates  []InstanceState `json:"InstanceStates",xml:"InstanceStates"`
-	Creation        time.Timer      `json:"Creation",xml:"Creation"`
-	Modified 		    time.Timer      `json:"Modified",xml:"Modified"`
+	Creation        time.Time       `json:"Creation",xml:"Creation"`
+	Modified 		    time.Time       `json:"Modified",xml:"Modified"`
 	Created         bool            `json:"Created",xml:"Created"`
 	Altered         bool            `json:"Altered",xml:"Altered"`
 	Errors          bool            `json:"Errors",xml:"Errors"`
@@ -394,9 +394,9 @@ Describe Domain State, contains
   
   * NetworkStates ([]NetworkState)  List Of Network States
 
-  * Creation      (time.Timer) 		  Creation Date
+  * Creation      (time.Time ) 		  Creation Date
 
-  * Modified      (time.Timer) 		  Last Modification Date
+  * Modified      (time.Time ) 		  Last Modification Date
 
   * Created       (bool)            Creation State
   
@@ -410,8 +410,8 @@ type DomainState struct {
 	Id            string     			`json:"Id",xml:"Id"`
 	DomainId      string          `json:"DomainId",xml:"DomainId"`
 	NetworkStates []NetworkState  `json:"NetworkStates",xml:"NetworkStates"`
-	Creation      time.Timer      `json:"Creation",xml:"Creation"`
-	Modified 		  time.Timer      `json:"Modified",xml:"Modified"`
+	Creation      time.Time       `json:"Creation",xml:"Creation"`
+	Modified 		  time.Time       `json:"Modified",xml:"Modified"`
 	Created       bool            `json:"Created",xml:"Created"`
 	Altered       bool            `json:"Altered",xml:"Altered"`
 	Errors        bool            `json:"Errors",xml:"Errors"`
@@ -425,9 +425,9 @@ Describe State, contains
 
   * DomainStates  ([]DomainState)   List Of Domain States
 
-  * Creation      (time.Timer) 		  Creation Date
+  * Creation      (time.Time ) 		  Creation Date
 
-  * Modified      (time.Timer) 		  Last Modification Date
+  * Modified      (time.Time ) 		  Last Modification Date
 
   * Created       (bool)           Creation State
 	
@@ -440,8 +440,8 @@ Describe State, contains
 type State struct {
 	Id            string     			`json:"Id",xml:"Id"`
 	DomainStates  []DomainState   `json:"DomainStates",xml:"DomainStates"`
-	Creation      time.Timer      `json:"Creation",xml:"Creation"`
-	Modified 		  time.Timer      `json:"Modified",xml:"Modified"`
+	Creation      time.Time       `json:"Creation",xml:"Creation"`
+	Modified 		  time.Time       `json:"Modified",xml:"Modified"`
 	Created       bool            `json:"Created",xml:"Created"`
 	Altered       bool            `json:"Altered",xml:"Altered"`
 	Errors        bool            `json:"Errors",xml:"Errors"`
@@ -461,9 +461,9 @@ Describe Entire Infrastructure, contains
 
   * State        (State)     	Creation State
 
-  * Creation     (time.Timer) Creation Date
+  * Creation     (time.Time ) Creation Date
 
-  * Modified     (time.Timer) Last Modification Date
+  * Modified     (time.Time ) Last Modification Date
 
   * Created      (bool)      	Creation State
 	
@@ -479,8 +479,8 @@ type Infrastructure struct {
 	Name     		string  					`json:"Name",xml:"Name"`
 	Domains     []Domain  				`json:"Domains",xml:"Domains"`
 	State       State     				`json:"State",xml:"State"`
-	Creation    time.Timer      	`json:"Creation",xml:"Creation"`
-	Modified 		time.Timer      	`json:"Modified",xml:"Modified"`
+	Creation    time.Time       	`json:"Creation",xml:"Creation"`
+	Modified 		time.Time       	`json:"Modified",xml:"Modified"`
 	Created     bool      				`json:"Created",xml:"Created"`
 	Altered     bool      				`json:"Altered",xml:"Altered"`
 	Errors      bool      				`json:"Errors",xml:"Errors"`

@@ -3,6 +3,7 @@ package vmio
 import (
 	"vmkube/model"
 	"errors"
+	"vmkube/utils"
 )
 
 type ProjectInfo struct {
@@ -42,9 +43,9 @@ func (info *ProjectInfo) Import(file string, format string) error {
 
 func (info *ProjectInfo) Export(prettify bool) ([]byte, error) {
 	if "json" == info.Format {
-		return  GetJSONFromObj(info.Project, prettify)
+		return  utils.GetJSONFromElem(info.Project, prettify)
 	} else if "xml" == info.Format {
-		return  GetXMLFromObj(info.Project, prettify)
+		return  utils.GetXMLFromElem(info.Project, prettify)
 	} else {
 		return  []byte{}, errors.New("Format type : "+info.Format+" not known ...")
 	}

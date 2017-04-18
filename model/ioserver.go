@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
-	"vmkube/vmio"
+	"vmkube/utils"
 )
 
 func (element *Instance) Validate() []error {
@@ -43,7 +43,7 @@ func (element *Instance) Validate() []error {
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList
@@ -128,7 +128,7 @@ func (element *ProjectServer) Validate() []error {
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,vmio.GetJSONFromObj(element, true))
+		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList

@@ -57,10 +57,12 @@ func CmdParseElement(key string, value string) (CmdElementType, error) {
 			return  SNetwork, nil
 		case "domain":
 			return  SDomain, nil
-		case "infrastructure":
-			return  SInfrastructure, nil
+		case "project":
+			return  SProject, nil
+		case "plan":
+			return  SPlan, nil
 		default:
-			return  NoElement, errors.New("Element '"+value+"' is not an infratructure element. Available ones : Server, Cloud-Server, Network, Domain, Infrastructure")
+			return  NoElement, errors.New("Element '"+value+"' is not an infratructure element. Available ones : Server, Cloud-Server, Network, Domain, Plan, Project")
 
 		}
 	} else {
@@ -87,10 +89,10 @@ func PrintCommandHelper(command	string, subCommand string) {
 	if "" !=  strings.TrimSpace(strings.ToLower(subCommand)) && "help" !=  strings.TrimSpace(strings.ToLower(subCommand)) {
 		fmt.Fprintln(os.Stdout, "Selected Sub-Command: " + subCommand)
 		for _,option := range helper.SubCommands {
-			if option[0] == strings.TrimSpace(strings.ToLower(subCommand)) {
-				fmt.Fprintln(os.Stdout, "%s\t%s",  utils.StrPad(option[0], 45), option[1])
+			//if option[0] == strings.TrimSpace(strings.ToLower(subCommand)) {
+				fmt.Fprintf(os.Stdout, "%s\t%s\n",  utils.StrPad(option[0], 45), option[1])
 				found = true
-			}
+			//}
 		}
 		if ! found  {
 			fmt.Fprintln(os.Stdout, "Sub-Command Not found!!")
