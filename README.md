@@ -29,7 +29,7 @@ Provided features:
 
 * Custom Deployment plan with main providers (VMKubelet, Ansible, Helm, ...)
 
-* Digital Control and multi vendor (Server and Cloud-Servers can be defined)
+* Digital Control and multi vendor instances (Server and Cloud-Servers can be defined)
 
 * Multiple project/infrastructure information export formats
 
