@@ -2,7 +2,6 @@ package vmio
 
 import (
 	"vmkube/model"
-	"os"
 	"errors"
 )
 
@@ -10,6 +9,7 @@ type InfrastructureInfo struct {
 	InfrastructureId 		string
 	InfrastructureName 	string
 	Format  						string
+	ProjectId 					string
 }
 
 type InfrastructureStream interface {
@@ -22,18 +22,18 @@ type InfrastructureStream interface {
 func (info *InfrastructureInfo) Read() (model.Infrastructure, error) {
 	var project model.Infrastructure
 	home := model.VMBaseFolder()
-	folder := home + "/metadata/" + info.InfrastructureId
-	os.MkdirAll(folder, 0666)
-	fileName := folder + "/project.ser"
+	folder := home + "/metadata/" + info.ProjectId
+	model.MakeFolderIfNotExists(folder)
+	fileName := folder + "/infrastructure.ser"
 	err := project.Load(fileName)
 	return  project, err
 }
 
 func (info *InfrastructureInfo) Write(project model.Infrastructure) bool {
 	home := model.VMBaseFolder()
-	folder := home + "/metadata/" + info.InfrastructureId
-	os.MkdirAll(folder, 0666)
-	fileName := folder + "/project.ser"
+	folder := home + "/metadata/" + info.ProjectId
+	model.MakeFolderIfNotExists(folder)
+	fileName := folder + "/infrastructure.ser"
 	err := project.Save(fileName)
 	return err == nil
 }

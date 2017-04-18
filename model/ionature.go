@@ -12,11 +12,17 @@ func existsFile(file string) bool {
 	return  err == nil
 }
 
-func deleteIfExists(file string) {
+func deleteIfExists(file string) error {
 	_,err := os.Stat(file)
 	if err != nil {
-		os.Remove(file)
+		return os.Remove(file)
 	}
+	return  err
+}
+
+func MakeFolderIfNotExists(folder string) error {
+	err := os.MkdirAll(folder, 0666)
+	return  err
 }
 
 type IONature interface {

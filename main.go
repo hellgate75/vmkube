@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"vmkube/action"
 	"strings"
-	"vmkube/model"
-	"vmkube/procedures"
 )
 
 func init() {

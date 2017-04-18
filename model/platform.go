@@ -432,6 +432,8 @@ Describe Entire Infrastructure, contains
 
 	* Id          (string)      Infrastructure Unique Identifier
 
+	* ProjectId   (string)      Related Project Unique Identifier
+
   * Name      	(string)  	 	Infrastructure Name
 
   * Domains      ([]Domain)  	List Of Domains
@@ -452,6 +454,7 @@ Describe Entire Infrastructure, contains
 */
 type Infrastructure struct {
 	Id          string     				`json:"Id",xml:"Id"`
+	ProjectId   string     				`json:"ProjectId",xml:"ProjectId"`
 	Name     		string  					`json:"Name",xml:"Name"`
 	Domains     []Domain  				`json:"Domains",xml:"Domains"`
 	State       State     				`json:"State",xml:"State"`
