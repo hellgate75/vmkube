@@ -15,7 +15,7 @@ When you close the project, you are ready to delete it or, alternatively, to bui
 
 ## What is provided?
 
-Provided fetures:
+Provided features:
 
 * Project definition procedures
 
