@@ -77,7 +77,7 @@ func (element *CloudInstance) Save(file string) error {
 	if err != nil {
 		return  err
 	}
-	deleteIfExists(file)
+	DeleteIfExists(file)
 	value := base64.RawStdEncoding.EncodeToString(byteArray)
 	newBytes := []byte(value)
 	err = ioutil.WriteFile(file, newBytes , 0666)
@@ -149,7 +149,7 @@ func (element *ProjectCloudServer) Save(file string) error {
 	if err != nil {
 		return  err
 	}
-	deleteIfExists(file)
+	DeleteIfExists(file)
 	value := base64.RawStdEncoding.EncodeToString(byteArray)
 	newBytes := []byte(value)
 	err = ioutil.WriteFile(file, newBytes , 0666)

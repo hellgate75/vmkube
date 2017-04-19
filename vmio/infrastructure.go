@@ -4,6 +4,7 @@ import (
 	"vmkube/model"
 	"errors"
 	"vmkube/utils"
+	"os"
 )
 
 type InfrastructureInfo struct {
@@ -11,29 +12,21 @@ type InfrastructureInfo struct {
 	Infra			model.Infrastructure
 }
 
-type InfrastructureStream interface {
-	Read()		error
-	Write() 	bool
-	Export(prettify bool) 	([]byte, error)
-	Import(file string, format string) 	error
-}
-
 func (info *InfrastructureInfo) Read() error {
-	home := model.VMBaseFolder()
-	folder := home + "/metadata/" + info.Infra.ProjectId
-	model.MakeFolderIfNotExists(folder)
-	fileName := folder + "/infrastructure.ser"
+	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
+	model.MakeFolderIfNotExists(baseFolder)
+	fileName := baseFolder + string(os.PathSeparator) + "." + info.Infra.ProjectId + ".infrastructure"
 	err := info.Infra.Load(fileName)
 	return  err
 }
 
-func (info *InfrastructureInfo) Write() bool {
-	home := model.VMBaseFolder()
-	folder := home + "/metadata/" + info.Infra.ProjectId
-	model.MakeFolderIfNotExists(folder)
-	fileName := folder + "/infrastructure.ser"
+func (info *InfrastructureInfo) Write() error {
+	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
+	model.MakeFolderIfNotExists(baseFolder)
+	fileName := baseFolder + string(os.PathSeparator) + "." + info.Infra.ProjectId + ".infrastructure"
+	model.DeleteIfExists(fileName)
 	err := info.Infra.Save(fileName)
-	return err == nil
+	return err
 }
 
 func (info *InfrastructureInfo) Import(file string, format string) error {

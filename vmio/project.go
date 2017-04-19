@@ -4,6 +4,7 @@ import (
 	"vmkube/model"
 	"errors"
 	"vmkube/utils"
+	"os"
 )
 
 type ProjectInfo struct {
@@ -11,29 +12,21 @@ type ProjectInfo struct {
 	Format  			string
 }
 
-type ProjectStream interface {
-	Read()		error
-	Write() 	bool
-	Export(prettify bool) 	([]byte, error)
-	Import(file string, format string) 	error
-}
-
 func (info *ProjectInfo) Read() error {
-	home := model.VMBaseFolder()
-	folder := home + "/metadata/" + info.Project.Id
-	model.MakeFolderIfNotExists(folder)
-	fileName := folder + "/project.ser"
+	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
+	model.MakeFolderIfNotExists(baseFolder)
+	fileName := baseFolder + string(os.PathSeparator) + "." + info.Project.Id + ".project"
 	err := info.Project.Load(fileName)
 	return err
 }
 
-func (info *ProjectInfo) Write() bool {
-	home := model.VMBaseFolder()
-	folder := home + "/metadata/" + info.Project.Id
-	model.MakeFolderIfNotExists(folder)
-	fileName := folder + "/project.ser"
+func (info *ProjectInfo) Write() error {
+	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
+	model.MakeFolderIfNotExists(baseFolder)
+	fileName := baseFolder + string(os.PathSeparator) + "." + info.Project.Id + ".project"
+	model.DeleteIfExists(fileName)
 	err := info.Project.Save(fileName)
-	return err == nil
+	return err
 }
 
 func (info *ProjectInfo) Import(file string, format string) error {

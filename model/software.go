@@ -23,14 +23,14 @@ func Homefolder() string {
 	usr, err := user.Current()
 	if err != nil {
 		log.Fatal( err )
-		return "/temp"
+		return  string(os.PathSeparator) + "temp"
 	}
 	return usr.HomeDir
 }
 
 func VMBaseFolder() string {
 	home := Homefolder()
-	return home + "/.vmkube"
+	return home + string(os.PathSeparator) + ".vmkube"
 }
 
 type MachineActions interface {
@@ -41,15 +41,15 @@ type MachineActions interface {
 
 func (isoTemplate *MachineISO)	Path(version string) string {
 	home := VMBaseFolder()
-	folder := home + "/images/" + isoTemplate.FolderName
-	fileName := folder + "/" + isoTemplate.FinalNamePrefix + version + isoTemplate.FinalNameSuffix
+	folder := home + string(os.PathSeparator) + "images" + string(os.PathSeparator) + isoTemplate.FolderName
+	fileName := folder + string(os.PathSeparator) + isoTemplate.FinalNamePrefix + version + isoTemplate.FinalNameSuffix
 	return fileName
 }
 
 func (isoTemplate *MachineISO)	Check(version string) bool {
 	home := VMBaseFolder()
-	folder := home + "/images/" + isoTemplate.FolderName
-	fileName := folder + "/" + isoTemplate.FinalNamePrefix + version + isoTemplate.FinalNameSuffix
+	folder := home + string(os.PathSeparator) + "images" + string(os.PathSeparator) + isoTemplate.FolderName
+	fileName := folder + string(os.PathSeparator) + isoTemplate.FinalNamePrefix + version + isoTemplate.FinalNameSuffix
 	_, error := os.Stat(fileName)
 	return ! os.IsNotExist(error)
 }
@@ -57,9 +57,9 @@ func (isoTemplate *MachineISO)	Check(version string) bool {
 func (isoTemplate *MachineISO)	Download(version string) bool {
 	url := isoTemplate.BaseURL + version + isoTemplate.ISOName
 	home := VMBaseFolder()
-	folder := home + "/images/" + isoTemplate.FolderName
+	folder := home + string(os.PathSeparator) + "images" + string(os.PathSeparator) + isoTemplate.FolderName
 	os.MkdirAll(folder, 0666)
-	fileName := folder + "/" + isoTemplate.FinalNamePrefix + version + isoTemplate.FinalNameSuffix
+	fileName := folder + string(os.PathSeparator) + isoTemplate.FinalNamePrefix + version + isoTemplate.FinalNameSuffix
 	fmt.Printf("Downloading %s to %s\n", url, fileName)
 
 	// TODO: check file existence first with io.IsExist

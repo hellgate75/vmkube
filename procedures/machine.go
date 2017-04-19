@@ -179,7 +179,7 @@ func CreateServer(server model.ProjectServer) ([]byte, error) {
 		}
 	}
 	command = append( command,  "--"+strings.ToLower(driver)+"-boot2docker-url")
-	command = append( command,  "file://" + path)
+	command = append( command,  "file://" + strings.Replace(path, string(os.PathSeparator), "/", len(path)))
 	command = append( command,  name + "-" + uuid)
 	
 	fmt.Printf("Running Create for hostname: %s  - Roles: %s  - command : '%s'\n", hostname, strings.Join(roles, ","),strings.Join(command, " "))

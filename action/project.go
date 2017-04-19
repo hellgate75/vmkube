@@ -177,6 +177,18 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 
 func (request *CmdRequest) ImportProject() (Response, error) {
 	response := Response{}
+	//Name := ""
+	//File := ""
+	//Format := ""
+	//FullImport := true
+	//ElementType := ""
+	//for _,option := range request.Arguments.Options {
+	//	if "name" == CorrectInput(option[0]) {
+	//		Name = CorrectInput(option[1])
+	//	} else if "elem-type" == CorrectInput(option[0]) {
+	//		ElementType = option[1]
+	//	}
+	//}
 	return  response, nil
 }
 

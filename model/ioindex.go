@@ -71,7 +71,7 @@ func (element *ProjectsDescriptor) Save(file string) error {
 	if err != nil {
 		return  err
 	}
-	deleteIfExists(file)
+	DeleteIfExists(file)
 	value := base64.RawStdEncoding.EncodeToString(byteArray)
 	newBytes := []byte(value)
 	err = ioutil.WriteFile(file, newBytes , 0666)
@@ -134,7 +134,7 @@ func (element *ProjectsIndex) Save(file string) error {
 	if err != nil {
 		return  err
 	}
-	deleteIfExists(file)
+	DeleteIfExists(file)
 	value := base64.RawStdEncoding.EncodeToString(byteArray)
 	newBytes := []byte(value)
 	err = ioutil.WriteFile(file, newBytes , 0666)

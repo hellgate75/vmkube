@@ -257,11 +257,15 @@ func InitHelpers() {
 	DefineProject.Options = append(DefineProject.Options,
 		[]string{"input-format", " <file format>", "(json|xml) Format used to define the project (default: json)", "false"},
 	)
-
+	
 	DefineProject.Options = append(DefineProject.Options,
-		[]string{"force", " bool", "Flag defining to force define project, no confirmation will be prompted", "false"},
+		[]string{"force", " bool", "Flag defining to force define project, overwriting existing and closed one, fails in case of built infrastructures, no confirmation will be prompted", "false"},
 	)
-
+	
+	DefineProject.Options = append(DefineProject.Options,
+		[]string{"destroy-infra", " bool", "Flag defining to force destroy infrastructure if exists or elsewise fails in case of built project", "false"},
+	)
+	
 	//Build Project
 	BuildProject.Options = append(BuildProject.Options,
 		[]string{"name", " <project name>", "Project name", "true"},
@@ -344,7 +348,7 @@ func InitHelpers() {
 	DeleteProject.Options = append(DeleteProject.Options,
 		[]string{"force", " bool", "Flag defining to force delete, no confirmation will be prompted", "false"},
 	)
-
+	
 	//Import Project
 	ImportProject.Options = append(ImportProject.Options,
 		[]string{"name", " <project name>", "New project name", "true"},
@@ -357,23 +361,35 @@ func InitHelpers() {
 	ImportProject.Options = append(ImportProject.Options,
 		[]string{"format", " <file format>", "(json|xml) Format used to import project (default: json)", "true"},
 	)
-
+	
 	ImportProject.Options = append(ImportProject.Options,
-		[]string{"full-import", " <boolean>", "Flag used to describe a full import (default: true)", "false"},
+		[]string{"elem-type", " <infra element type>", "Type of entity to import in the project (allowed: Server, Cloud-Server, Network, Domain, Project,...)", "true"},
 	)
 
 	ImportProject.Options = append(ImportProject.Options,
-		[]string{"domain-list", " <list of domain names>", "List of domain names to import (valid if full-import = false)", "false"},
+		[]string{"full-import", " <boolean>", "Flag used to describe a full import (default: true), when true element list import will be ignored", "false"},
+	)
+	
+	ImportProject.Options = append(ImportProject.Options,
+		[]string{"import-domain-list", "<boolean>", "Import list of Domains in the project (valid if full-import = false)", "false"},
 	)
 
 	ImportProject.Options = append(ImportProject.Options,
-		[]string{"network-list", " <list of network names>", "List of network names to import (valid if full-import = false)", "false"},
+		[]string{"import-network-list", "<boolean>", "Import list of Networks in the project (valid if full-import = false)", "false"},
 	)
 
 	ImportProject.Options = append(ImportProject.Options,
-		[]string{"server-list", " <list of server names>", "List of server names to import (valid if full-import = false)", "false"},
+		[]string{"import-server-list", "<boolean>", "Import list of Local Servers in the project (valid if full-import = false)", "false"},
 	)
-
+	
+	ImportProject.Options = append(ImportProject.Options,
+		[]string{"cloud-server-list", "<boolean>", "Import list of Cloud-Servers in the project (valid if full-import = false)", "false"},
+	)
+	
+	ImportProject.Options = append(ImportProject.Options,
+		[]string{"plan-list", "<boolean>", "Import list of Deployment Plans in the project (valid if full-import = false)", "false"},
+	)
+	
 	//Export Project
 	ExportProject.Options = append(ExportProject.Options,
 		[]string{"name", " <project name>", "Project name", "true"},
