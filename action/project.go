@@ -75,7 +75,7 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 			}
 		}
 		if TypeVal == "" {
-			fmt.Printf( "Element Type not provided ...\n")
+			fmt.Printf("Element Type not provided ...\n")
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 			return Response{
 				Message: "",
@@ -89,7 +89,7 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 							if "json" == Sample {
 								bytes, err := utils.GetJSONFromElem(define.Sample, true)
 								if err != nil {
-									fmt.Printf( "Error printing in output format : %s\n", Sample)
+									fmt.Printf("Error printing in output format : %s\n", Sample)
 									PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 									return Response{
 										Message: "",
@@ -102,7 +102,7 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 							} else {
 								bytes, err := utils.GetXMLFromElem(define.Sample, true)
 								if err != nil {
-									fmt.Printf( "Error printing in output format : %s\n", Sample)
+									fmt.Printf("Error printing in output format : %s\n", Sample)
 									PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 									return Response{
 										Message: "",
@@ -115,13 +115,13 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 							}
 						}
 					}
-					fmt.Printf( "Unable to find Type : %s\n",TypeVal)
+					fmt.Printf("Unable to find Type : %s\n",TypeVal)
 					PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 					return Response{
 						Message: "",
 						Status: true,}, nil
 				}
-				fmt.Printf( "Wrong output format : %s\n", Sample)
+				fmt.Printf("Wrong output format : %s\n", Sample)
 				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 				return Response{
 					Message: "",
@@ -138,14 +138,14 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 								Message: "",
 								Status: true,}, nil
 						}
-						fmt.Printf( "Unable to describe Type : %s\n",TypeVal)
+						fmt.Printf("Unable to describe Type : %s\n",TypeVal)
 						PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 						return Response{
 							Message: "",
 							Status: true,}, nil
 					}
 				}
-				fmt.Printf( "Unable to find Type : %s\n",TypeVal)
+				fmt.Printf("Unable to find Type : %s\n",TypeVal)
 				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 				return Response{
 					Message: "",
