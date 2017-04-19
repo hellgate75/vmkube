@@ -81,10 +81,38 @@ func ImportProject(file string, format string) (model.Project, error) {
 	return project, err
 }
 
+func ImportUserProject(file string, format string) (model.Project, error) {
+	imported := model.ProjectImport{
+	}
+	info := ProjectImportInfo{
+		Format: format,
+		ProjectImport: imported,
+	}
+	err := info.Import(file, format)
+	if err != nil {
+		return err
+	}
+	project := model.ProjectFromImport(imported)
+	return project, err
+}
+
 func ExportProject(project model.Project, file string, format string, prettify bool) error {
 	info := ProjectInfo{
 		Format: format,
 		Project: project,
+	}
+	bytes, err := info.Export(prettify)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(file, bytes, 0644)
+	return err
+}
+
+func ExportUserProject(project model.Project, file string, format string, prettify bool) error {
+	info := ProjectImportInfo{
+		Format: format,
+		ProjectImport: model.ProjectToImport(project),
 	}
 	bytes, err := info.Export(prettify)
 	if err != nil {

@@ -32,6 +32,14 @@ func ProjectFromImport(imported ProjectImport) Project {
 	}
 }
 
+func ProjectToImport(project Project) ProjectImport {
+	return ProjectImport{
+		Id: project.Id,
+		Name: project.Name,
+		Domains: project.Domains,
+	}
+}
+
 type FieldData struct {
 	JName       string
 	XName       string
