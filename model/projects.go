@@ -106,8 +106,8 @@ type ProjectServer struct {
 	Memory      				int     `json:"Memory",xml:"Memory",mandatory:"no",descr:"Memory Size MB",type:"integer"`
 	Cpus        				int     `json:"Cpus",xml:"Cpus",mandatory:"no",descr:"Number of Logical Cores",type:"integer"`
 	DiskSize 						int 		`json:"DiskSize",xml:"DiskSize",mandatory:"no",descr:"Dimension of disk root (in GB)",type:"integer"`
-	Swarm   ProjectSwarmOpt     `json:"Swarm",xml:"Swarm",mandatory:"no",descr:"Swarm Options",type:"object Swarm list"`
-	Engine 	ProjectEngineOpt    `json:"Engine",xml:"Engine",mandatory:"no",descr:"Engine Options",type:"object Engine list"`
+	Swarm   ProjectSwarmOpt     `json:"Swarm",xml:"Swarm",mandatory:"no",descr:"Swarm Options",type:"object Swarm"`
+	Engine 	ProjectEngineOpt    `json:"Engine",xml:"Engine",mandatory:"no",descr:"Engine Options",type:"object Engine"`
 	OSType    			string      `json:"OSType",xml:"OSType",mandatory:"yes",descr:"Machine OS Type (ref: https://docs.docker.com/machine/drivers/os-base/)",type:"text"`
 	OSVersion 			string      `json:"OSVersion",xml:"OSVersion",mandatory:"yes",descr:"Machine OS Version (ref: https://docs.docker.com/machine/drivers/os-base/)",type:"text"`
 	NoShare     			bool      `json:"NoShare",xml:"NoShare",mandatory:"no",descr:"Mount or not home as shared folder",type:"boolean"`
@@ -353,7 +353,7 @@ Describe Project State in Index, contains
 
 	* Open       	(bool)      				Project Writable State
 
-  * Active      (bool)						  Active State of Project
+  * Active      (bool)						  Active State of Infrastructure
 
   * Synced      (bool)						  Sync State of Project
 */
@@ -362,7 +362,7 @@ type ProjectsDescriptor struct {
 	Name     		string  					`json:"Name",xml:"Name",mandatory:"yes",descr:"Project Name",type:"text"`
 	InfraId     string            `json:"InfraId",xml:"InfraId",mandatory:"yes",descr:"Infrastructure Unique Identifier",type:"text"`
 	InfraName   string  					`json:"InfraName",xml:"InfraName",mandatory:"yes",descr:"Infrastructure Project Name",type:"text"`
-	Active      bool  						`json:"Active",xml:"Active",mandatory:"yes",descr:"Active State of Project",type:"boolean"`
+	Active      bool  						`json:"Active",xml:"Active",mandatory:"yes",descr:"Active State of Infrastructure",type:"boolean"`
 	Open      	bool  						`json:"Open",xml:"Open",mandatory:"yes",descr:"Project Writable State",type:"boolean"`
 	Synced      bool  						`json:"Synced",xml:"Synced",mandatory:"no",descr:"Sync State of Project",type:"boolean"`
 }
