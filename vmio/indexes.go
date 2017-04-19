@@ -15,9 +15,15 @@ type ProjectIndexInfo struct {
 
 func (info *ProjectIndexInfo) Read() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
-	model.MakeFolderIfNotExists(baseFolder)
+	err := model.MakeFolderIfNotExists(baseFolder)
+	if err != nil {
+		return err
+	}
 	fileName := baseFolder + string(os.PathSeparator) + ".vmkubeindex"
-	err := info.Index.Load(fileName)
+	if _,err = os.Stat(fileName); err!=nil {
+		info.Write()
+	}
+	err = info.Index.Load(fileName)
 	return  err
 }
 

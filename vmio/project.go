@@ -16,6 +16,9 @@ func (info *ProjectInfo) Read() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
 	fileName := baseFolder + string(os.PathSeparator) + "." + info.Project.Id + ".project"
+	if _,err := os.Stat(fileName); err!=nil {
+		info.Write()
+	}
 	err := info.Project.Load(fileName)
 	return err
 }

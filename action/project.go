@@ -52,7 +52,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		Status: false,
 		Message: "Not Implemented",
 	}
-	return  response, errors.New("Unable to executore task")
+	return  response, errors.New("Unable to execute task")
 }
 
 func (request *CmdRequest) AlterProject() (Response, error) {
@@ -60,7 +60,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 		Status: false,
 		Message: "Not Implemented",
 	}
-	return  response, errors.New("Unable to executore task")
+	return  response, errors.New("Unable to execute task")
 }
 
 func (request *CmdRequest) InfoProject() (Response, error) {
@@ -172,15 +172,40 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 		Status: false,
 		Message: "Not Implemented",
 	}
-	return  response, errors.New("Unable to executore task")
+	return  response, errors.New("Unable to execute task")
 }
 
 func (request *CmdRequest) ListProjects() (Response, error) {
-	response := Response{
-		Status: false,
-		Message: "Not Implemented",
+	indexes, error := vmio.LoadIndex()
+	if error != nil {
+		response := Response{
+			Status: false,
+			Message: error.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
 	}
-	return  response, errors.New("Unable to executore task")
+	if len(indexes.Projects) > 0 {
+		fmt.Printf("%s  %s  %s  %s  %s\n", utils.StrPad("Project Id", 20), utils.StrPad("Project Name", 20), utils.StrPad("Open", 4), utils.StrPad("Infrastructure Name", 20), utils.StrPad("Active", 6))
+	} else {
+		fmt.Printf("No Projects found\n")
+	}
+	for _,index := range indexes.Projects {
+		open := "no"
+		active := "no"
+		if index.Open {
+			open = "yes"
+		}
+		if index.Active {
+			active = "yes"
+		}
+		fmt.Printf("%s  %s  %s  %s  %s\n", utils.StrPad(index.Id, 20), utils.StrPad(index.Name, 20), utils.StrPad(" "+open, 4), utils.StrPad(index.InfraName, 20), utils.StrPad("  "+active, 6))
+		
+	}
+	response := Response{
+		Status: true,
+		Message: "Success",
+	}
+	return  response, nil
 }
 
 func (request *CmdRequest) StatusProject() (Response, error) {

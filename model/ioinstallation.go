@@ -69,7 +69,7 @@ func (element *Installation) Save(file string) error {
 	DeleteIfExists(file)
 	value := base64.RawStdEncoding.EncodeToString(byteArray)
 	newBytes := []byte(value)
-	err = ioutil.WriteFile(file, newBytes , 0666)
+	err = ioutil.WriteFile(file, newBytes , 0777)
 	return  err
 }
 
@@ -132,7 +132,7 @@ func (element *InstallationPlan) Save(file string) error {
 	DeleteIfExists(file)
 	value := base64.RawStdEncoding.EncodeToString(byteArray)
 	newBytes := []byte(value)
-	err = ioutil.WriteFile(file, newBytes , 0666)
+	err = ioutil.WriteFile(file, newBytes , 0777)
 	return  err
 }
 

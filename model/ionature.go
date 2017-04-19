@@ -21,7 +21,7 @@ func DeleteIfExists(file string) error {
 }
 
 func MakeFolderIfNotExists(folder string) error {
-	err := os.MkdirAll(folder, 0666)
+	err := os.MkdirAll(folder, 0777)
 	return  err
 }
 
@@ -34,7 +34,7 @@ type IONature interface {
 
 func GetLockFile(id string) string {
 	folder := VMBaseFolder() + string(os.PathSeparator) + ".lock"
-	os.MkdirAll(folder, 0666)
+	os.MkdirAll(folder, 0777)
 	return folder + string(os.PathSeparator) + strings.Replace(id, "-", "_", len(id)) + ".lock"
 
 }
@@ -64,7 +64,7 @@ func readLocks(projectId string) ([]string, error) {
 func addLock(projectId string, newline string) error {
 	fileName := GetLockFile(projectId)
 	DeleteIfExists(fileName)
-	file, err := os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
+	file, err := os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
 		return err
 	}

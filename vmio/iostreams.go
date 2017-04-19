@@ -46,7 +46,7 @@ func ExportIndex(index model.ProjectsIndex, file string, format string, prettify
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(file, bytes, 0644)
+	err = ioutil.WriteFile(file, bytes, 0777)
 	return err
 }
 
@@ -105,7 +105,7 @@ func ExportProject(project model.Project, file string, format string, prettify b
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(file, bytes, 0644)
+	err = ioutil.WriteFile(file, bytes, 0777)
 	return err
 }
 
@@ -118,7 +118,7 @@ func ExportUserProject(project model.Project, file string, format string, pretti
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(file, bytes, 0644)
+	err = ioutil.WriteFile(file, bytes, 0777)
 	return err
 }
 
@@ -162,6 +162,6 @@ func ExportInfrastructure(infrastructure model.Infrastructure, file string, form
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(file, bytes, 0644)
+	err = ioutil.WriteFile(file, bytes, 0777)
 	return err
 }

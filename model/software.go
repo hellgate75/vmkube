@@ -58,7 +58,7 @@ func (isoTemplate *MachineISO)	Download(version string) bool {
 	url := isoTemplate.BaseURL + version + isoTemplate.ISOName
 	home := VMBaseFolder()
 	folder := home + string(os.PathSeparator) + "images" + string(os.PathSeparator) + isoTemplate.FolderName
-	os.MkdirAll(folder, 0666)
+	os.MkdirAll(folder, 0777)
 	fileName := folder + string(os.PathSeparator) + isoTemplate.FinalNamePrefix + version + isoTemplate.FinalNameSuffix
 	fmt.Printf("Downloading %s to %s\n", url, fileName)
 

@@ -3,6 +3,8 @@ package action
 import (
 	"fmt"
 	"errors"
+	"vmkube/utils"
+	"vmkube/vmio"
 )
 
 type InfrastructureActions interface {
@@ -48,7 +50,7 @@ func (request *CmdRequest) CreateInfra() (Response, error) {
 		Status: false,
 		Message: "Not Implemented",
 	}
-	return  response, errors.New("Unable to executore task")
+	return  response, errors.New("Unable to execute task")
 }
 
 func (request *CmdRequest) AlterInfra() (Response, error) {
@@ -56,7 +58,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 		Status: false,
 		Message: "Not Implemented",
 	}
-	return  response, errors.New("Unable to executore task")
+	return  response, errors.New("Unable to execute task")
 }
 
 func (request *CmdRequest) DeleteInfra() (Response, error) {
@@ -64,7 +66,7 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		Status: false,
 		Message: "Not Implemented",
 	}
-	return  response, errors.New("Unable to executore task")
+	return  response, errors.New("Unable to execute task")
 }
 
 func (request *CmdRequest) StartInfra() (Response, error) {
@@ -72,7 +74,7 @@ func (request *CmdRequest) StartInfra() (Response, error) {
 		Status: false,
 		Message: "Not Implemented",
 	}
-	return  response, errors.New("Unable to executore task")
+	return  response, errors.New("Unable to execute task")
 }
 
 func (request *CmdRequest) StopInfra() (Response, error) {
@@ -80,7 +82,7 @@ func (request *CmdRequest) StopInfra() (Response, error) {
 		Status: false,
 		Message: "Not Implemented",
 	}
-	return  response, errors.New("Unable to executore task")
+	return  response, errors.New("Unable to execute task")
 }
 
 func (request *CmdRequest) RestartInfra() (Response, error) {
@@ -88,15 +90,36 @@ func (request *CmdRequest) RestartInfra() (Response, error) {
 		Status: false,
 		Message: "Not Implemented",
 	}
-	return  response, errors.New("Unable to executore task")
+	return  response, errors.New("Unable to execute task")
 }
 
 func (request *CmdRequest) ListInfras() (Response, error) {
-	response := Response{
-		Status: false,
-		Message: "Not Implemented",
+	indexes, error := vmio.LoadIndex()
+	if error != nil {
+		response := Response{
+			Status: false,
+			Message: error.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
 	}
-	return  response, errors.New("Unable to executore task")
+	if len(indexes.Projects) > 0 {
+		fmt.Printf("%s  %s  %s\n", utils.StrPad("Infrastructure Id", 20), utils.StrPad("Infrastructure Name", 20), utils.StrPad("Active", 6))
+	} else {
+		fmt.Printf("No Infrastructures found\n")
+	}
+	for _,index := range indexes.Projects {
+		active := "no"
+		if index.Active {
+			active = "yes"
+		}
+		fmt.Printf("%s  %s  %s\n", utils.StrPad(index.InfraId, 20), utils.StrPad(index.InfraName, 20), utils.StrPad("  "+active, 6))
+		
+	}
+	response := Response{
+		Status: true,
+		Message: "Success",
+	}
+	return  response, nil
 }
 
 func (request *CmdRequest) StatusInfra() (Response, error) {
@@ -104,5 +127,5 @@ func (request *CmdRequest) StatusInfra() (Response, error) {
 		Status: false,
 		Message: "Not Implemented",
 	}
-	return  response, errors.New("Unable to executore task")
+	return  response, errors.New("Unable to execute task")
 }

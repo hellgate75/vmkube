@@ -16,6 +16,9 @@ func (info *InfrastructureInfo) Read() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
 	fileName := baseFolder + string(os.PathSeparator) + "." + info.Infra.ProjectId + ".infrastructure"
+	if _,err := os.Stat(fileName); err!=nil {
+		info.Write()
+	}
 	err := info.Infra.Load(fileName)
 	return  err
 }
