@@ -19,18 +19,22 @@ type MachineISO struct {
 	FinalNameSuffix	string `json:"filesuffix",xml:"filesuffix"`
 }
 
-func Homefolder() string {
+func HomeFolder() string {
 	usr, err := user.Current()
 	if err != nil {
 		log.Fatal( err )
-		return  string(os.PathSeparator) + "temp"
+		return  os.TempDir()
 	}
 	return usr.HomeDir
 }
 
 func VMBaseFolder() string {
-	home := Homefolder()
+	home := HomeFolder()
 	return home + string(os.PathSeparator) + ".vmkube"
+}
+
+func GetEmergencyFolder() string {
+	return HomeFolder()
 }
 
 type MachineActions interface {

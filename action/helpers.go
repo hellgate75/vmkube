@@ -259,11 +259,11 @@ func InitHelpers() {
 	)
 	
 	DefineProject.Options = append(DefineProject.Options,
-		[]string{"force", " bool", "Flag defining to force define project, overwriting existing and closed one, fails in case of built infrastructures, no confirmation will be prompted", "false"},
+		[]string{"force", " bool", "Flag used to force define project, overwriting existing and closed one, fails in case of built infrastructures (default: false), no confirmation will be prompted", "false"},
 	)
 	
 	DefineProject.Options = append(DefineProject.Options,
-		[]string{"destroy-infra", " bool", "Flag defining to force destroy infrastructure if exists or elsewise fails in case of built project", "false"},
+		[]string{"destroy-infra", " bool", "Flag defining to force destroy infrastructure if exists or elsewise fails in case of built project (default: false)", "false"},
 	)
 	
 	//Build Project
