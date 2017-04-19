@@ -114,7 +114,6 @@ func GetXMLFromElem(m interface{}, prettify bool) ([]byte, error) {
 	return xml.Marshal(m)
 }
 
-
 func ToMap(m interface{}) map[string]interface{} {
 	var inInterface interface{}
 	inrec, _ := json.Marshal(&m)

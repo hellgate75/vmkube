@@ -5,6 +5,7 @@ import (
 	"vmkube/vmio"
 	"os"
 	"vmkube/utils"
+	"vmkube/model"
 )
 
 type ProjectActions interface {
@@ -92,7 +93,7 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 									PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 									return Response{
 										Message: "",
-									  Status: true,}, nil
+										Status: true,}, nil
 								}
 								fmt.Fprintf(os.Stdout, "%s\n", bytes)
 								return Response{
@@ -121,6 +122,30 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 						Status: true,}, nil
 				}
 				fmt.Println(os.Stderr, "Wrong output format : "+Sample)
+				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+				return Response{
+					Message: "",
+					Status: true,}, nil
+			} else {
+				defines := vmio.ListProjectTypeDefines()
+				for _,define := range defines {
+					if define.Name == TypeVal {
+						fields, err := model.DescribeStruct(define.Sample)
+						if err == nil {
+							model.PrintFieldsHeader(len(fields)>0)
+							model.PrintFieldsRecursively(fields, 0)
+							return Response{
+								Message: "",
+								Status: true,}, nil
+						}
+						fmt.Println(os.Stderr, "Unable to describe Type : "+TypeVal)
+						PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+						return Response{
+							Message: "",
+							Status: true,}, nil
+					}
+				}
+				fmt.Println(os.Stderr, "Unable to find Type : "+TypeVal)
 				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 				return Response{
 					Message: "",

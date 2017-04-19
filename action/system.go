@@ -146,7 +146,9 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 						}
 						if passed  {
 							ArgCmd.Options = options
-							fmt.Fprintf(os.Stdout, "Executing command %s ...\n", command)
+							if "help" != command && "info-project" != command {
+								fmt.Fprintf(os.Stdout, "Executing command %s ...\n", command)
+							}
 							return  true
 						} else  {
 							fmt.Fprintln(os.Stderr, "One or more options parse failed!!")
@@ -203,8 +205,10 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 					}
 					if passed  {
 						ArgCmd.Options = options
-						fmt.Fprintf(os.Stdout, "Executing command %s ...\n", command)
-						time.Sleep(100 * time.Millisecond)
+						if "help" != command && "info-project" != command {
+							fmt.Fprintf(os.Stdout, "Executing command %s ...\n", command)
+							time.Sleep(100 * time.Millisecond)
+						}
 						return  true
 					} else  {
 						fmt.Fprintln(os.Stderr, "Error: One or more options parse failed!!")
@@ -213,8 +217,10 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 						return  false
 					}
 				}
-				fmt.Fprintf(os.Stdout, "Executing command %s ...\n", command)
-				time.Sleep(100 * time.Millisecond)
+				if "help" != command && "info-project" != command {
+					fmt.Fprintf(os.Stdout, "Executing command %s ...\n", command)
+					time.Sleep(100 * time.Millisecond)
+				}
 				return  true
 			} else if len(args) >= 1 {
 				fmt.Fprintln(os.Stderr, "Error: Unable to parse Sub-Command...")
