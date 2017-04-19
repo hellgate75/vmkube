@@ -209,8 +209,88 @@ func (request *CmdRequest) ListProjects() (Response, error) {
 }
 
 func (request *CmdRequest) StatusProject() (Response, error) {
-	response := Response{}
-	return  response, nil
+	Name := ""
+	for _,option := range request.Arguments.Options {
+		if "name" == CorrectInput(option[0]) {
+			Name = option[1]
+			break
+		}
+	}
+	if Name == "" {
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		return Response{
+			Message: "Project Name not provided",
+			Status: false,},errors.New("Unable to execute task")
+	}
+	descriptor, err := vmio.GetProjectDescriptor(Name)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	project, err := vmio.LoadProject(descriptor.Id)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	open := "no"
+	if project.Open {
+		open = "yes"
+	}
+	errors := "no"
+	if project.Errors {
+		errors = "yes"
+	}
+	fmt.Printf("Id: %s\nProject: %s\nOpen: %s\n", project.Id,project.Name, open)
+	fmt.Printf("Created : %d-%02d-%02d %02d:%02d:%02d\n",
+		project.Created.Year(), project.Created.Month(), project.Created.Day(),
+		project.Created.Hour(), project.Created.Minute(), project.Created.Second())
+	fmt.Printf("Modified : %d-%02d-%02d %02d:%02d:%02d\n",
+		project.Modified.Year(), project.Modified.Month(), project.Modified.Day(),
+		project.Modified.Hour(), project.Modified.Minute(), project.Modified.Second())
+	fmt.Printf("Errors: %s\nLast Message: %s\n", errors,project.LastMessage)
+	fmt.Printf("Domains: %d\n", len(project.Domains))
+	for _,domain := range project.Domains {
+		num, options := vmio.StripOptions(domain.Options)
+		fmt.Printf("Domain: %s (Id: %s) - Options [%d] :%s\n", domain.Name, domain.Id, num, options)
+		fmt.Printf("Networks: %d\n", len(domain.Networks))
+		for _,network := range domain.Networks {
+			num, options := vmio.StripOptions(network.Options)
+			fmt.Printf("   Network: %s (Id: %s) - Options [%d] :%s\n", network.Name, network.Id, num, options)
+			fmt.Printf("   Servers: %d\n", len(network.Servers))
+			serversMap := make(map[string]string)
+			for _,server := range network.Servers {
+				serversMap[server.Id] = server.Name
+				fmt.Printf("      Server: %s (Id: %s) - Driver: %s - OS : %s:%s\n", server.Name, server.Id, server.Driver, server.OSType, server.OSVersion)
+			}
+			fmt.Printf("   Cloud Servers: %d\n", len(network.CServers))
+			for _,server := range network.CServers {
+				serversMap[server.Id] = server.Name
+				num, options := vmio.StripOptions(server.Options)
+				fmt.Printf("      Server: %s (Id: %s) - Driver: %s - Options [%d] :%s\n", server.Name, server.Id, server.Driver, num, options)
+			}
+			fmt.Printf("   Installation Plans: %d\n", len(network.Installations))
+			for _,installation := range network.Installations {
+				serverName,ok := serversMap[installation.ServerId]
+				if !ok {
+					serverName = "<invalid>"
+				}
+				cloud := "no"
+				if installation.IsCloud {
+					cloud = "yes"
+				}
+				fmt.Printf("      Plan: Id: %s - Server: %s [Id: %s] - Cloud: %s - Envoronment : %s  Role: %s  Type: %s\n", installation.Id, serverName, installation.ServerId, cloud, installation.Environment, installation.Role, installation.Type)
+			}
+		}
+	}
+	return Response{
+		Message: "Success",
+		Status: true,}, nil
 }
 
 func (request *CmdRequest) ImportProject() (Response, error) {

@@ -113,7 +113,9 @@ Describe Server options, contains
   
   * Options   ([][]string) Specific vendor option in format key value pairs array without signs (e.g.: --<driver>)
   
-  * Hostname  (string)     Logical Server Hostname
+  * Hostname  (string)     Network Server Hostname
+
+  * IPAddress (string)     Network IP Address
 */
 type Instance struct {
 	Id        string      `json:"Id" xml:"Id"`
@@ -131,6 +133,7 @@ type Instance struct {
 	NoShare     bool      `json:"NoShare" xml:"NoShare"`
 	Options   [][]string  `json:"Options" xml:"Options"`
 	Hostname  string      `json:"Hostname" xml:"Hostname"`
+	IPAddress string      `json:"IPAddress" xml:"IPAddress"`
 }
 
 /*
@@ -144,12 +147,14 @@ Describe Cloud Server options, contains
   
   * Driver    (string)      Cloud Server Driver (amazonec2, digitalocean, azure, etc...)
   
-  * Hostname  (string)      Logical Server Hostname
+  * Hostname  (string)      Cloud Server Hostname
   
   * Roles     ([]string)    Roles used in the deployment plan
   
   * Options   ([][]string)  Cloud Server Options
-  
+ 
+  * IPAddress (string)      Cloud IP Address
+ 
 	Refers to : https://docs.docker.com/machine/drivers/
 */
 type CloudInstance struct {
@@ -160,6 +165,7 @@ type CloudInstance struct {
 	Hostname  string      `json:"Hostname" xml:"Hostname"`
 	Roles   	[]string    `json:"Roles" xml:"Roles"`
 	Options   [][]string  `json:"Options" xml:"Options"`
+	IPAddress string      `json:"IPAddress" xml:"IPAddress"`
 }
 
 /*
