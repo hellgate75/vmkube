@@ -60,29 +60,29 @@ func (isoTemplate *MachineISO)	Download(version string) bool {
 	folder := home + "/images/" + isoTemplate.FolderName
 	os.MkdirAll(folder, 0666)
 	fileName := folder + "/" + isoTemplate.FinalNamePrefix + version + isoTemplate.FinalNameSuffix
-	fmt.Println("Downloading", url, "to", fileName)
+	fmt.Printf("Downloading %s to %s\n", url, fileName)
 
 	// TODO: check file existence first with io.IsExist
 	output, err := os.Create(fileName)
 	if err != nil {
-		fmt.Println("Error while creating", fileName, "-", err)
+		fmt.Printf("Error while creating %s - %s\n", fileName, err)
 		return false
 	}
 	defer output.Close()
 
 	response, err := http.Get(url)
 	if err != nil {
-		fmt.Println("Error while downloading", url, "-", err)
+		fmt.Printf("Error while downloading %s - %s\n", url, err)
 		return false
 	}
 	defer response.Body.Close()
 
 	n, err := io.Copy(output, response.Body)
 	if err != nil {
-		fmt.Println("Error while downloading", url, "-", err)
+		fmt.Printf("Error while downloading %s - %s\n", url, err)
 		return false
 	}
-	fmt.Println(n, "bytes downloaded.")
+	fmt.Printf("%d bytes downloaded.", n)
 	_, error := os.Stat(fileName)
 	return ! os.IsNotExist(error)
 }

@@ -16,12 +16,12 @@ func DownloadISO(machineType string, version string) (string, bool) {
 	machineAction, error := model.GetMachineAction(machineType)
 	if error == nil {
 		if ! machineAction.Check(version) {
-			fmt.Println("Machine",machineType,"Version",version,"not present, downloading from internet...")
+			fmt.Printf("Machine %s Version %s not present, downloading from internet...\n",machineType,version)
 			downloaded := machineAction.Download(version)
-			fmt.Println("Machine",machineType,"Version",version,"dowanloaded:",downloaded)
+			fmt.Printf("Machine %s Version %s dowanloaded: %t\n",machineType,version,downloaded)
 			return machineAction.Path(version), downloaded
 		} else {
-			fmt.Println("Machine",machineType,"Version",version,"already dowanloaded...")
+			fmt.Printf("Machine %s Version %s already dowanloaded...\n",machineType,version)
 			return machineAction.Path(version), true
 		}
 	} else {
@@ -36,7 +36,7 @@ func RequestConfirmation(reason string) bool {
 	fmt.Fprintf(os.Stdout, "%s.Confirm [y/n] :", reason)
 	text, _ = reader.ReadString('\n')
 	if text != "Y" && text != "y" && text != "N" && text != "n" {
-		fmt.Fprintln(os.Stdout, "Current text is not allowed :", text)
+		fmt.Fprintf(os.Stdout, "Current text is not allowed : %s\n", text)
 		return  RequestConfirmation(reason)
 	}
 	return false
@@ -56,7 +56,7 @@ func CreateCloudServer(server model.ProjectCloudServer) ([]byte, error) {
 	}
 	command = append( command,  name + "-" + uuid)
 	
-	fmt.Println(os.Stdout,"Running Create for hostname: " + hostname + " - Roles "+strings.Join(roles, ",")+" - command : '" + strings.Join(command, " ") + "'")
+	fmt.Printf("Running Create for hostname: %s  - Roles: %s  - command : '%s'\n", hostname, strings.Join(roles, ","),strings.Join(command, " "))
 	return  executeCommand(command)
 }
 
@@ -181,8 +181,8 @@ func CreateServer(server model.ProjectServer) ([]byte, error) {
 	command = append( command,  "--"+strings.ToLower(driver)+"-boot2docker-url")
 	command = append( command,  "file://" + path)
 	command = append( command,  name + "-" + uuid)
-
-	fmt.Println(os.Stdout,"Running Create for hostname: " + hostname + " - Roles "+strings.Join(roles, ",")+" - command : '" + strings.Join(command, " ") + "'")
+	
+	fmt.Printf("Running Create for hostname: %s  - Roles: %s  - command : '%s'\n", hostname, strings.Join(roles, ","),strings.Join(command, " "))
 	return  executeCommand(command)
 }
 
@@ -192,7 +192,7 @@ func RemoveServer(name string, id string) ([]byte, error) {
 	command = append( command,  "rm")
 	command = append( command,  "-f")
 	command = append( command,  name + "-" + id)
-	fmt.Println(os.Stdout,"Running Delete command : '" + strings.Join(command, " ") + "'")
+	fmt.Printf("Running Delete command :  '%s'\n", strings.Join(command, " "))
 	return  executeCommand(command)
 }
 
@@ -201,7 +201,7 @@ func ServerStatus(name string, id string) ([]byte, error) {
 	command = append( command,  "docker-machine")
 	command = append( command,  "status")
 	command = append( command,  name + "-" + id)
-	fmt.Println(os.Stdout,"Running Status command : '" + strings.Join(command, " ") + "'")
+	fmt.Printf("Running Status command :  '%s'\n", strings.Join(command, " "))
 	return  executeCommand(command)
 }
 
@@ -210,7 +210,7 @@ func ServerEnv(name string, id string) ([]byte, error) {
 	command = append( command,  "docker-machine")
 	command = append( command,  "env")
 	command = append( command,  name + "-" + id)
-	fmt.Println(os.Stdout,"Running Environment command : '" + strings.Join(command, " ") + "'")
+	fmt.Printf("Running Environment command :  '%s'\n", strings.Join(command, " "))
 	return  executeCommand(command)
 }
 
@@ -219,7 +219,7 @@ func ServerInspect(name string, id string) ([]byte, error) {
 	command = append( command,  "docker-machine")
 	command = append( command,  "inspect")
 	command = append( command,  name + "-" + id)
-	fmt.Println(os.Stdout,"Running Inspect command : '" + strings.Join(command, " ") + "'")
+	fmt.Printf("Running Inspect command :  '%s'\n", strings.Join(command, " "))
 	return  executeCommand(command)
 }
 
@@ -228,16 +228,11 @@ func ServerIPAddr(name string, id string) ([]byte, error) {
 	command = append( command,  "docker-machine")
 	command = append( command,  "ip")
 	command = append( command,  name + "-" + id)
-	fmt.Println(os.Stdout,"Running Inspect command : '" + strings.Join(command, " ") + "'")
+	fmt.Printf("Running IP Address command :  '%s'\n", strings.Join(command, " "))
 	return  executeCommand(command)
 }
 
 func executeCommand(command []string) ([]byte, error) {
-	//cmd := exec.Command(command[0], command[1:]...)
 	cmd := exec.Command(command[0], command[1:]...)
-	stdoutStderr, err := cmd.CombinedOutput()
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	return  stdoutStderr, err
+	return cmd.CombinedOutput()
 }
