@@ -90,7 +90,7 @@ func ImportUserProject(file string, format string) (model.Project, error) {
 	}
 	err := info.Import(file, format)
 	if err != nil {
-		return err
+		return model.Project{}, err
 	}
 	project := model.ProjectFromImport(imported)
 	return project, err

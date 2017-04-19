@@ -4,7 +4,6 @@ import (
 	"vmkube/model"
 	"errors"
 	"vmkube/utils"
-	"os"
 )
 
 type ProjectImportInfo struct {

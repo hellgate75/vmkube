@@ -6,6 +6,7 @@ import (
 	"os"
 	"vmkube/utils"
 	"vmkube/model"
+	"errors"
 )
 
 type ProjectActions interface {
@@ -47,13 +48,19 @@ func (request *CmdRequest) CheckProject() bool {
 }
 
 func (request *CmdRequest) CreateProject() (Response, error) {
-	response := Response{}
-	return  response, nil
+	response := Response{
+		Status: false,
+		Message: "Not Implemented",
+	}
+	return  response, errors.New("Unable to executore task")
 }
 
 func (request *CmdRequest) AlterProject() (Response, error) {
-	response := Response{}
-	return  response, nil
+	response := Response{
+		Status: false,
+		Message: "Not Implemented",
+	}
+	return  response, errors.New("Unable to executore task")
 }
 
 func (request *CmdRequest) InfoProject() (Response, error) {
@@ -161,13 +168,19 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 }
 
 func (request *CmdRequest) DeleteProject() (Response, error) {
-	response := Response{}
-	return  response, nil
+	response := Response{
+		Status: false,
+		Message: "Not Implemented",
+	}
+	return  response, errors.New("Unable to executore task")
 }
 
 func (request *CmdRequest) ListProjects() (Response, error) {
-	response := Response{}
-	return  response, nil
+	response := Response{
+		Status: false,
+		Message: "Not Implemented",
+	}
+	return  response, errors.New("Unable to executore task")
 }
 
 func (request *CmdRequest) StatusProject() (Response, error) {

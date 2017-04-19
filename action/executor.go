@@ -1,5 +1,7 @@
 package action
 
+import "fmt"
+
 func ExecuteRequest(request CmdRequest) bool{
 	//println(request.TypeStr,request.Type)
 	//println(request.SubTypeStr,request.HelpType)
@@ -17,117 +19,156 @@ func ExecuteRequest(request CmdRequest) bool{
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 			return  false
 		} else  {
-			request.StartInfra()
+			response, error := request.StartInfra()
+			if ! response.Status {
+				fmt.Printf("Error: %s, clause: %s\n", error, response.Message)
+			}
+			return  error == nil
 		}
-		return  true
 	}
 	case StopInfrastructure: {
 		if ! request.CheckInfra() {
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 			return  false
 		} else  {
-			request.StopInfra()
+			response, error := request.StopInfra()
+			if ! response.Status {
+				fmt.Printf("Error: %s, clause: %s\n", error, response.Message)
+			}
+			return  error == nil
 		}
-		return  true
 	}
 	case RestartInfrastructure: {
 		if ! request.CheckInfra() {
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 			return  false
 		} else  {
-			request.RestartInfra()
+			response, error := request.RestartInfra()
+			if ! response.Status {
+				fmt.Printf("Error: %s, clause: %s\n", error, response.Message)
+			}
+			return  error == nil
 		}
-		return  true
 	}
 	case DestroyInfrastructure: {
 		if ! request.CheckInfra() {
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 			return  false
 		} else  {
-			request.DeleteInfra()
+			response, error := request.DeleteInfra()
+			if ! response.Status {
+				fmt.Printf("Error: %s, clause: %s\n", error, response.Message)
+			}
+			return  error == nil
 		}
-		return  true
 	}
 	case ListInfrastructure: {
 		if ! request.CheckInfra() {
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 			return  false
 		} else  {
-			request.StatusInfra()
+			response, error := request.StatusInfra()
+			if ! response.Status {
+				fmt.Printf("Error: %s, clause: %s\n", error, response.Message)
+			}
+			return  error == nil
 		}
-		return  true
 	}
 	case ListInfrastructures: {
 		if ! request.CheckInfra() {
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 			return  false
 		} else  {
-			request.ListInfras()
+			response, error := request.ListInfras()
+			if ! response.Status {
+				fmt.Printf("Error: %s, clause: %s\n", error, response.Message)
+			}
+			return  error == nil
 		}
-		return  true
 	}
 	case ListConfigs: {
 		if ! request.CheckProject() {
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 			return  false
 		} else  {
-			request.ListProjects()
+			response, error := request.ListProjects()
+			if ! response.Status {
+				fmt.Printf("Error: %s, clause: %s\n", error, response.Message)
+			}
+			return  error == nil
 		}
-		return  true
 	}
 	case StatusConfig: {
 		if ! request.CheckProject() {
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 			return  false
 		} else  {
-			request.StatusProject()
+			response, error := request.StatusProject()
+			if ! response.Status {
+				fmt.Printf("Error: %s, clause: %s\n", error, response.Message)
+			}
+			return  error == nil
 		}
-		return  true
 	}
 	case ImportConfig: {
 		if ! request.CheckProject() {
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 			return  false
 		} else  {
-			request.ImportProject()
+			response, error := request.ImportProject()
+			if ! response.Status {
+				fmt.Printf("Error: %s, clause: %s\n", error, response.Message)
+			}
+			return  error == nil
 		}
-		return  true
 	}
 	case ExportConfig: {
 		if ! request.CheckProject() {
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 			return  false
 		} else  {
-			request.ExportProject()
+			response, error := request.ExportProject()
+			if ! response.Status {
+				fmt.Printf("Error: %s, clause: %s\n", error, response.Message)
+			}
+			return  error == nil
 		}
-		return  true
 	}
 	case DefineConfig: {
 		if ! request.CheckProject() {
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 			return  false
 		} else  {
-			request.CreateProject()
+			response, error := request.CreateProject()
+			if ! response.Status {
+				fmt.Printf("Error: %s, clause: %s\n", error, response.Message)
+			}
+			return  error == nil
 		}
-		return  true
 	}
 	case DeleteConfig: {
 		if ! request.CheckProject() {
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 			return  false
 		} else  {
-			request.DeleteProject()
+			response, error := request.DeleteProject()
+			if ! response.Status {
+				fmt.Printf("Error: %s, clause: %s\n", error, response.Message)
+			}
+			return  error == nil
 		}
-		return  true
 	}
 	case AlterConfig: {
 		if ! request.CheckProject() {
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 			return  false
 		} else  {
-			request.AlterProject()
+			response, error := request.AlterProject()
+			if ! response.Status {
+				fmt.Printf("Error: %s, clause: %s\n", error, response.Message)
+			}
+			return  error == nil
 		}
-		return  true
 	}
 	case InfoConfig: {
 		if ! request.CheckProject() {

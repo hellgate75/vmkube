@@ -2,6 +2,7 @@ package action
 
 import (
 	"fmt"
+	"errors"
 )
 
 type InfrastructureActions interface {
@@ -43,41 +44,65 @@ func (request *CmdRequest) CheckInfra() bool {
 }
 
 func (request *CmdRequest) CreateInfra() (Response, error) {
-	response := Response{}
-	return  response, nil
+	response := Response{
+		Status: false,
+		Message: "Not Implemented",
+	}
+	return  response, errors.New("Unable to executore task")
 }
 
 func (request *CmdRequest) AlterInfra() (Response, error) {
-	response := Response{}
-	return  response, nil
+	response := Response{
+		Status: false,
+		Message: "Not Implemented",
+	}
+	return  response, errors.New("Unable to executore task")
 }
 
 func (request *CmdRequest) DeleteInfra() (Response, error) {
-	response := Response{}
-	return  response, nil
+	response := Response{
+		Status: false,
+		Message: "Not Implemented",
+	}
+	return  response, errors.New("Unable to executore task")
 }
 
 func (request *CmdRequest) StartInfra() (Response, error) {
-	response := Response{}
-	return  response, nil
+	response := Response{
+		Status: false,
+		Message: "Not Implemented",
+	}
+	return  response, errors.New("Unable to executore task")
 }
 
 func (request *CmdRequest) StopInfra() (Response, error) {
-	response := Response{}
-	return  response, nil
+	response := Response{
+		Status: false,
+		Message: "Not Implemented",
+	}
+	return  response, errors.New("Unable to executore task")
 }
 
 func (request *CmdRequest) RestartInfra() (Response, error) {
-	response := Response{}
-	return  response, nil
+	response := Response{
+		Status: false,
+		Message: "Not Implemented",
+	}
+	return  response, errors.New("Unable to executore task")
 }
 
 func (request *CmdRequest) ListInfras() (Response, error) {
-	response := Response{}
-	return  response, nil
+	response := Response{
+		Status: false,
+		Message: "Not Implemented",
+	}
+	return  response, errors.New("Unable to executore task")
 }
 
 func (request *CmdRequest) StatusInfra() (Response, error) {
-	response := Response{}
-	return  response, nil
+	response := Response{
+		Status: false,
+		Message: "Not Implemented",
+	}
+	return  response, errors.New("Unable to executore task")
 }
