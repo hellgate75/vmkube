@@ -70,6 +70,9 @@ func (element *CloudInstance) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
+	if err == nil && element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	return err
 }
 
@@ -143,6 +146,9 @@ func (element *ProjectCloudServer) Import(file string, format string) error {
 		err = json.Unmarshal(byteArray, &element)
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
+	}
+	if err == nil && element.Id == "" {
+		element.Id = NewUUIDString()
 	}
 	return err
 }

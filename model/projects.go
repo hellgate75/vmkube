@@ -343,7 +343,7 @@ type ProjectImport struct {
 /*
 Describe Project State in Index, contains
 
-  * Id          (string)            Project Unique Identifier
+  * Id          (string)            Project Descriptor Unique Identifier
 
   * Name      	(string)  	 				Project Name
 
@@ -370,8 +370,11 @@ type ProjectsDescriptor struct {
 /*
 Describe Projects Index, contains
 
-  * Projects    ([]ProjectsDescriptor)     Projects indexed in VMKube
+  * Id          (string)                  Indexes Unique Identifier
+
+  * Projects    ([]ProjectsDescriptor)    Projects indexed in VMKube
 */
 type ProjectsIndex struct {
+	Id          string                  `json:"Id" xml:"Id" mandatory:"yes" descr:"Project Unique Identifier" type:"text"`
 	Projects		[]ProjectsDescriptor 		`json:"Projects" xml:"Projects" mandatory:"yes" descr:"Projects indexed in VMKube" type:"object Projects list"`
 }

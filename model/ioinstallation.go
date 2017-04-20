@@ -53,6 +53,9 @@ func (element *Installation) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
+	if err == nil && element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	return err
 }
 
@@ -109,6 +112,9 @@ func (element *InstallationPlan) Import(file string, format string) error {
 		err = json.Unmarshal(byteArray, &element)
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
+	}
+	if err == nil && element.Id == "" {
+		element.Id = NewUUIDString()
 	}
 	return err
 }

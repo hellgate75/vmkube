@@ -64,6 +64,9 @@ func (element *InstanceState) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
+	if err == nil && element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	return err
 }
 
@@ -130,6 +133,9 @@ func (element *NetworkState) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
+	if err == nil && element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	return err
 }
 
@@ -193,6 +199,9 @@ func (element *DomainState) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
+	if err == nil && element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	return err
 }
 
@@ -252,6 +261,9 @@ func (element *State) Import(file string, format string) error {
 		err = json.Unmarshal(byteArray, &element)
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
+	}
+	if err == nil && element.Id == "" {
+		element.Id = NewUUIDString()
 	}
 	return err
 }

@@ -32,6 +32,13 @@ func (info *ProjectInfo) Write() error {
 	return err
 }
 
+func (info *ProjectInfo) Delete() error {
+	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
+	model.MakeFolderIfNotExists(baseFolder)
+	fileName := baseFolder + string(os.PathSeparator) + "." + info.Project.Id + ".project"
+	return model.DeleteIfExists(fileName)
+}
+
 func (info *ProjectInfo) Import(file string, format string) error {
 	err := info.Project.Import(file, format)
 	return  err

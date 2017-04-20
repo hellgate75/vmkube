@@ -76,6 +76,9 @@ func (element *Instance) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
+	if err == nil && element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	return err
 }
 
@@ -155,8 +158,8 @@ func (element *ProjectServer) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	if err == nil {
-		element.Id=NewUUIDString()
+	if err == nil && element.Id == "" {
+		element.Id = NewUUIDString()
 	}
 	return err
 }

@@ -110,3 +110,15 @@ func RemoveLock(projectId string, resourceId string) bool {
 	return overwriteLocks(projectId, newLines) == nil
 }
 
+func HasLock(projectId string, resourceId string) bool {
+	lines, err := readLocks(projectId)
+	if err != nil {
+		return false
+	}
+	for _,line := range lines {
+		if resourceId == line {
+			return true
+		}
+	}
+	return false
+}

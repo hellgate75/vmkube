@@ -74,6 +74,10 @@ func CorrectInput(input string) string {
 	return  strings.TrimSpace(strings.ToLower(input))
 }
 
+func GetBoolean(input string) bool {
+	return CorrectInput(input) == "true"
+}
+
 func NewUUIDString()	string {
 	return  uuid.NewV4().String()
 }

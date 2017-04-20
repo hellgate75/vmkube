@@ -22,6 +22,7 @@ func (info *ProjectIndexInfo) Read() error {
 	fileName := baseFolder + string(os.PathSeparator) + ".vmkubeindex"
 	if _,err = os.Stat(fileName); err!=nil {
 		info.Index = model.ProjectsIndex{
+			Id: model.NewUUIDString(),
 			Projects: []model.ProjectsDescriptor{},
 		}
 		return nil
@@ -43,6 +44,15 @@ func (info *ProjectIndexInfo) Import(file string, format string) error {
 	err := info.Index.Import(file, format)
 	return  err
 }
+
+
+func (info *ProjectIndexInfo) Delete() error {
+	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
+	model.MakeFolderIfNotExists(baseFolder)
+	fileName := baseFolder + string(os.PathSeparator) + ".vmkubeindex"
+	return model.DeleteIfExists(fileName)
+}
+
 
 func (info *ProjectIndexInfo) Export(prettify bool) ([]byte, error) {
 	if "json" == info.Format {

@@ -65,10 +65,10 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			InputFormat = option[1]
 		}
 		if "force" == CorrectInput(option[0]) {
-			Force = CorrectInput(option[0]) == "true"
+			Force = GetBoolean(option[1])
 		}
 		if "destroy-infra" == CorrectInput(option[0]) {
-			DestroyInfra = CorrectInput(option[0]) == "true"
+			DestroyInfra = GetBoolean(option[1])
 		}
 	}
 	if Name == "" {
@@ -394,6 +394,95 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 }
 
 func (request *CmdRequest) DeleteProject() (Response, error) {
+	Name := ""
+	Force := false
+	for _,option := range request.Arguments.Options {
+		if "name" == CorrectInput(option[0]) {
+			Name = option[1]
+		}
+		if "force" == CorrectInput(option[0]) {
+			Force = GetBoolean(option[1])
+		}
+	}
+	AllowProjectDeletion := Force
+	
+	descriptor, err := vmio.GetProjectDescriptor(Name)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	
+	if err == nil {
+		if ! AllowProjectDeletion {
+			if descriptor.InfraId == "" {
+				AllowProjectDeletion = utils.RequestConfirmation("Do you want delete Project named '"+descriptor.Name+"'?")
+			} else {
+				AllowProjectDeletion = utils.RequestConfirmation("Do you want delete Project named '"+descriptor.Name+" and Infrastrcuture named'"+descriptor.InfraName+"'?")
+			}
+			if ! AllowProjectDeletion {
+				response := Response{
+					Status: false,
+					Message: "User task interruption",
+				}
+				return response, errors.New("Unable to execute task")
+			}
+		}
+	}
+	existsInfrastructure := (descriptor.InfraId != "")
+	existanceClause := ""
+	if existsInfrastructure {
+		existanceClause = " and proceding with deletion of existing Infrastrcuture named'"+descriptor.InfraName+"'"
+	}
+	fmt.Printf("\n%Proceding with deletion of Project named  '%s'%s...\n", descriptor.Name, existanceClause )
+	
+	
+	indexes,err := vmio.LoadIndex()
+
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	if existsInfrastructure {
+		resp, err := request.DeleteInfra()
+		if err != nil {
+			return resp, err
+		}
+	}
+	
+	info := vmio.ProjectInfo{
+		Format: "",
+		Project: model.Project{
+			Id: descriptor.Id,
+		},
+	}
+	
+	err = info.Delete()
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	NewIndexes := make([]model.ProjectsDescriptor, 0)
+	for _,prj := range indexes.Projects {
+		if CorrectInput(prj.Name) != Name {
+			NewIndexes = append(NewIndexes, )
+		}
+	}
+	SaveIndex := len(indexes.Projects) > len(NewIndexes)
+	if SaveIndex {
+		indexes.Projects = NewIndexes
+		vmio.SaveIndex(indexes)
+	}
 	response := Response{
 		Status: false,
 		Message: "Not Implemented",
