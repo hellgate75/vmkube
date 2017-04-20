@@ -43,8 +43,8 @@ func GetLockFile(id string) string {
 
 }
 
-func readLocks(projectId string) ([]string, error) {
-	fileName := GetLockFile(projectId)
+func readLocks(containerId string) ([]string, error) {
+	fileName := GetLockFile(containerId)
 	if !existsFile(fileName) {
 		err := utils.CreateNewEmptyFile(fileName)
 		if err != nil {
@@ -65,8 +65,8 @@ func readLocks(projectId string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
-func addLock(projectId string, newline string) error {
-	fileName := GetLockFile(projectId)
+func addLock(containerId string, newline string) error {
+	fileName := GetLockFile(containerId)
 	DeleteIfExists(fileName)
 	file, err := os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
@@ -77,8 +77,8 @@ func addLock(projectId string, newline string) error {
 	return err
 }
 
-func overwriteLocks(projectId string, lines []string) error {
-	fileName := GetLockFile(projectId)
+func overwriteLocks(containerId string, lines []string) error {
+	fileName := GetLockFile(containerId)
 	DeleteIfExists(fileName)
 	err := utils.CreateNewEmptyFile(fileName)
 	if err != nil {
@@ -97,26 +97,30 @@ func overwriteLocks(projectId string, lines []string) error {
 }
 
 
-func WriteLock(projectId string, resourceId string) bool {
-	return addLock(projectId, resourceId) == nil
+func WriteLock(containerId string, resourceId string) bool {
+	return addLock(containerId, resourceId) == nil
 }
 
-func RemoveLock(projectId string, resourceId string) bool {
-	lines, err := readLocks(projectId)
+func RemoveLock(containerId string, resourceId string) bool {
+	lines, err := readLocks(containerId)
 	if err != nil {
 		return false
 	}
-	newLines := lines[0:]
+	newLines := make([]string, 0)
 	for _,line := range lines {
 		if resourceId != line {
 			newLines = append(newLines, line)
 		}
 	}
-	return overwriteLocks(projectId, newLines) == nil
+	if len(newLines) == 0 {
+		return os.Remove(GetLockFile(containerId)) == nil
+	} else {
+		return overwriteLocks(containerId, newLines) == nil
+	}
 }
 
-func HasLock(projectId string, resourceId string) bool {
-	lines, err := readLocks(projectId)
+func HasLock(containerId string, resourceId string) bool {
+	lines, err := readLocks(containerId)
 	if err != nil {
 		return false
 	}

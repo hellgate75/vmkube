@@ -1,6 +1,72 @@
 package vmio
 
-import "vmkube/model"
+import (
+	"vmkube/model"
+	"sync"
+	"time"
+)
+
+type IFaceIndex model.ProjectsIndex
+type IFaceProject model.Project
+type IFaceInfra model.Infrastructure
+
+func (iFace *IFaceIndex) WaitForUnlock() {
+	waitGroup := sync.WaitGroup{}
+	waitGroup.Add(1)
+	go func(){
+		index := model.ProjectsIndex{
+			Id: iFace.Id,
+		}
+		for{
+			if IsIndexLocked(index) {
+				time.Sleep(500)
+			} else {
+				waitGroup.Done()
+				break
+			}
+		}
+	}()
+	waitGroup.Wait()
+}
+
+func (iFace *IFaceProject) WaitForUnlock() {
+	waitGroup := sync.WaitGroup{}
+	waitGroup.Add(1)
+	go func(){
+		project := model.Project{
+			Id: iFace.Id,
+		}
+		for{
+			if IsProjectLocked(project) {
+				time.Sleep(500)
+			} else {
+				waitGroup.Done()
+				break
+			}
+		}
+	}()
+	waitGroup.Wait()
+}
+
+func (iFace *IFaceInfra) WaitForUnlock() {
+	waitGroup := sync.WaitGroup{}
+	waitGroup.Add(1)
+	go func(){
+		infra := model.Infrastructure{
+			Id: iFace.Id,
+			ProjectId: iFace.ProjectId,
+		}
+		for{
+			if IsInfrastructureLocked(infra) {
+				time.Sleep(500)
+			} else {
+				waitGroup.Done()
+				break
+			}
+		}
+	}()
+	waitGroup.Wait()
+}
 
 func LockIndex(index model.ProjectsIndex) bool {
 	return model.WriteLock(index.Id, index.Id)

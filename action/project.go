@@ -86,7 +86,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	descriptor, err := vmio.GetProjectDescriptor(Name)
 	if err == nil {
 		if ! AllowProjectDeletion {
-			AllowProjectDeletion = utils.RequestConfirmation("Do you want delete Project named '"+descriptor.Name+"'?")
+			AllowProjectDeletion = utils.RequestConfirmation("Do you want proceed with deletion process for Project named '"+descriptor.Name+"'?")
 			if ! AllowProjectDeletion {
 				response := Response{
 					Status: false,
@@ -110,7 +110,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	
 	if descriptor.InfraId != "" {
 		if ! AllowInfraDeletion {
-			AllowInfraDeletion = utils.RequestConfirmation("Do you want delete Infrastrcuture named '"+descriptor.InfraName+"'?")
+			AllowInfraDeletion = utils.RequestConfirmation("Do you want proceed with deletion process for Infrastrcuture named '"+descriptor.InfraName+"'?")
 			if ! AllowInfraDeletion {
 				response := Response{
 					Status: false,
@@ -222,7 +222,17 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		}
 	}
 	
+	iFaceProject := vmio.IFaceProject{
+		Id: descriptor.Id,
+	}
+	iFaceProject.WaitForUnlock()
+	
+	
+	vmio.LockProject(project)
+	
 	err = vmio.SaveProject(project)
+	
+	vmio.UnlockProject(project)
 	
 	if err != nil {
 		response := Response{
@@ -240,9 +250,34 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		}
 	}
 	
-	index, err := vmio.LoadIndex()
+	indexes, err := vmio.LoadIndex()
 	
-	index.Projects = append(index.Projects, model.ProjectsDescriptor{
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	
+	iFaceIndex := vmio.IFaceIndex{
+		Id: indexes.Id,
+	}
+	iFaceIndex.WaitForUnlock()
+	
+	indexes, err = vmio.LoadIndex()
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	
+	vmio.LockIndex(indexes)
+	
+	indexes.Projects = append(indexes.Projects, model.ProjectsDescriptor{
 		Id: project.Id,
 		Name: project.Name,
 		Open: project.Open,
@@ -253,7 +288,9 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	})
 	
 	
-	err = vmio.SaveIndex(index)
+	err = vmio.SaveIndex(indexes)
+	
+	vmio.UnlockIndex(indexes)
 	
 	if err != nil {
 		response := Response{
@@ -436,8 +473,9 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 	if existsInfrastructure {
 		existanceClause = " and proceding with deletion of existing Infrastrcuture named'"+descriptor.InfraName+"'"
 	}
-	fmt.Printf("\n%Proceding with deletion of Project named  '%s'%s...\n", descriptor.Name, existanceClause )
+	fmt.Printf("\nProceding with deletion of Project named  '%s'%s...\n", descriptor.Name, existanceClause )
 	
+
 	indexes,err := vmio.LoadIndex()
 
 	if err != nil {
@@ -455,6 +493,17 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 		}
 	}
 	
+	projectMeta := model.Project{
+		Id: descriptor.Id,
+	}
+	
+	iFaceProject := vmio.IFaceProject{
+		Id: descriptor.Id,
+	}
+	iFaceProject.WaitForUnlock()
+	
+	vmio.LockProject(projectMeta)
+	
 	info := vmio.ProjectInfo{
 		Format: "",
 		Project: model.Project{
@@ -463,6 +512,8 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 	}
 	
 	err = info.Delete()
+
+	vmio.UnlockProject(projectMeta)
 	if err != nil {
 		response := Response{
 			Status: false,
@@ -470,6 +521,27 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
+	
+	
+	iFaceIndex := vmio.IFaceIndex{
+		Id: indexes.Id,
+	}
+	iFaceIndex.WaitForUnlock()
+	
+	indexes, err = vmio.LoadIndex()
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+
+	vmio.LockIndex(indexes)
+	
+	defer vmio.UnlockIndex(indexes)
+	
 	
 	NewIndexes := make([]model.ProjectsDescriptor, 0)
 	for _,prj := range indexes.Projects {
@@ -480,13 +552,20 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 	SaveIndex := len(indexes.Projects) > len(NewIndexes)
 	if SaveIndex {
 		indexes.Projects = NewIndexes
-		vmio.SaveIndex(indexes)
+		err = vmio.SaveIndex(indexes)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return  response, errors.New("Unable to execute task")
+		}
 	}
 	response := Response{
-		Status: false,
-		Message: "Not Implemented",
+		Status: true,
+		Message: "Success",
 	}
-	return  response, errors.New("Unable to execute task")
+	return  response, nil
 }
 
 func (request *CmdRequest) ListProjects() (Response, error) {
@@ -499,7 +578,7 @@ func (request *CmdRequest) ListProjects() (Response, error) {
 		return  response, errors.New("Unable to execute task")
 	}
 	if len(indexes.Projects) > 0 {
-		fmt.Printf("%s  %s  %s  %s  %s\n", utils.StrPad("Project Id", 20), utils.StrPad("Project Name", 20), utils.StrPad("Open", 4), utils.StrPad("Infrastructure Name", 20), utils.StrPad("Active", 6))
+		fmt.Printf("%s  %s  %s  %s  %s\n", utils.StrPad("Project Id", 40), utils.StrPad("Project Name", 40), utils.StrPad("Open", 4), utils.StrPad("Infrastructure Name", 40), utils.StrPad("Active", 6))
 	} else {
 		fmt.Printf("No Projects found\n")
 	}
@@ -512,7 +591,7 @@ func (request *CmdRequest) ListProjects() (Response, error) {
 		if index.Active {
 			active = "yes"
 		}
-		fmt.Printf("%s  %s  %s  %s  %s\n", utils.StrPad(index.Id, 20), utils.StrPad(index.Name, 20), utils.StrPad(" "+open, 4), utils.StrPad(index.InfraName, 20), utils.StrPad("  "+active, 6))
+		fmt.Printf("%s  %s  %s  %s  %s\n", utils.StrPad(index.Id, 40), utils.StrPad(index.Name, 40), utils.StrPad(open, 4), utils.StrPad(index.InfraName, 40), utils.StrPad("  "+active, 6))
 		
 	}
 	response := Response{
@@ -544,6 +623,11 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
+	iFaceProject := vmio.IFaceProject{
+		Id: descriptor.Id,
+	}
+	iFaceProject.WaitForUnlock()
+	
 	project, err := vmio.LoadProject(descriptor.Id)
 	if err != nil {
 		response := Response{

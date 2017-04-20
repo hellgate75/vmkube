@@ -88,7 +88,7 @@ func IntToString(n int) string {
 func RequestConfirmation(reason string) bool {
 	text := ""
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Fprintf(os.Stdout, "%s.Confirm opration [y/n/yes/no] : ", reason)
+	fmt.Fprintf(os.Stdout, "%s.Confirm operation [y/n/yes/no] : ", reason)
 	text, _ = reader.ReadString('\n')
 	if CorrectInput(text) != "y" && CorrectInput(text) != "yes" && CorrectInput(text) != "n" && CorrectInput(text) != "no" {
 		fmt.Fprintf(os.Stdout, "Current text is not allowed : %s\n", text)

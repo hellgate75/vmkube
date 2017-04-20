@@ -103,7 +103,7 @@ func (request *CmdRequest) ListInfras() (Response, error) {
 		return  response, errors.New("Unable to execute task")
 	}
 	if len(indexes.Projects) > 0 {
-		fmt.Printf("%s  %s  %s\n", utils.StrPad("Infrastructure Id", 20), utils.StrPad("Infrastructure Name", 20), utils.StrPad("Active", 6))
+		fmt.Printf("%s  %s  %s\n", utils.StrPad("Infrastructure Id", 40), utils.StrPad("Infrastructure Name", 40), utils.StrPad("Active", 6))
 	} else {
 		fmt.Printf("No Infrastructures found\n")
 	}
@@ -112,7 +112,7 @@ func (request *CmdRequest) ListInfras() (Response, error) {
 		if index.Active {
 			active = "yes"
 		}
-		fmt.Printf("%s  %s  %s\n", utils.StrPad(index.InfraId, 20), utils.StrPad(index.InfraName, 20), utils.StrPad("  "+active, 6))
+		fmt.Printf("%s  %s  %s\n", utils.StrPad(index.InfraId, 40), utils.StrPad(index.InfraName, 40), utils.StrPad("  "+active, 6))
 		
 	}
 	response := Response{
@@ -144,6 +144,12 @@ func (request *CmdRequest) StatusInfra() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
+	iFaceInfra := vmio.IFaceInfra{
+		Id: descriptor.InfraId,
+		ProjectId: descriptor.Id,
+	}
+	iFaceInfra.WaitForUnlock()
+	
 	infrastructure, err := vmio.LoadInfrastructure(descriptor.Id)
 	if err != nil {
 		response := Response{
