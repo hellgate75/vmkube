@@ -92,9 +92,10 @@ func (element *ProjectNetwork) Validate() []error {
 	if element.Name == "" {
 		errorList = append(errorList, errors.New("Unassigned Name field"))
 	}
-	if len(element.CServers) == 0 && len(element.Servers) == 0 {
-		errorList = append(errorList, errors.New("Unassigned Cloud Servers or Servers List fields"))
-	}
+	// Permissive approach for empty projects in development
+	//if len(element.CServers) == 0 && len(element.Servers) == 0 {
+	//	errorList = append(errorList, errors.New("Unassigned Cloud Servers or Servers List fields"))
+	//}
 	for _,server := range element.Servers {
 		errorList = append(errorList, server.Validate()...)
 	}

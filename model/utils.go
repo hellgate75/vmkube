@@ -40,6 +40,14 @@ func ProjectToImport(project Project) ProjectImport {
 	}
 }
 
+func EncodeBytes(decodedByteArray []byte) []byte {
+	return decodedByteArray
+}
+
+func DecodeBytes(encodedByteArray []byte) []byte {
+return encodedByteArray
+}
+
 type FieldData struct {
 	JName       string
 	XName       string

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"vmkube/utils"
+	"bytes"
 )
 
 func (element *CloudInstance) Validate() []error {
@@ -78,9 +79,11 @@ func (element *CloudInstance) Save(file string) error {
 		return  err
 	}
 	DeleteIfExists(file)
-	value := base64.RawStdEncoding.EncodeToString(byteArray)
-	newBytes := []byte(value)
-	err = ioutil.WriteFile(file, newBytes , 0777)
+	bb := &bytes.Buffer{}
+	encoder := base64.NewEncoder(base64.StdEncoding, bb)
+	encoder.Write(byteArray)
+	encoder.Close()
+	err = ioutil.WriteFile(file, bb.Bytes() , 0777)
 	return  err
 }
 
@@ -150,9 +153,11 @@ func (element *ProjectCloudServer) Save(file string) error {
 		return  err
 	}
 	DeleteIfExists(file)
-	value := base64.RawStdEncoding.EncodeToString(byteArray)
-	newBytes := []byte(value)
-	err = ioutil.WriteFile(file, newBytes , 0777)
+	bb := &bytes.Buffer{}
+	encoder := base64.NewEncoder(base64.StdEncoding, bb)
+	encoder.Write(byteArray)
+	encoder.Close()
+	err = ioutil.WriteFile(file, bb.Bytes() , 0777)
 	return  err
 }
 

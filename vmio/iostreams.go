@@ -22,7 +22,7 @@ func LoadIndex() (model.ProjectsIndex, error) {
 		Index: index,
 	}
 	err := info.Read()
-	return index, err
+	return info.Index, err
 }
 
 func ImportIndex(file string, format string) (model.ProjectsIndex, error) {
@@ -34,7 +34,7 @@ func ImportIndex(file string, format string) (model.ProjectsIndex, error) {
 		Index: index,
 	}
 	err := info.Import(file, format)
-	return index, err
+	return info.Index, err
 }
 
 func ExportIndex(index model.ProjectsIndex, file string, format string, prettify bool) error {
@@ -67,7 +67,7 @@ func LoadProject(id string) (model.Project, error) {
 		Project: project,
 	}
 	err := info.Read()
-	return project, err
+	return info.Project, err
 }
 
 func ImportProject(file string, format string) (model.Project, error) {
@@ -78,7 +78,7 @@ func ImportProject(file string, format string) (model.Project, error) {
 		Project: project,
 	}
 	err := info.Import(file, format)
-	return project, err
+	return info.Project, err
 }
 
 func ImportUserProject(file string, format string) (model.Project, error) {
@@ -92,7 +92,7 @@ func ImportUserProject(file string, format string) (model.Project, error) {
 	if err != nil {
 		return model.Project{}, err
 	}
-	project := model.ProjectFromImport(imported)
+	project := model.ProjectFromImport(info.ProjectImport)
 	return project, err
 }
 
@@ -139,7 +139,7 @@ func LoadInfrastructure(projectId string) (model.Infrastructure, error) {
 		Infra: infrastructure,
 	}
 	err := info.Read()
-	return infrastructure, err
+	return info.Infra, err
 }
 
 func ImportInfrastructure(file string, format string) (model.Infrastructure, error) {
@@ -150,7 +150,7 @@ func ImportInfrastructure(file string, format string) (model.Infrastructure, err
 		Infra: infrastructure,
 	}
 	err := info.Import(file, format)
-	return infrastructure, err
+	return info.Infra, err
 }
 
 func ExportInfrastructure(infrastructure model.Infrastructure, file string, format string, prettify bool) error {

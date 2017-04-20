@@ -112,7 +112,7 @@ var(
 	ListProject CommandHelper = CommandHelper{
 		Command: "status-project",
 		Description: "List information about a specific project",
-		CmdType: ListInfrastructure,
+		CmdType: StatusConfig,
 		LineHelp: "status-project [OPTIONS]",
 		SubCommands: [][]string{},
 		SubCmdTypes: []CmdSubRequestType{},

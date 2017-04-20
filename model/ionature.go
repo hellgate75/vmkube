@@ -21,8 +21,11 @@ func DeleteIfExists(file string) error {
 }
 
 func MakeFolderIfNotExists(folder string) error {
-	err := os.MkdirAll(folder, 0777)
-	return  err
+	if _,err := os.Stat(folder); err != nil {
+		err := os.MkdirAll(folder, 0777)
+		return  err
+	}
+	return nil
 }
 
 type IONature interface {

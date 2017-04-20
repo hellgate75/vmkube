@@ -21,7 +21,10 @@ func (info *ProjectIndexInfo) Read() error {
 	}
 	fileName := baseFolder + string(os.PathSeparator) + ".vmkubeindex"
 	if _,err = os.Stat(fileName); err!=nil {
-		info.Write()
+		info.Index = model.ProjectsIndex{
+			Projects: []model.ProjectsDescriptor{},
+		}
+		return nil
 	}
 	err = info.Index.Load(fileName)
 	return  err

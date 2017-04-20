@@ -3,7 +3,6 @@ package model
 import (
 	"errors"
 	"io/ioutil"
-	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
 	"vmkube/utils"
@@ -45,11 +44,7 @@ func (element *InstanceState) Load(file string) error {
 	if err != nil {
 		return  err
 	}
-	by, err := base64.RawStdEncoding.DecodeString(string(byteArray))
-	if err != nil {
-		return  err
-	}
-	err = json.Unmarshal(by, &element)
+	err = json.Unmarshal(DecodeBytes(byteArray), &element)
 	return err
 }
 
@@ -73,14 +68,12 @@ func (element *InstanceState) Import(file string, format string) error {
 }
 
 func (element *InstanceState) Save(file string) error {
-	byteArray, err := json.Marshal(element)
+	byteArray, err := json.MarshalIndent(element, "", "  ")
 	if err != nil {
 		return  err
 	}
 	DeleteIfExists(file)
-	value := base64.RawStdEncoding.EncodeToString(byteArray)
-	newBytes := []byte(value)
-	err = ioutil.WriteFile(file, newBytes , 0777)
+	err = ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 	return  err
 }
 
@@ -117,11 +110,7 @@ func (element *NetworkState) Load(file string) error {
 	if err != nil {
 		return  err
 	}
-	by, err := base64.RawStdEncoding.DecodeString(string(byteArray))
-	if err != nil {
-		return  err
-	}
-	err = json.Unmarshal(by, &element)
+	err = json.Unmarshal(DecodeBytes(byteArray), &element)
 	return err
 }
 
@@ -145,14 +134,12 @@ func (element *NetworkState) Import(file string, format string) error {
 }
 
 func (element *NetworkState) Save(file string) error {
-	byteArray, err := json.Marshal(element)
+	byteArray, err := json.MarshalIndent(element, "", "  ")
 	if err != nil {
 		return  err
 	}
 	DeleteIfExists(file)
-	value := base64.RawStdEncoding.EncodeToString(byteArray)
-	newBytes := []byte(value)
-	err = ioutil.WriteFile(file, newBytes , 0777)
+	err = ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 	return  err
 }
 
@@ -186,11 +173,7 @@ func (element *DomainState) Load(file string) error {
 	if err != nil {
 		return  err
 	}
-	by, err := base64.RawStdEncoding.DecodeString(string(byteArray))
-	if err != nil {
-		return  err
-	}
-	err = json.Unmarshal(by, &element)
+	err = json.Unmarshal(DecodeBytes(byteArray), &element)
 	return err
 }
 
@@ -214,14 +197,12 @@ func (element *DomainState) Import(file string, format string) error {
 }
 
 func (element *DomainState) Save(file string) error {
-	byteArray, err := json.Marshal(element)
+	byteArray, err := json.MarshalIndent(element, "", "  ")
 	if err != nil {
 		return  err
 	}
 	DeleteIfExists(file)
-	value := base64.RawStdEncoding.EncodeToString(byteArray)
-	newBytes := []byte(value)
-	err = ioutil.WriteFile(file, newBytes , 0777)
+	err = ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 	return  err
 }
 
@@ -252,11 +233,7 @@ func (element *State) Load(file string) error {
 	if err != nil {
 		return  err
 	}
-	by, err := base64.RawStdEncoding.DecodeString(string(byteArray))
-	if err != nil {
-		return  err
-	}
-	err = json.Unmarshal(by, &element)
+	err = json.Unmarshal(DecodeBytes(byteArray), &element)
 	return err
 }
 
@@ -280,14 +257,12 @@ func (element *State) Import(file string, format string) error {
 }
 
 func (element *State) Save(file string) error {
-	byteArray, err := json.Marshal(element)
+	byteArray, err := json.MarshalIndent(element, "", "  ")
 	if err != nil {
 		return  err
 	}
 	DeleteIfExists(file)
-	value := base64.RawStdEncoding.EncodeToString(byteArray)
-	newBytes := []byte(value)
-	err = ioutil.WriteFile(file, newBytes , 0777)
+	err = ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 	return  err
 }
 

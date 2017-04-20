@@ -49,11 +49,197 @@ func (request *CmdRequest) CheckProject() bool {
 }
 
 func (request *CmdRequest) CreateProject() (Response, error) {
-	response := Response{
-		Status: false,
-		Message: "Not Implemented",
+	Name := ""
+	InputFile := ""
+	InputFormat := ""
+	Force := false
+	DestroyInfra := false
+	for _,option := range request.Arguments.Options {
+		if "name" == CorrectInput(option[0]) {
+			Name = option[1]
+		}
+		if "input-file" == CorrectInput(option[0]) {
+			InputFile = option[1]
+		}
+		if "input-format" == CorrectInput(option[0]) {
+			InputFormat = option[1]
+		}
+		if "force" == CorrectInput(option[0]) {
+			Force = CorrectInput(option[0]) == "true"
+		}
+		if "destroy-infra" == CorrectInput(option[0]) {
+			DestroyInfra = CorrectInput(option[0]) == "true"
+		}
 	}
-	return  response, errors.New("Unable to execute task")
+	if Name == "" {
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		return Response{
+			Message: "Project Name not provided",
+			Status: false,},errors.New("Unable to execute task")
+	}
+	descriptor, err := vmio.GetProjectDescriptor(Name)
+	if err == nil && !Force {
+		response := Response{
+			Status: false,
+			Message: "Project '"+Name+"' already exists and no force clause specified ...",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	if descriptor.InfraId != "" && ! DestroyInfra {
+		response := Response{
+			Status: false,
+			Message: "Project '"+Name+"' already build in Infra '"+descriptor.InfraName+"' and no infrastructure destroy clause specified ...",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	existsProject := (err == nil)
+	existsInfrastructure := (descriptor.InfraId != "")
+	existanceClause := "n't"
+	existanceClause2 := "proceding with definition of new project"
+	if existsProject {
+		existanceClause = ""
+		existanceClause2 = "proceding with overwrite of existing project"
+	}
+	fmt.Printf("\nProject: %s does%s exist, now %s...\n", Name, existanceClause, existanceClause2 )
+	project := model.Project{}
+	if InputFile != "" && InputFormat != "" {
+		fmt.Printf("\nLoading project %s from file '%s' using format '%s'...\n", Name, InputFile, InputFormat )
+		project, err = vmio.ImportUserProject(InputFile, InputFormat)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return  response, errors.New("Unable to execute task")
+		}
+		project.LastMessage = "Project imported from file " + InputFile + " in format " + InputFormat
+		project.Name = Name
+	} else {
+		fmt.Printf("\nDefining new empty project %s...\n", Name )
+		project.Id = NewUUIDString()
+		project.Name = Name
+		project.Created = time.Now()
+		project.Modified = time.Now()
+		project.Open = true
+		project.LastMessage = "Empty Project Creation"
+		project.Domains = append(project.Domains, model.ProjectDomain{
+			Id: NewUUIDString(),
+			Name: "Default Domain",
+			Options: [][]string{},
+			Networks: []model.ProjectNetwork{},
+		})
+		project.Domains[0].Networks = append(project.Domains[0].Networks, model.ProjectNetwork{
+			Id: NewUUIDString(),
+			Name: "Defaut Network",
+			Options: [][]string{},
+			CServers: []model.ProjectCloudServer{},
+			Servers: []model.ProjectServer{},
+			Installations: []model.InstallationPlan{},
+		})
+	}
+	
+	
+	if ErrorList := project.Validate(); len(ErrorList) > 0 {
+		errorValue := "Imported Project is invalid, clause(s) :"
+		for _,err := range ErrorList {
+			errorValue += fmt.Sprintf("\n%s", err.Error())
+		}
+		response := Response{
+			Status: false,
+			Message: errorValue,
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	InfraBackup := ""
+	ProjectBackup := ""
+	if existsInfrastructure {
+		InfraBackup = fmt.Sprintf("%s%s.infra-%s-%s.json",model.GetEmergencyFolder(),string(os.PathSeparator),descriptor.InfraId, descriptor.InfraName)
+		infra, err := vmio.LoadInfrastructure(descriptor.Id)
+		if err == nil {
+			vmio.ExportInfrastructure(infra,InfraBackup,"json",true)
+			fmt.Printf("Emergency Infrastructure backup at : %s\n", InfraBackup)
+		}
+		response, err := request.DeleteInfra()
+		if err != nil {
+			return response, err
+		}
+	}
+	
+	if existsProject {
+		ProjectBackup = fmt.Sprintf("%s%s.project-%s-%s.json",model.GetEmergencyFolder(),string(os.PathSeparator),descriptor.Id, descriptor.Name)
+		project, err := vmio.LoadProject(descriptor.Id)
+		if err == nil {
+			vmio.ExportUserProject(project,ProjectBackup,"json",true)
+			fmt.Printf("Emergency Project backup at : %s\n", ProjectBackup)
+		}
+		response, err := request.DeleteProject()
+		if err != nil {
+			return response, err
+		}
+	}
+	
+	err = vmio.SaveProject(project)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		if existsProject {
+			if existsInfrastructure {
+				return  response, errors.New("Unable to execute task, Project '"+Name+"' and Infrastructure "+descriptor.InfraName+" no longer exist, no rollback available, check emergency backups in logs!!")
+			} else {
+				return  response, errors.New("Unable to execute task, Project '"+Name+"' no longer exist, no rollback available, check emergency backup in logs!!")
+			}
+		} else {
+			return  response, errors.New("Unable to execute task")
+		}
+	}
+	
+	//prj, err := vmio.LoadProject(project.Id)
+	//
+	//fmt.Printf("Error: %s\n%s\n", err, utils.GetJSONFromObj(prj, true))
+	
+	index, err := vmio.LoadIndex()
+	
+	index.Projects = append(index.Projects, model.ProjectsDescriptor{
+		Id: project.Id,
+		Name: project.Name,
+		Open: project.Open,
+		Synced: true,
+		Active: false,
+		InfraId: "",
+		InfraName: "",
+	})
+	
+	
+	err = vmio.SaveIndex(index)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		request.DeleteProject()
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	if ProjectBackup != "" {
+		fmt.Printf("Removing Project backup at : %s\n", ProjectBackup)
+		os.Remove(ProjectBackup)
+	}
+	
+	if InfraBackup != "" {
+		fmt.Printf("Removing Infrastructure backup at : %s\n", InfraBackup)
+		os.Remove(InfraBackup)
+	}
+	
+	response := Response{
+		Status: true,
+		Message: "Success",
+	}
+	return  response, nil
 }
 
 func (request *CmdRequest) AlterProject() (Response, error) {
@@ -169,178 +355,11 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 }
 
 func (request *CmdRequest) DeleteProject() (Response, error) {
-	Name := ""
-	InputFile := ""
-	InputFormat := ""
-	Force := false
-	DestroyInfra := false
-	for _,option := range request.Arguments.Options {
-		if "name" == CorrectInput(option[0]) {
-			Name = option[1]
-		}
-		if "input-file" == CorrectInput(option[0]) {
-			InputFile = option[1]
-		}
-		if "input-format" == CorrectInput(option[0]) {
-			InputFormat = option[1]
-		}
-		if "force" == CorrectInput(option[0]) {
-			Force = CorrectInput(option[0]) == "true"
-		}
-		if "destroy-infra" == CorrectInput(option[0]) {
-			DestroyInfra = CorrectInput(option[0]) == "true"
-		}
-	}
-	if Name == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
-		return Response{
-			Message: "Project Name not provided",
-			Status: false,},errors.New("Unable to execute task")
-	}
-	descriptor, err := vmio.GetProjectDescriptor(Name)
-	if err == nil && !Force {
-		response := Response{
-			Status: false,
-			Message: "Project '"+Name+"' already exists and no force clause specified ...",
-		}
-		return  response, errors.New("Unable to execute task")
-	}
-	
-	if descriptor.InfraId != "" && ! DestroyInfra {
-		response := Response{
-			Status: false,
-			Message: "Project '"+Name+"' already build in Infra '"+descriptor.InfraName+"' and no infrastructure destroy clause specified ...",
-		}
-		return  response, errors.New("Unable to execute task")
-	}
-	existsProject := (err == nil)
-	existsInfrastructure := (descriptor.InfraId != "")
-	existanceClause := "n't"
-	existanceClause2 := "proceding with definition of new project"
-	if existsProject {
-		existanceClause = ""
-		existanceClause2 = "proceding with overwrite of existing project"
-	}
-	fmt.Printf("\nProject: %s does%s exist, now %s...\n", Name, existanceClause, existanceClause2 )
-	project := model.Project{}
-	if InputFile != "" && InputFormat != "" {
-		fmt.Printf("\nLoading project %s from file '%s' using format '%s'...\n", Name, InputFile, InputFormat )
-		project, err = vmio.ImportUserProject(InputFile, InputFormat)
-		if err != nil {
-			response := Response{
-				Status: false,
-				Message: err.Error(),
-			}
-			return  response, errors.New("Unable to execute task")
-		}
-		project.LastMessage = "Project imported from file " + InputFile + " in format " + InputFormat
-		project.Name = Name
-	} else {
-		fmt.Printf("\nDefining new empty project %s...\n", Name )
-		project.Id = NewUUIDString()
-		project.Name = Name
-		project.Created = time.Now()
-		project.Modified = time.Now()
-		project.Open = true
-		project.LastMessage = "Empty Project Creation"
-	}
-	
-	
-	if ErrorList := project.Validate(); len(ErrorList) > 0 {
-		errorValue := "Imported Project is invalid, clause(s) :"
-		for _,err := range ErrorList {
-			errorValue += fmt.Sprintf("\n%s", err.Error())
-		}
-		response := Response{
-			Status: false,
-			Message: errorValue,
-		}
-		return  response, errors.New("Unable to execute task")
-	}
-	InfraBackup := ""
-	ProjectBackup := ""
-	if existsInfrastructure {
-		InfraBackup = fmt.Sprintf("%s%s.infra-%s-%s.json",model.GetEmergencyFolder(),string(os.PathSeparator),descriptor.InfraId, descriptor.InfraName)
-		infra, err := vmio.LoadInfrastructure(descriptor.Id)
-		if err == nil {
-			vmio.ExportInfrastructure(infra,InfraBackup,"json",true)
-			fmt.Printf("Emergency Infrastructure backup at : %s\n", InfraBackup)
-		}
-		response, err := request.DeleteInfra()
-		if err != nil {
-			return response, err
-		}
-	}
-	
-	if existsProject {
-		ProjectBackup = fmt.Sprintf("%s%s.project-%s-%s.json",model.GetEmergencyFolder(),string(os.PathSeparator),descriptor.Id, descriptor.Name)
-		project, err := vmio.LoadProject(descriptor.Id)
-		if err == nil {
-			vmio.ExportUserProject(project,ProjectBackup,"json",true)
-			fmt.Printf("Emergency Project backup at : %s\n", ProjectBackup)
-		}
-		response, err := request.DeleteProject()
-		if err != nil {
-			return response, err
-		}
-	}
-	
-	err = vmio.SaveProject(project)
-	
-	if err != nil {
-		response := Response{
-			Status: false,
-			Message: err.Error(),
-		}
-		if existsProject {
-			if existsInfrastructure {
-				return  response, errors.New("Unable to execute task, Project '"+Name+"' and Infrastructure "+descriptor.InfraName+" no longer exist, no rollback available, check emergency backups in logs!!")
-			} else {
-				return  response, errors.New("Unable to execute task, Project '"+Name+"' no longer exist, no rollback available, check emergency backup in logs!!")
-			}
-		} else {
-			return  response, errors.New("Unable to execute task")
-		}
-	}
-	
-	index, err := vmio.LoadIndex()
-	
-	index.Projects = append(index.Projects, model.ProjectsDescriptor{
-		Id: project.Id,
-		Name: project.Name,
-		Open: project.Open,
-		Synced: true,
-		Active: false,
-		InfraId: "",
-		InfraName: "",
-	})
-	
-	err = vmio.SaveIndex(index)
-	
-	if err != nil {
-		response := Response{
-			Status: false,
-			Message: err.Error(),
-		}
-		request.DeleteProject()
-		return  response, errors.New("Unable to execute task")
-	}
-	
-	if ProjectBackup != "" {
-		fmt.Printf("Removing Project backup at : %s\n", ProjectBackup)
-		os.Remove(ProjectBackup)
-	}
-	
-	if InfraBackup != "" {
-		fmt.Printf("Removing Infrastructure backup at : %s\n", InfraBackup)
-		os.Remove(InfraBackup)
-	}
-	
 	response := Response{
-		Status: true,
-		Message: "Success",
+		Status: false,
+		Message: "Not Implemented",
 	}
-	return  response, nil
+	return  response, errors.New("Unable to execute task")
 }
 
 func (request *CmdRequest) ListProjects() (Response, error) {
@@ -391,7 +410,7 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 			Status: false,},errors.New("Unable to execute task")
 	}
 	descriptor, err := vmio.GetProjectDescriptor(Name)
-	if err == nil {
+	if err != nil {
 		response := Response{
 			Status: false,
 			Message: err.Error(),
