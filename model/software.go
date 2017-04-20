@@ -8,6 +8,7 @@ import (
 	"os/user"
 	"log"
 	"errors"
+	"vmkube/utils"
 )
 
 type MachineISO struct {
@@ -67,12 +68,11 @@ func (isoTemplate *MachineISO)	Download(version string) bool {
 	fmt.Printf("Downloading %s to %s\n", url, fileName)
 
 	// TODO: check file existence first with io.IsExist
-	output, err := os.Create(fileName)
+	err := utils.CreateNewEmptyFile(fileName)
 	if err != nil {
 		fmt.Printf("Error while creating %s - %s\n", fileName, err)
 		return false
 	}
-	defer output.Close()
 
 	response, err := http.Get(url)
 	if err != nil {
@@ -80,7 +80,13 @@ func (isoTemplate *MachineISO)	Download(version string) bool {
 		return false
 	}
 	defer response.Body.Close()
-
+	
+	output, err := os.OpenFile(fileName, os.O_RDWR, 0777)
+	if err != nil {
+		return false
+	}
+	defer output.Close()
+	
 	n, err := io.Copy(output, response.Body)
 	if err != nil {
 		fmt.Printf("Error while downloading %s - %s\n", url, err)

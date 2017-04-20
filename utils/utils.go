@@ -9,6 +9,7 @@ import (
 	"bufio"
 	"os"
 	"fmt"
+	"io/ioutil"
 )
 
 func StrPad(instr string, capping int) string {
@@ -136,4 +137,6 @@ func ToMap(m interface{}) map[string]interface{} {
 	return  inInterface.(map[string]interface{})
 }
 
-
+func CreateNewEmptyFile(file string) error {
+	return ioutil.WriteFile(file, []byte{}, 0777)
+}

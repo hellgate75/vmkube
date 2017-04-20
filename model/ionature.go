@@ -5,6 +5,7 @@ import (
 	"strings"
 	"bufio"
 	"fmt"
+	"vmkube/utils"
 )
 
 func existsFile(file string) bool {
@@ -45,13 +46,12 @@ func GetLockFile(id string) string {
 func readLocks(projectId string) ([]string, error) {
 	fileName := GetLockFile(projectId)
 	if !existsFile(fileName) {
-		newFile, err := os.Create(fileName)
-		defer newFile.Close()
+		err := utils.CreateNewEmptyFile(fileName)
 		if err != nil {
 			return nil, err
 		}
 	}
-	file, err := os.Open(fileName)
+	file, err := os.OpenFile(fileName, os.O_RDWR, 0777)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,11 @@ func addLock(projectId string, newline string) error {
 func overwriteLocks(projectId string, lines []string) error {
 	fileName := GetLockFile(projectId)
 	DeleteIfExists(fileName)
-	file, err := os.Create(fileName)
+	err := utils.CreateNewEmptyFile(fileName)
+	if err != nil {
+		return err
+	}
+	file, err := os.OpenFile(fileName, os.O_RDWR, 0777)
 	if err != nil {
 		return err
 	}
