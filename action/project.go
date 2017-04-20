@@ -438,7 +438,6 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 	}
 	fmt.Printf("\n%Proceding with deletion of Project named  '%s'%s...\n", descriptor.Name, existanceClause )
 	
-	
 	indexes,err := vmio.LoadIndex()
 
 	if err != nil {

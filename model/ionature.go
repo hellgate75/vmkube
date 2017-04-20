@@ -45,7 +45,8 @@ func GetLockFile(id string) string {
 func readLocks(projectId string) ([]string, error) {
 	fileName := GetLockFile(projectId)
 	if !existsFile(fileName) {
-		_, err := os.Create(fileName)
+		newFile, err := os.Create(fileName)
+		defer newFile.Close()
 		if err != nil {
 			return nil, err
 		}
