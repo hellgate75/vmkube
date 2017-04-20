@@ -77,8 +77,30 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			Message: "Project Name not provided",
 			Status: false,},errors.New("Unable to execute task")
 	}
+	
+	AllowProjectDeletion := Force
+	AllowInfraDeletion := DestroyInfra
+	AllowProjectBackup := Force
+	AllowInfraBackup := DestroyInfra
+	
 	descriptor, err := vmio.GetProjectDescriptor(Name)
-	if err == nil && !Force {
+	if err == nil {
+		if ! AllowProjectDeletion {
+			AllowProjectDeletion = utils.RequestConfirmation("Do you want delete Project named '"+descriptor.Name+"'?")
+			if ! AllowProjectDeletion {
+				response := Response{
+					Status: false,
+					Message: "User task interruption",
+				}
+				return response, errors.New("Unable to execute task")
+			}
+		}
+		if AllowProjectDeletion && ! AllowProjectBackup {
+			AllowProjectBackup = utils.RequestConfirmation("Do you want backup Project named'"+descriptor.Name+"'?")
+		}
+	}
+	
+	if err == nil && !AllowProjectDeletion {
 		response := Response{
 			Status: false,
 			Message: "Project '"+Name+"' already exists and no force clause specified ...",
@@ -86,7 +108,23 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		return  response, errors.New("Unable to execute task")
 	}
 	
-	if descriptor.InfraId != "" && ! DestroyInfra {
+	if descriptor.InfraId != "" {
+		if ! AllowInfraDeletion {
+			AllowInfraDeletion = utils.RequestConfirmation("Do you want delete Infrastrcuture named '"+descriptor.InfraName+"'?")
+			if ! AllowInfraDeletion {
+				response := Response{
+					Status: false,
+					Message: "User task interruption",
+				}
+				return response, errors.New("Unable to execute task")
+			}
+		}
+		if AllowInfraDeletion && ! AllowInfraBackup {
+			AllowInfraBackup = utils.RequestConfirmation("Do you want backup Infrastrcuture named'"+descriptor.InfraName+"'?")
+		}
+	}
+	
+	if descriptor.InfraId != "" && ! AllowInfraDeletion {
 		response := Response{
 			Status: false,
 			Message: "Project '"+Name+"' already build in Infra '"+descriptor.InfraName+"' and no infrastructure destroy clause specified ...",
@@ -153,12 +191,15 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	}
 	InfraBackup := ""
 	ProjectBackup := ""
+
 	if existsInfrastructure {
-		InfraBackup = fmt.Sprintf("%s%s.infra-%s-%s.json",model.GetEmergencyFolder(),string(os.PathSeparator),descriptor.InfraId, descriptor.InfraName)
-		infra, err := vmio.LoadInfrastructure(descriptor.Id)
-		if err == nil {
-			vmio.ExportInfrastructure(infra,InfraBackup,"json",true)
-			fmt.Printf("Emergency Infrastructure backup at : %s\n", InfraBackup)
+		if AllowInfraBackup {
+			InfraBackup = fmt.Sprintf("%s%s.infra-%s-%s.json",model.GetEmergencyFolder(),string(os.PathSeparator),descriptor.InfraId, descriptor.InfraName)
+			infra, err := vmio.LoadInfrastructure(descriptor.Id)
+			if err == nil {
+				vmio.ExportInfrastructure(infra,InfraBackup,"json",true)
+				fmt.Printf("Emergency Infrastructure backup at : %s\n", InfraBackup)
+			}
 		}
 		response, err := request.DeleteInfra()
 		if err != nil {
@@ -167,11 +208,13 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	}
 	
 	if existsProject {
-		ProjectBackup = fmt.Sprintf("%s%s.project-%s-%s.json",model.GetEmergencyFolder(),string(os.PathSeparator),descriptor.Id, descriptor.Name)
-		project, err := vmio.LoadProject(descriptor.Id)
-		if err == nil {
-			vmio.ExportUserProject(project,ProjectBackup,"json",true)
-			fmt.Printf("Emergency Project backup at : %s\n", ProjectBackup)
+		if AllowProjectBackup {
+			ProjectBackup = fmt.Sprintf("%s%s.project-%s-%s.json",model.GetEmergencyFolder(),string(os.PathSeparator),descriptor.Id, descriptor.Name)
+			project, err := vmio.LoadProject(descriptor.Id)
+			if err == nil {
+				vmio.ExportUserProject(project,ProjectBackup,"json",true)
+				fmt.Printf("Emergency Project backup at : %s\n", ProjectBackup)
+			}
 		}
 		response, err := request.DeleteProject()
 		if err != nil {
@@ -196,10 +239,6 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			return  response, errors.New("Unable to execute task")
 		}
 	}
-	
-	//prj, err := vmio.LoadProject(project.Id)
-	//
-	//fmt.Printf("Error: %s\n%s\n", err, utils.GetJSONFromObj(prj, true))
 	
 	index, err := vmio.LoadIndex()
 	

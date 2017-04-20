@@ -6,6 +6,9 @@ import (
 	"strconv"
 	"encoding/json"
 	"encoding/xml"
+	"bufio"
+	"os"
+	"fmt"
 )
 
 func StrPad(instr string, capping int) string {
@@ -79,6 +82,18 @@ func StringToInt(s string) (int,error) {
 
 func IntToString(n int) string {
 	return strconv.Itoa(n)
+}
+
+func RequestConfirmation(reason string) bool {
+	text := ""
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Fprintf(os.Stdout, "%s.Confirm opration [y/n/yes/no] : ", reason)
+	text, _ = reader.ReadString('\n')
+	if CorrectInput(text) != "y" && CorrectInput(text) != "yes" && CorrectInput(text) != "n" && CorrectInput(text) != "no" {
+		fmt.Fprintf(os.Stdout, "Current text is not allowed : %s\n", text)
+		return  RequestConfirmation(reason)
+	}
+	return (CorrectInput(text) == "y" || CorrectInput(text) == "yes")
 }
 
 

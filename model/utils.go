@@ -43,7 +43,7 @@ func ProjectToImport(project Project) ProjectImport {
 func EncodeBytes(decodedByteArray []byte) []byte {
 	newBytes := make([]byte,0)
 	for _,byteElem := range decodedByteArray {
-		newBytes = append(newBytes, byteElem << 1)
+		newBytes = append(newBytes, byteElem - 20)
 	}
 	return newBytes
 	//return decodedByteArray
@@ -52,7 +52,7 @@ func EncodeBytes(decodedByteArray []byte) []byte {
 func DecodeBytes(encodedByteArray []byte) []byte {
 	newBytes := make([]byte,0)
 	for _,byteElem := range encodedByteArray {
-		newBytes = append(newBytes, byteElem >> 1)
+		newBytes = append(newBytes, byteElem + 20)
 	}
 	return newBytes
 	//return encodedByteArray

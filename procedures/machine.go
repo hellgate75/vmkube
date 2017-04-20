@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"vmkube/model"
 	"log"
-	"bufio"
 	"os"
 	"strings"
 	"vmkube/utils"
@@ -28,18 +27,6 @@ func DownloadISO(machineType string, version string) (string, bool) {
 		log.Fatal("Machine",machineType,"not found!!","-","error:", error)
 		return  "", false
 	}
-}
-
-func RequestConfirmation(reason string) bool {
-	text := ""
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Fprintf(os.Stdout, "%s.Confirm [y/n] :", reason)
-	text, _ = reader.ReadString('\n')
-	if text != "Y" && text != "y" && text != "N" && text != "n" {
-		fmt.Fprintf(os.Stdout, "Current text is not allowed : %s\n", text)
-		return  RequestConfirmation(reason)
-	}
-	return false
 }
 
 func CreateCloudServer(server model.ProjectCloudServer) ([]byte, error) {

@@ -80,19 +80,14 @@ func NewUUIDString()	string {
 
 func PrintCommandHelper(command	string, subCommand string) {
 	helper := RecoverCommandHelper(command)
-	//fmt.Fprintln(os.Stdout, "vmkube Command [SubCommand] [OPTIONS]")
-	//fmt.Fprintln(os.Stdout, "Required Command:", command)
-	//fmt.Fprintln(os.Stdout, "Parsed Command:", helper.Command)
 	fmt.Fprintln(os.Stdout, "Help: vmkube", helper.LineHelp)
 	fmt.Fprintln(os.Stdout, "Action:", helper.Description)
 	found := false
 	if "" !=  strings.TrimSpace(strings.ToLower(subCommand)) && "help" !=  strings.TrimSpace(strings.ToLower(subCommand)) {
 		fmt.Fprintln(os.Stdout, "Selected Sub-Command: " + subCommand)
 		for _,option := range helper.SubCommands {
-			//if option[0] == strings.TrimSpace(strings.ToLower(subCommand)) {
 				fmt.Fprintf(os.Stdout, "%s\t%s\n",  utils.StrPad(option[0], 45), option[1])
 				found = true
-			//}
 		}
 		if ! found  {
 			fmt.Fprintln(os.Stdout, "Sub-Command Not found!!")
