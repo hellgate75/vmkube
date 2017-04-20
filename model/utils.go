@@ -41,11 +41,21 @@ func ProjectToImport(project Project) ProjectImport {
 }
 
 func EncodeBytes(decodedByteArray []byte) []byte {
-	return decodedByteArray
+	newBytes := make([]byte,0)
+	for _,byteElem := range decodedByteArray {
+		newBytes = append(newBytes, byteElem << 1)
+	}
+	return newBytes
+	//return decodedByteArray
 }
 
 func DecodeBytes(encodedByteArray []byte) []byte {
-return encodedByteArray
+	newBytes := make([]byte,0)
+	for _,byteElem := range encodedByteArray {
+		newBytes = append(newBytes, byteElem >> 1)
+	}
+	return newBytes
+	//return encodedByteArray
 }
 
 type FieldData struct {
