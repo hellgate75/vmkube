@@ -71,7 +71,7 @@ func (element *CloudInstance) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	println(element)
-	if err == nil && element.Id == "" {
+	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
@@ -82,7 +82,9 @@ func (element *CloudInstance) Import(file string, format string) error {
 }
 
 func (element *CloudInstance) PostImport() error {
-	element.Id = NewUUIDString()
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	return nil
 }
 
@@ -157,7 +159,7 @@ func (element *ProjectCloudServer) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	if err == nil && element.Id == "" {
+	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
@@ -167,7 +169,9 @@ func (element *ProjectCloudServer) Import(file string, format string) error {
 }
 
 func (element *ProjectCloudServer) PostImport() error {
-	element.Id = NewUUIDString()
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	return nil
 }
 

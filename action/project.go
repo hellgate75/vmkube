@@ -692,11 +692,11 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 func (request *CmdRequest) ImportProject() (Response, error) {
 	Name := ""
 	File := ""
-	Format := ""
+	Format := "json"
 	FullImport := true
 	Force := false
 	Sample := false
-	SampleFormat := ""
+	SampleFormat := "json"
 	var ElementType CmdElementType = NoElement
 	var err error
 	for _,option := range request.Arguments.Options {
@@ -1276,7 +1276,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 func (request *CmdRequest) ExportProject() (Response, error) {
 	Name := ""
 	File := ""
-	Format := ""
+	Format := "json"
 	FullExport := true
 	var ElementType CmdElementType = NoElement
 	var err error

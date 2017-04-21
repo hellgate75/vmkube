@@ -46,7 +46,7 @@ func (element *ProjectImport) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	if err == nil && element.Id == "" {
+	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
@@ -56,7 +56,9 @@ func (element *ProjectImport) Import(file string, format string) error {
 }
 
 func (element *ProjectImport) PostImport() error {
-	element.Id=NewUUIDString()
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	for i := 0; i < len(element.Domains); i++ {
 		err := element.Domains[i].PostImport()
 		if err != nil {
@@ -116,7 +118,7 @@ func (element *Project) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	if err == nil && element.Id == "" {
+	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
@@ -126,7 +128,9 @@ func (element *Project) Import(file string, format string) error {
 }
 
 func (element *Project) PostImport() error {
-	element.Id=NewUUIDString()
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	for i := 0; i < len(element.Domains); i++ {
 		err := element.Domains[i].PostImport()
 		if err != nil {
@@ -197,7 +201,7 @@ func (element *Infrastructure) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	if err == nil && element.Id == "" {
+	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
@@ -207,7 +211,9 @@ func (element *Infrastructure) Import(file string, format string) error {
 }
 
 func (element *Infrastructure) PostImport() error {
-	element.Id=NewUUIDString()
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	for i := 0; i < len(element.Domains); i++ {
 		err := element.Domains[i].PostImport()
 		if err != nil {

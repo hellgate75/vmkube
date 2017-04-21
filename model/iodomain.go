@@ -58,8 +58,8 @@ func (element *Domain) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	for i := 0; i < len(element.Networks); i++ {
-		err := element.Networks[i].PostImport()
+	if err == nil {
+		err := element.PostImport()
 		if err != nil {
 			return err
 		}
@@ -68,7 +68,9 @@ func (element *Domain) Import(file string, format string) error {
 }
 
 func (element *Domain) PostImport() error {
-	element.Id=NewUUIDString()
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	for _,network := range element.Networks {
 		err := network.PostImport()
 		if err != nil {
@@ -138,7 +140,7 @@ func (element *ProjectDomain) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	if err == nil && element.Id == "" {
+	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
@@ -148,7 +150,9 @@ func (element *ProjectDomain) Import(file string, format string) error {
 }
 
 func (element *ProjectDomain) PostImport() error {
-	element.Id=NewUUIDString()
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	for i := 0; i < len(element.Networks); i++ {
 		err := element.Networks[i].PostImport()
 		if err != nil {

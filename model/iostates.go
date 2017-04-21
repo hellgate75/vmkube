@@ -64,7 +64,7 @@ func (element *InstanceState) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	if err == nil && element.Id == "" {
+	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
@@ -74,7 +74,9 @@ func (element *InstanceState) Import(file string, format string) error {
 }
 
 func (element *InstanceState) PostImport() error {
-	element.Id = NewUUIDString()
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	return nil
 }
 
@@ -141,7 +143,7 @@ func (element *NetworkState) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	if err == nil && element.Id == "" {
+	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
@@ -151,9 +153,11 @@ func (element *NetworkState) Import(file string, format string) error {
 }
 
 func (element *NetworkState) PostImport() error {
-	element.Id = NewUUIDString()
-	for _, states := range element.InstanceStates {
-		states.PostImport()
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
+	for i := 0; i < len(element.InstanceStates); i++ {
+		element.InstanceStates[i].PostImport()
 	}
 	return nil
 }
@@ -218,7 +222,7 @@ func (element *DomainState) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	if err == nil && element.Id == "" {
+	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
@@ -228,9 +232,11 @@ func (element *DomainState) Import(file string, format string) error {
 }
 
 func (element *DomainState) PostImport() error {
-	element.Id = NewUUIDString()
-	for _, states := range element.NetworkStates {
-		states.PostImport()
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
+	for i := 0; i < len(element.NetworkStates); i++ {
+		element.NetworkStates[i].PostImport()
 	}
 	return nil
 }
@@ -292,7 +298,7 @@ func (element *State) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	if err == nil && element.Id == "" {
+	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
@@ -302,9 +308,11 @@ func (element *State) Import(file string, format string) error {
 }
 
 func (element *State) PostImport() error {
-	element.Id = NewUUIDString()
-	for _, states := range element.DomainStates {
-		states.PostImport()
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
+	for i := 0; i < len(element.DomainStates); i++ {
+		element.DomainStates[i].PostImport()
 	}
 	return nil
 }

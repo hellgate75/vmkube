@@ -68,6 +68,9 @@ func (element *ProjectsDescriptor) Import(file string, format string) error {
 }
 
 func (element *ProjectsDescriptor) PostImport() error {
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	return nil
 }
 
@@ -125,7 +128,7 @@ func (element *ProjectsIndex) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	if err == nil && element.Id == "" {
+	if err == nil {
 		err = element.PostImport()
 		if err != nil {
 			return err
@@ -135,6 +138,12 @@ func (element *ProjectsIndex) Import(file string, format string) error {
 }
 
 func (element *ProjectsIndex) PostImport() error {
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
+	for i := 0; i < len(element.Projects); i++ {
+		element.Projects[i].PostImport()
+	}
 	return nil
 }
 

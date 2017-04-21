@@ -69,7 +69,7 @@ func (element *Network) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	if err == nil && element.Id == "" {
+	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
@@ -79,7 +79,9 @@ func (element *Network) Import(file string, format string) error {
 }
 
 func (element *Network) PostImport() error {
-	element.Id=NewUUIDString()
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	serverMap := make(map[string]string, 0)
 	for i := 0; i < len(element.Instances); i++ {
 		id := element.Instances[i].Id
@@ -212,7 +214,7 @@ func (element *ProjectNetwork) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil {
-		if err == nil && element.Id == "" {
+		if err == nil {
 			err := element.PostImport()
 			if err != nil {
 				return err
@@ -223,7 +225,9 @@ func (element *ProjectNetwork) Import(file string, format string) error {
 }
 
 func (element *ProjectNetwork) PostImport() error {
-	element.Id=NewUUIDString()
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	serverMap := make(map[string]string, 0)
 	for i := 0; i < len(element.Servers); i++ {
 		id := element.Servers[i].Id

@@ -53,7 +53,7 @@ func (element *Installation) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	if err == nil && element.Id == "" {
+	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
@@ -63,7 +63,9 @@ func (element *Installation) Import(file string, format string) error {
 }
 
 func (element *Installation) PostImport() error {
-	element.Id = NewUUIDString()
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	return nil
 }
 
@@ -121,7 +123,7 @@ func (element *InstallationPlan) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	if err == nil && element.Id == "" {
+	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
@@ -131,7 +133,9 @@ func (element *InstallationPlan) Import(file string, format string) error {
 }
 
 func (element *InstallationPlan) PostImport() error {
-	element.Id = NewUUIDString()
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
 	return nil
 }
 

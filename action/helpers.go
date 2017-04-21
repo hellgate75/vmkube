@@ -368,7 +368,7 @@ func InitHelpers() {
 	)
 
 	ImportProject.Options = append(ImportProject.Options,
-		[]string{"format", " <json|xml>", "Format used to import project (default: json)", "true"},
+		[]string{"format", " <json|xml>", "Format used to import project (default: json)", "false"},
 	)
 	
 	ImportProject.Options = append(ImportProject.Options,
@@ -401,11 +401,11 @@ func InitHelpers() {
 	)
 
 	ExportProject.Options = append(ExportProject.Options,
-		[]string{"format", " <json|xml>", "Format used to export project (default: json)", "true"},
+		[]string{"format", " <json|xml>", "Format used to export project (default: json)", "false"},
 	)
 
 	ExportProject.Options = append(ExportProject.Options,
-		[]string{"full-export", "<boolean>", "Flag used to describe a full export (default: true)", "false"},
+		[]string{"full-export", " <boolean>", "Flag used to describe a full export (default: true)", "false"},
 	)
 	
 	ExportProject.Options = append(ExportProject.Options,
