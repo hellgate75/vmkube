@@ -33,7 +33,7 @@ type TypeDefine struct {
 
 type DefineList []TypeDefine
 
-var serverSample model.ProjectServer = model.ProjectServer{
+var ServerSample model.ProjectServer = model.ProjectServer{
 	Id: "",
 	Name: "MyServer",
 	Driver: "virtualbox",
@@ -54,17 +54,18 @@ var serverSample model.ProjectServer = model.ProjectServer{
 	Swarm: model.ProjectSwarmOpt{},
 }
 
-var cloudServerSample model.ProjectCloudServer = model.ProjectCloudServer{
+var CloudServerSample model.ProjectCloudServer = model.ProjectCloudServer{
 	Id: "",
 	Name: "MyCloudServer",
 	Driver: "virtualbox",
 	Hostname: "myserver",
+	Roles: []string{"server","master","rancher-host","rancher-server"},
 	Options: [][]string{
 		[]string{"my-provider-option", "my-provider-option-value"},
 	},
 }
 
-var installationPlan model.InstallationPlan = model.InstallationPlan{
+var InstallationPlanSample model.InstallationPlan = model.InstallationPlan{
 	Id: "",
 	Environment: model.KubernetesEnv,
 	IsCloud: false,
@@ -77,7 +78,7 @@ var installationPlan model.InstallationPlan = model.InstallationPlan{
 	Type: model.HostRole,
 }
 
-var installationPlan2 model.InstallationPlan = model.InstallationPlan{
+var InstallationPlanSample2 model.InstallationPlan = model.InstallationPlan{
 	Id: "",
 	Environment: model.CattleEnv,
 	IsCloud: true,
@@ -90,30 +91,30 @@ var installationPlan2 model.InstallationPlan = model.InstallationPlan{
 	Type: model.ServerRole,
 }
 
-var networkSample model.ProjectNetwork = model.ProjectNetwork{
+var NetworkSample model.ProjectNetwork = model.ProjectNetwork{
 	Id: "",
 	Name: "MyNetwork",
-	CServers: []model.ProjectCloudServer{cloudServerSample},
-	Servers: []model.ProjectServer{serverSample},
-	Installations: []model.InstallationPlan{installationPlan,installationPlan2},
+	CServers: []model.ProjectCloudServer{CloudServerSample},
+	Servers: []model.ProjectServer{ServerSample},
+	Installations: []model.InstallationPlan{InstallationPlanSample, InstallationPlanSample2},
 	Options: [][]string{
 		[]string{"my-network-option", "my-network-option-value"},
 	},
 }
 
-var domainSample model.ProjectDomain = model.ProjectDomain {
+var DomainSample model.ProjectDomain = model.ProjectDomain {
 	Id: "",
 	Name: "MyDomain",
-	Networks: []model.ProjectNetwork{networkSample},
+	Networks: []model.ProjectNetwork{NetworkSample},
 	Options: [][]string{
 		[]string{"my-domain-option", "my-domain-option-value"},
 	},
 }
 
-var projectSample model.ProjectImport = model.ProjectImport {
+var ProjectSample model.ProjectImport = model.ProjectImport {
 	Id: "",
 	Name: "MyProject",
-	Domains: []model.ProjectDomain{domainSample},
+	Domains: []model.ProjectDomain{DomainSample},
 }
 
 func ListProjectTypeDefines() DefineList {
@@ -123,42 +124,42 @@ func ListProjectTypeDefines() DefineList {
 		Description: "Server Element describes Instance configuration for local scope",
 		Type: ServerElement,
 		Fields: []TypeDefineField{},
-		Sample: serverSample,
+		Sample: ServerSample,
 	})
 	defineList = append(defineList, TypeDefine{
 		Name: "Cloud-Server",
 		Description: "Server Element describes Instance configuration for remote/cloud scope",
 		Type: CloudServerElement,
 		Fields: []TypeDefineField{},
-		Sample: cloudServerSample,
+		Sample: CloudServerSample,
 	})
 	defineList = append(defineList, TypeDefine{
 		Name: "Plan",
 		Description: "Plan describes one single couple of installation and provisioning procedures for one project instance",
 		Type: PlanElement,
 		Fields: []TypeDefineField{},
-		Sample: installationPlan,
+		Sample: InstallationPlanSample,
 	})
 	defineList = append(defineList, TypeDefine{
 		Name: "Network",
 		Description: "Describe Network Inrastracture, composed by Server/Cloud Server Configurations and Plans",
 		Type: NetworkElement,
 		Fields: []TypeDefineField{},
-		Sample: networkSample,
+		Sample: NetworkSample,
 	})
 	defineList = append(defineList, TypeDefine{
 		Name: "Domain",
 		Description: "Describe Domain Inrastracture, composed by Networks, and defining and order in the Infrastructure",
 		Type: DomainElement,
 		Fields: []TypeDefineField{},
-		Sample: domainSample,
+		Sample: DomainSample,
 	})
 	defineList = append(defineList, TypeDefine{
 		Name: "Project",
 		Description: "Top Level Design Element containing multiple Domains",
 		Type: ProjectElement,
 		Fields: []TypeDefineField{},
-		Sample: projectSample,
+		Sample: ProjectSample,
 	})
 	
 	return defineList

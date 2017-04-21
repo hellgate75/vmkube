@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"encoding/xml"
+	"vmkube/vmio"
 )
 
 type Response struct {
@@ -15,6 +16,13 @@ type Response struct {
 
 type ExportImportDomains struct {
 	Domains []model.ProjectDomain
+}
+
+var ImportDomainSample ExportImportDomains = ExportImportDomains{
+	Domains: []model.ProjectDomain{
+		vmio.DomainSample,
+		vmio.DomainSample,
+	},
 }
 
 func UserImportDomains(File string, Format string) (ExportImportDomains, error) {
@@ -49,6 +57,17 @@ type ExportImportNetwork struct {
 	Networks    []model.ProjectNetwork
 }
 
+var ImportNetworkSample ExportImportNetwork = ExportImportNetwork{
+	Domain:      DomainReference{
+		DomainId: NewUUIDString(),
+		DomainName: vmio.DomainSample.Name,
+	},
+	Networks:    []model.ProjectNetwork{
+		vmio.NetworkSample,
+		vmio.NetworkSample,
+	},
+}
+
 func UserImportNetworks(File string, Format string) ([]ExportImportNetwork, error) {
 	networks := make([]ExportImportNetwork, 0)
 	if ! model.ExistsFile(File) {
@@ -81,6 +100,19 @@ type ExportImportLocalServers struct {
 	Servers      []model.ProjectServer
 }
 
+var ImportLocalServerSample ExportImportLocalServers = ExportImportLocalServers{
+	Network:      NetworkReference{
+		DomainId:     NewUUIDString(),
+		DomainName:   vmio.DomainSample.Name,
+		NetworkId:    NewUUIDString(),
+		NetworkName:  vmio.NetworkSample.Name,
+	},
+	Servers:    []model.ProjectServer{
+		vmio.ServerSample,
+		vmio.ServerSample,
+	},
+}
+
 func UserImportLocalServers(File string, Format string) ([]ExportImportLocalServers, error) {
 	servers := make([]ExportImportLocalServers, 0)
 	if ! model.ExistsFile(File) {
@@ -106,6 +138,19 @@ type ExportImportCloudServers struct {
 	Servers      []model.ProjectCloudServer
 }
 
+var ImportCloudServerSample ExportImportCloudServers = ExportImportCloudServers{
+	Network:      NetworkReference{
+		DomainId:     NewUUIDString(),
+		DomainName:   vmio.DomainSample.Name,
+		NetworkId:    NewUUIDString(),
+		NetworkName:  vmio.NetworkSample.Name,
+	},
+	Servers:    []model.ProjectCloudServer{
+		vmio.CloudServerSample,
+		vmio.CloudServerSample,
+	},
+}
+
 func UserImportCloudServers(File string, Format string) ([]ExportImportCloudServers, error) {
 	servers := make([]ExportImportCloudServers, 0)
 	if ! model.ExistsFile(File) {
@@ -129,6 +174,45 @@ func UserImportCloudServers(File string, Format string) ([]ExportImportCloudServ
 type ExportImportPlans struct {
 	Network      NetworkReference
 	Plans       []model.InstallationPlan
+}
+
+var InstallationPlanSample model.InstallationPlan = model.InstallationPlan{
+	Id: "",
+	Environment: model.KubernetesEnv,
+	IsCloud: false,
+	ServerId: NewUUIDString(),
+	MainCommandRef: "https://github.com/myrepo/something/mycommand.git",
+	MainCommandSet: model.AnsibleCmdSet,
+	ProvisionCommandRef: "https://site.to.my.commands/something/mycommand.tgz",
+	ProvisionCommandSet: model.HelmCmdSet,
+	Role: model.MasterRole,
+	Type: model.HostRole,
+}
+
+var InstallationPlanSample2 model.InstallationPlan = model.InstallationPlan{
+	Id: "",
+	Environment: model.CattleEnv,
+	IsCloud: true,
+	ServerId: NewUUIDString(),
+	MainCommandRef: "https://github.com/myrepo/something/mycommand.git",
+	MainCommandSet: model.AnsibleCmdSet,
+	ProvisionCommandRef: "https://site.to.my.commands/something/mycommand.tgz",
+	ProvisionCommandSet: model.VirtKubeCmdSet,
+	Role: model.StandAloneRole,
+	Type: model.ServerRole,
+}
+
+var ImportPlansSample ExportImportPlans = ExportImportPlans{
+	Network:      NetworkReference{
+		DomainId:     NewUUIDString(),
+		DomainName:   vmio.DomainSample.Name,
+		NetworkId:    NewUUIDString(),
+		NetworkName:  vmio.NetworkSample.Name,
+	},
+	Plans:    []model.InstallationPlan{
+		InstallationPlanSample,
+		InstallationPlanSample2,
+	},
 }
 
 func UserImportPlans(File string, Format string) ([]ExportImportPlans, error) {

@@ -114,6 +114,23 @@ func GetJSONFromObj(m interface{}, prettify bool) []byte {
 	return bytes
 }
 
+
+func GetXMLFromObj(m interface{}, prettify bool) []byte {
+	if prettify {
+		bytes,err := xml.MarshalIndent(m, "", "  ")
+		if err != nil {
+			return []byte{}
+		}
+		return bytes
+	}
+	bytes,err := xml.Marshal(m)
+	if err != nil {
+		return []byte{}
+	}
+	return bytes
+}
+
+
 func ExportStructureToFile(File string, Format string, structure interface{}) error {
 	var bytesArray []byte = make([]byte, 0)
 	var err error

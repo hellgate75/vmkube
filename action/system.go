@@ -116,7 +116,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 									break
 								} else {
 									if "elem-type" == strings.ToLower(strings.TrimSpace(key)) {
-										elementType, error := CmdParseElement(key, value)
+										elementType, error := CmdParseElement(value)
 										if error == nil && NoElement != elementType {
 											ArgCmd.Element = elementType
 										} else  {
@@ -175,7 +175,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 								break
 							} else {
 								if "elem-type" == strings.ToLower(strings.TrimSpace(key)) {
-									elementType, error := CmdParseElement(key, value)
+									elementType, error := CmdParseElement(value)
 									if error == nil && NoElement != elementType {
 										ArgCmd.Element = elementType
 									} else  {

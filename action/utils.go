@@ -46,9 +46,8 @@ func ParseCommandLine(args []string) (CmdRequest, error) {
 }
 
 
-func CmdParseElement(key string, value string) (CmdElementType, error) {
-	if "elem-type" == strings.ToLower(strings.TrimSpace(key)) {
-		switch strings.ToLower(strings.TrimSpace(value)) {
+func CmdParseElement(value string) (CmdElementType, error) {
+		switch CorrectInput(value) {
 		case "server":
 			return  LServer, nil
 		case "cloud-server":
@@ -65,9 +64,6 @@ func CmdParseElement(key string, value string) (CmdElementType, error) {
 			return  NoElement, errors.New("Element '"+value+"' is not an infratructure element. Available ones : Server, Cloud-Server, Network, Domain, Plan, Project")
 
 		}
-	} else {
-		return  NoElement, errors.New("Element '"+key+"' is not an infratructure element key. Available one : --elem-type")
-	}
 }
 
 func CorrectInput(input string) string {

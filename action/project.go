@@ -695,6 +695,8 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 	File := ""
 	Format := ""
 	FullImport := true
+	Sample := false
+	SampleFormat := ""
 	var ElementType CmdElementType = NoElement
 	var err error
 	for _,option := range request.Arguments.Options {
@@ -704,14 +706,21 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			File = option[1]
 		} else if "format" == CorrectInput(option[0]) {
 			Format = option[1]
-		} else if "full-export" == CorrectInput(option[0]) {
+		} else if "full-import" == CorrectInput(option[0]) {
 			FullImport = GetBoolean(option[1])
+		} else if "sample" == CorrectInput(option[0]) {
+			Sample = GetBoolean(option[1])
+		} else if "sample-format" == CorrectInput(option[0]) {
+			SampleFormat = option[1]
 		} else if "elem-type" == CorrectInput(option[0]) {
-			ElementType, err = CmdParseElement(option[0],option[1])
+			ElementType, err = CmdParseElement(option[1])
 			if err != nil {
 				ElementType = NoElement
 			}
 		}
+	}
+	if CorrectInput(SampleFormat) == "" {
+		SampleFormat = "json"
 	}
 	if strings.TrimSpace(Name) == "" {
 		response := Response{
@@ -720,19 +729,84 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
-	if strings.TrimSpace(File) == "" {
-		response := Response{
-			Status: false,
-			Message: "Import File Path Field is mandatory",
+	if ! Sample {
+		if strings.TrimSpace(File) == "" {
+			response := Response{
+				Status: false,
+				Message: "Import File Path Field is mandatory",
+			}
+			return  response, errors.New("Unable to execute task")
 		}
-		return  response, errors.New("Unable to execute task")
-	}
-	if strings.TrimSpace(Format) == "" {
-		response := Response{
-			Status: false,
-			Message: "Import Format Field is mandatory",
+		if strings.TrimSpace(Format) == "" {
+			response := Response{
+				Status: false,
+				Message: "Import Format Field is mandatory",
+			}
+			return  response, errors.New("Unable to execute task")
 		}
-		return  response, errors.New("Unable to execute task")
+	} else {
+		if CorrectInput(SampleFormat) != "json" && CorrectInput(SampleFormat) != "xml" {
+			response := Response{
+				Status: false,
+				Message: "Sample Format '"+SampleFormat+"' not supported!!",
+			}
+			return  response, errors.New("Unable to execute task")
+		}
+		if FullImport || ElementType == SProject {
+			if CorrectInput(SampleFormat) == "json" {
+				fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.ProjectSample, true))
+			} else {
+				fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.ProjectSample, true))
+			}
+		} else if ElementType != NoElement {
+			switch ElementType {
+			case SDomain:
+				if CorrectInput(SampleFormat) == "json" {
+					fmt.Printf("%s\n", utils.GetJSONFromObj(ImportDomainSample, true))
+				} else {
+					fmt.Printf("%s\n", utils.GetXMLFromObj(ImportDomainSample, true))
+				}
+				break
+			case SNetwork:
+				if CorrectInput(SampleFormat) == "json" {
+					fmt.Printf("%s\n", utils.GetJSONFromObj(ImportNetworkSample, true))
+				} else {
+					fmt.Printf("%s\n", utils.GetXMLFromObj(ImportNetworkSample, true))
+				}
+				break
+			case LServer:
+				if CorrectInput(SampleFormat) == "json" {
+					fmt.Printf("%s\n", utils.GetJSONFromObj(ImportLocalServerSample, true))
+				} else {
+					fmt.Printf("%s\n", utils.GetXMLFromObj(ImportLocalServerSample, true))
+				}
+				break
+			case CLServer:
+				if CorrectInput(SampleFormat) == "json" {
+					fmt.Printf("%s\n", utils.GetJSONFromObj(ImportCloudServerSample, true))
+				} else {
+					fmt.Printf("%s\n", utils.GetXMLFromObj(ImportCloudServerSample, true))
+				}
+				break
+			default:
+				if CorrectInput(SampleFormat) == "json" {
+					fmt.Printf("%s\n", utils.GetJSONFromObj(ImportPlansSample, true))
+				} else {
+					fmt.Printf("%s\n", utils.GetXMLFromObj(ImportPlansSample, true))
+				}
+			}
+		} else {
+			response := Response{
+				Status: false,
+				Message: "Infrastructure Element not supported!!",
+			}
+			return  response, errors.New("Unable to execute task")
+		}
+		response := Response{
+			Status: true,
+			Message: "Success",
+		}
+		return  response, nil
 	}
 	descriptor, err := vmio.GetProjectDescriptor(Name)
 	if err != nil {
@@ -1017,7 +1091,7 @@ func (request *CmdRequest) ExportProject() (Response, error) {
 		} else if "full-export" == CorrectInput(option[0]) {
 			FullExport = GetBoolean(option[1])
 		} else if "elem-type" == CorrectInput(option[0]) {
-			ElementType, err = CmdParseElement(option[0],option[1])
+			ElementType, err = CmdParseElement(option[1])
 			if err != nil {
 				ElementType = NoElement
 			}

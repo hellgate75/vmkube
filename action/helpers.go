@@ -170,10 +170,10 @@ var(
 		Options:	[][]string{},
 	}
 	ImportProject CommandHelper = CommandHelper{
-		Command: "project",
+		Command: "import-project",
 		Description: "Import a new project from file",
 		CmdType: ImportConfig,
-		LineHelp: "project [OPTIONS]",
+		LineHelp: "import-project [OPTIONS]",
 		SubCommands: [][]string{},
 		SubCmdTypes: []CmdSubRequestType{},
 		SubCmdHelperTypes: []CmdRequestType{},
@@ -208,7 +208,7 @@ func InitHelpers() {
 		[]string{"info-project", "Provides information about project elements definition"},
 		[]string{"delete-project", "Delete existing closed project"},
 		[]string{"build-project", "Build and existing project and create/modify an infrstructure"},
-		[]string{"project", "Import project from existing configuration"},
+		[]string{"import-project", "Import project from existing configuration"},
 		[]string{"export-project", "Export existing project configuration"},
 	)
 	//Start Infrastructure
@@ -368,6 +368,13 @@ func InitHelpers() {
 	
 	ImportProject.Options = append(ImportProject.Options,
 		[]string{"elem-type", " <infra element type>", "Type of entity top level in the import (allowed: Server, Cloud-Server, Network, Domain,... valid if full-export = false)", "false"},
+	)
+	ImportProject.Options = append(ImportProject.Options,
+		[]string{"sample", " <boolean>", "Show a sample import output instead of import from file (default: false, valid if full-export = false)", "false"},
+	)
+	
+	ImportProject.Options = append(ImportProject.Options,
+		[]string{"sample-format", " <json|xml>", "Output format for the required sample import instead of import (default: json, valid if full-export = false)", "false"},
 	)
 	
 	//Export Project
