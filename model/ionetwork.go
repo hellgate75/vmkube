@@ -38,7 +38,7 @@ func (element *Network) Validate() []error {
 }
 
 func (element *Network) Load(file string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
@@ -54,7 +54,7 @@ func (element *Network) Load(file string) error {
 }
 
 func (element *Network) Import(file string, format string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
@@ -70,9 +70,63 @@ func (element *Network) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil && element.Id == "" {
-		element.Id = NewUUIDString()
+		err := element.PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return err
+}
+
+func (element *Network) PostImport() error {
+	element.Id=NewUUIDString()
+	serverMap := make(map[string]string, 0)
+	for _, instance := range element.Instances {
+		id := instance.Id
+		if id == "" {
+			id = instance.Name
+		}
+		if id != "" {
+			if _,ok := serverMap[id]; ok {
+				bytes := []byte(`Duplicate instance Id/Name reference in json : `)
+				bytes = append(bytes,utils.GetJSONFromObj(instance, true)...)
+				return errors.New(string(bytes))
+			}
+		}
+		instance.Id = NewUUIDString()
+		if id != "" {
+			serverMap[id] = instance.Id
+		}
+	}
+	for _, instance := range element.CInstances {
+		id := instance.Id
+		if id == "" {
+			id = instance.Name
+		}
+		if id != "" {
+			if _,ok := serverMap[id]; ok {
+				bytes := []byte(`Duplicate cloud instance or server Id/Name reference in json : `)
+				bytes = append(bytes,utils.GetJSONFromObj(instance, true)...)
+				return errors.New(string(bytes))
+			}
+		}
+		instance.Id = NewUUIDString()
+		if id != "" {
+			serverMap[id] = instance.Id
+		}
+	}
+	for _, installation := range element.Installations {
+		installation.Id = NewUUIDString()
+		oldId := installation.InstanceId
+		if _,ok := serverMap[oldId]; ! ok || oldId == "" {
+			bytes := []byte(`Unable to locate cloud instance or instance Id/Name in installation plan reference in json : `)
+			bytes = append(bytes,utils.GetJSONFromObj(installation, true)...)
+			return errors.New(string(bytes))
+		}
+		value, _ := serverMap[oldId]
+		installation.InstanceId = value
+	}
+	return nil
 }
 
 func (element *Network) Save(file string) error {
@@ -117,7 +171,7 @@ func (element *ProjectNetwork) Validate() []error {
 }
 
 func (element *ProjectNetwork) Load(file string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
@@ -133,7 +187,7 @@ func (element *ProjectNetwork) Load(file string) error {
 }
 
 func (element *ProjectNetwork) Import(file string, format string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
@@ -149,55 +203,65 @@ func (element *ProjectNetwork) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil {
-		element.Id=NewUUIDString()
-		serverMap := make(map[string]string, 0)
-		for _,server := range element.Servers {
-			id := server.Id
-			if id == "" {
-				id = server.Name
+		if err == nil && element.Id == "" {
+			err := element.PostImport()
+			if err != nil {
+				return err
 			}
-			if id != "" {
-				if _,ok := serverMap[id]; ok {
-					bytes := []byte(`Duplicate server Id/Name reference in json : `)
-					bytes = append(bytes,utils.GetJSONFromObj(server, true)...)
-					return errors.New(string(bytes))
-				}
-			}
-			server.Id = NewUUIDString()
-			if id != "" {
-				serverMap[id] = server.Id
-			}
-		}
-		for _,server := range element.CServers {
-			id := server.Id
-			if id == "" {
-				id = server.Name
-			}
-			if id != "" {
-				if _,ok := serverMap[id]; ok {
-					bytes := []byte(`Duplicate cloud server or server Id/Name reference in json : `)
-					bytes = append(bytes,utils.GetJSONFromObj(server, true)...)
-					return errors.New(string(bytes))
-				}
-			}
-			server.Id = NewUUIDString()
-			if id != "" {
-				serverMap[id] = server.Id
-			}
-		}
-		for _,installPlan := range element.Installations {
-			installPlan.Id = NewUUIDString()
-			oldId := installPlan.ServerId
-			if _,ok := serverMap[oldId]; ! ok || oldId == "" {
-				bytes := []byte(`Unable to locate cloud server or server Id/Name in installation plan reference in json : `)
-				bytes = append(bytes,utils.GetJSONFromObj(installPlan, true)...)
-				return errors.New(string(bytes))
-			}
-			value, _ := serverMap[oldId]
-			installPlan.ServerId = value
 		}
 	}
 	return err
+}
+
+func (element *ProjectNetwork) PostImport() error {
+	element.Id=NewUUIDString()
+	serverMap := make(map[string]string, 0)
+	for _,server := range element.Servers {
+		id := server.Id
+		if id == "" {
+			id = server.Name
+		}
+		if id != "" {
+			if _,ok := serverMap[id]; ok {
+				bytes := []byte(`Duplicate server Id/Name reference in json : `)
+				bytes = append(bytes,utils.GetJSONFromObj(server, true)...)
+				return errors.New(string(bytes))
+			}
+		}
+		server.Id = NewUUIDString()
+		if id != "" {
+			serverMap[id] = server.Id
+		}
+	}
+	for _,server := range element.CServers {
+		id := server.Id
+		if id == "" {
+			id = server.Name
+		}
+		if id != "" {
+			if _,ok := serverMap[id]; ok {
+				bytes := []byte(`Duplicate cloud server or server Id/Name reference in json : `)
+				bytes = append(bytes,utils.GetJSONFromObj(server, true)...)
+				return errors.New(string(bytes))
+			}
+		}
+		server.Id = NewUUIDString()
+		if id != "" {
+			serverMap[id] = server.Id
+		}
+	}
+	for _,installPlan := range element.Installations {
+		installPlan.Id = NewUUIDString()
+		oldId := installPlan.ServerId
+		if _,ok := serverMap[oldId]; ! ok || oldId == "" {
+			bytes := []byte(`Unable to locate cloud server or server Id/Name in installation plan reference in json : `)
+			bytes = append(bytes,utils.GetJSONFromObj(installPlan, true)...)
+			return errors.New(string(bytes))
+		}
+		value, _ := serverMap[oldId]
+		installPlan.ServerId = value
+	}
+	return nil
 }
 
 func (element *ProjectNetwork) Save(file string) error {

@@ -49,7 +49,7 @@ func (element *Instance) Validate() []error {
 }
 
 func (element *Instance) Load(file string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
@@ -61,7 +61,7 @@ func (element *Instance) Load(file string) error {
 }
 
 func (element *Instance) Import(file string, format string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
@@ -77,9 +77,17 @@ func (element *Instance) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil && element.Id == "" {
-		element.Id = NewUUIDString()
+		err := element.PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return err
+}
+
+func (element *Instance) PostImport() error {
+	element.Id = NewUUIDString()
+	return nil
 }
 
 func (element *Instance) Save(file string) error {
@@ -131,7 +139,7 @@ func (element *ProjectServer) Validate() []error {
 }
 
 func (element *ProjectServer) Load(file string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
@@ -143,7 +151,7 @@ func (element *ProjectServer) Load(file string) error {
 }
 
 func (element *ProjectServer) Import(file string, format string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
@@ -159,9 +167,17 @@ func (element *ProjectServer) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil && element.Id == "" {
-		element.Id = NewUUIDString()
+		err := element.PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return err
+}
+
+func (element *ProjectServer) PostImport() error {
+	element.Id = NewUUIDString()
+	return nil
 }
 
 func (element *ProjectServer) Save(file string) error {

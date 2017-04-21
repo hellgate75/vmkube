@@ -37,7 +37,7 @@ func (element *InstanceState) Validate() []error {
 }
 
 func (element *InstanceState) Load(file string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
@@ -49,7 +49,7 @@ func (element *InstanceState) Load(file string) error {
 }
 
 func (element *InstanceState) Import(file string, format string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
@@ -65,9 +65,17 @@ func (element *InstanceState) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil && element.Id == "" {
-		element.Id = NewUUIDString()
+		err := element.PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return err
+}
+
+func (element *InstanceState) PostImport() error {
+	element.Id = NewUUIDString()
+	return nil
 }
 
 func (element *InstanceState) Save(file string) error {
@@ -106,7 +114,7 @@ func (element *NetworkState) Validate() []error {
 }
 
 func (element *NetworkState) Load(file string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
@@ -118,7 +126,7 @@ func (element *NetworkState) Load(file string) error {
 }
 
 func (element *NetworkState) Import(file string, format string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
@@ -134,9 +142,20 @@ func (element *NetworkState) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil && element.Id == "" {
-		element.Id = NewUUIDString()
+		err := element.PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return err
+}
+
+func (element *NetworkState) PostImport() error {
+	element.Id = NewUUIDString()
+	for _, states := range element.InstanceStates {
+		states.PostImport()
+	}
+	return nil
 }
 
 func (element *NetworkState) Save(file string) error {
@@ -172,7 +191,7 @@ func (element *DomainState) Validate() []error {
 }
 
 func (element *DomainState) Load(file string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
@@ -184,7 +203,7 @@ func (element *DomainState) Load(file string) error {
 }
 
 func (element *DomainState) Import(file string, format string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
@@ -200,9 +219,20 @@ func (element *DomainState) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil && element.Id == "" {
-		element.Id = NewUUIDString()
+		err := element.PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return err
+}
+
+func (element *DomainState) PostImport() error {
+	element.Id = NewUUIDString()
+	for _, states := range element.NetworkStates {
+		states.PostImport()
+	}
+	return nil
 }
 
 func (element *DomainState) Save(file string) error {
@@ -235,7 +265,7 @@ func (element *State) Validate() []error {
 }
 
 func (element *State) Load(file string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
@@ -247,7 +277,7 @@ func (element *State) Load(file string) error {
 }
 
 func (element *State) Import(file string, format string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
@@ -263,9 +293,20 @@ func (element *State) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil && element.Id == "" {
-		element.Id = NewUUIDString()
+		err := element.PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return err
+}
+
+func (element *State) PostImport() error {
+	element.Id = NewUUIDString()
+	for _, states := range element.DomainStates {
+		states.PostImport()
+	}
+	return nil
 }
 
 func (element *State) Save(file string) error {

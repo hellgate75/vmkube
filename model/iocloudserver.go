@@ -39,7 +39,7 @@ func (element *CloudInstance) Validate() []error {
 }
 
 func (element *CloudInstance) Load(file string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
@@ -55,7 +55,7 @@ func (element *CloudInstance) Load(file string) error {
 }
 
 func (element *CloudInstance) Import(file string, format string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
@@ -71,9 +71,17 @@ func (element *CloudInstance) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil && element.Id == "" {
-		element.Id = NewUUIDString()
+		err := element.PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return err
+}
+
+func (element *CloudInstance) PostImport() error {
+	element.Id = NewUUIDString()
+	return nil
 }
 
 func (element *CloudInstance) Save(file string) error {
@@ -116,7 +124,7 @@ func (element *ProjectCloudServer) Validate() []error {
 }
 
 func (element *ProjectCloudServer) Load(file string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
@@ -132,7 +140,7 @@ func (element *ProjectCloudServer) Load(file string) error {
 }
 
 func (element *ProjectCloudServer) Import(file string, format string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
@@ -148,9 +156,17 @@ func (element *ProjectCloudServer) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil && element.Id == "" {
-		element.Id = NewUUIDString()
+		err := element.PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return err
+}
+
+func (element *ProjectCloudServer) PostImport() error {
+	element.Id = NewUUIDString()
+	return nil
 }
 
 func (element *ProjectCloudServer) Save(file string) error {

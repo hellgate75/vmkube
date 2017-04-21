@@ -8,6 +8,7 @@ import (
 	"vmkube/model"
 	"errors"
 	"time"
+	"strings"
 )
 
 type ProjectActions interface {
@@ -179,10 +180,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	
 	
 	if ErrorList := project.Validate(); len(ErrorList) > 0 {
-		errorValue := "Imported Project is invalid, clause(s) :"
-		for _,err := range ErrorList {
-			errorValue += fmt.Sprintf("\n%s", err.Error())
-		}
+		_, errorValue := vmio.StripErrorMessages("Imported Project is invalid, clause(s) :", ErrorList)
 		response := Response{
 			Status: false,
 			Message: errorValue,
@@ -514,6 +512,7 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 	err = info.Delete()
 
 	vmio.UnlockProject(projectMeta)
+
 	if err != nil {
 		response := Response{
 			Status: false,
@@ -540,8 +539,6 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 
 	vmio.LockIndex(indexes)
 	
-	defer vmio.UnlockIndex(indexes)
-	
 	
 	NewIndexes := make([]model.ProjectsDescriptor, 0)
 	for _,prj := range indexes.Projects {
@@ -558,9 +555,11 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 				Status: false,
 				Message: err.Error(),
 			}
+			vmio.UnlockIndex(indexes)
 			return  response, errors.New("Unable to execute task")
 		}
 	}
+	vmio.UnlockIndex(indexes)
 	response := Response{
 		Status: true,
 		Message: "Success",
@@ -692,23 +691,552 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 }
 
 func (request *CmdRequest) ImportProject() (Response, error) {
-	response := Response{}
-	//Name := ""
-	//File := ""
-	//Format := ""
-	//FullImport := true
-	//ElementType := ""
-	//for _,option := range request.Arguments.Options {
-	//	if "name" == CorrectInput(option[0]) {
-	//		Name = CorrectInput(option[1])
-	//	} else if "elem-type" == CorrectInput(option[0]) {
-	//		ElementType = option[1]
-	//	}
-	//}
+	Name := ""
+	File := ""
+	Format := ""
+	FullImport := true
+	var ElementType CmdElementType = NoElement
+	var err error
+	for _,option := range request.Arguments.Options {
+		if "name" == CorrectInput(option[0]) {
+			Name = CorrectInput(option[1])
+		} else if "file" == CorrectInput(option[0]) {
+			File = option[1]
+		} else if "format" == CorrectInput(option[0]) {
+			Format = option[1]
+		} else if "full-export" == CorrectInput(option[0]) {
+			FullImport = GetBoolean(option[1])
+		} else if "elem-type" == CorrectInput(option[0]) {
+			ElementType, err = CmdParseElement(option[0],option[1])
+			if err != nil {
+				ElementType = NoElement
+			}
+		}
+	}
+	if strings.TrimSpace(Name) == "" {
+		response := Response{
+			Status: false,
+			Message: "Project Name Field is mandatory",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	if strings.TrimSpace(File) == "" {
+		response := Response{
+			Status: false,
+			Message: "Import File Path Field is mandatory",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	if strings.TrimSpace(Format) == "" {
+		response := Response{
+			Status: false,
+			Message: "Import Format Field is mandatory",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	descriptor, err := vmio.GetProjectDescriptor(Name)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	fmt.Printf("Import File Path : %s, Format: %s\n", File, Format)
+	Full := "no"
+	if FullImport {
+		Full = "yes"
+	}
+	fmt.Printf("Import Full : %s\n", Full)
+	if ! FullImport {
+		ImportDomains := "no"
+		if ElementType == SDomain || ElementType == SProject {
+			ImportDomains = "yes"
+		}
+		ImportNetworks := "no"
+		if ElementType == SNetwork || ElementType == SProject {
+			ImportNetworks = "yes"
+		}
+		ImportServers := "no"
+		if ElementType == LServer || ElementType == SProject {
+			ImportServers = "yes"
+		}
+		ImportCServers := "no"
+		if ElementType == CLServer || ElementType == SProject {
+			ImportCServers = "yes"
+		}
+		ImportPlans := "no"
+		if ElementType == SPlan || ElementType == SProject {
+			ImportPlans = "yes"
+		}
+		fmt.Printf("Import Domains : %s\nImport Networks : %s\nImport Servers : %s\nImport Cloud Servers : %s\nImport Plans : %s\n",
+			ImportDomains, ImportNetworks, ImportServers, ImportCServers, ImportPlans)
+	}
+	if ! FullImport && ElementType == NoElement {
+		response := Response{
+			Status: false,
+			Message: "Nothing to import, application quits ...",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	model.DeleteIfExists(File)
+	if FullImport || ElementType == SProject {
+		project, err := vmio.LoadProject(descriptor.Id)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return  response, errors.New("Unable to execute task")
+		}
+		project, err = vmio.ImportUserProject(File, Format)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return  response, errors.New("Unable to execute task")
+		}
+		project.PostImport()
+		errorList := project.Validate()
+		if len(errorList) > 0 {
+			_, errorValue := vmio.StripErrorMessages("Project import is invalid, clause(s) :", errorList)
+			response := Response{
+				Status: false,
+				Message: errorValue,
+			}
+			return  response, errors.New("Unable to execute task")
+		}
+	} else {
+		project, err := vmio.LoadProject(descriptor.Id)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return  response, errors.New("Unable to execute task")
+		}
+		switch ElementType {
+		case SDomain:
+			domains := ExportImportDomains{
+				Domains: []model.ProjectDomain{},
+			}
+			domains, err = UserImportDomains(File, Format)
+			if err != nil {
+				response := Response{
+					Status: false,
+					Message: err.Error(),
+				}
+				return  response, errors.New("Unable to execute task")
+			}
+			for _, domain := range domains.Domains {
+				domain.PostImport()
+				errorList := domain.Validate()
+				if len(errorList) > 0 {
+					_, errorValue := vmio.StripErrorMessages("Domains import is invalid, clause(s) :", errorList)
+					response := Response{
+						Status: false,
+						Message: errorValue,
+					}
+					return  response, errors.New("Unable to execute task")
+				}
+			}
+			fmt.Printf("Successfully imported Project '%s' Domains to file '%s' in format '%s' ", Name, File, Format)
+			break
+		case SNetwork:
+			var networks []ExportImportNetwork
+			networks, err = UserImportNetworks(File, Format)
+			if err != nil {
+				response := Response{
+					Status: false,
+					Message: err.Error(),
+				}
+				return  response, errors.New("Unable to execute task")
+			}
+			for _,domain := range project.Domains {
+				network := ExportImportNetwork{
+					Domain: DomainReference{
+						DomainId: domain.Id,
+						DomainName: domain.Name,
+					},
+					Networks: domain.Networks,
+				}
+				for _, network := range network.Networks {
+					network.PostImport()
+					errorList := network.Validate()
+					if len(errorList) > 0 {
+						_, errorValue := vmio.StripErrorMessages("Networks import is invalid, clause(s) :", errorList)
+						response := Response{
+							Status: false,
+							Message: errorValue,
+						}
+						return  response, errors.New("Unable to execute task")
+					}
+				}
+				networks = append(networks, network)
+			}
+			fmt.Printf("Successfully imported Project '%s' Networks to file '%s' in format '%s' ", Name, File, Format)
+			break
+		case  LServer:
+			var servers []ExportImportLocalServers
+			servers, err = UserImportLocalServers(File, Format)
+			if err != nil {
+				response := Response{
+					Status: false,
+					Message: err.Error(),
+				}
+				return  response, errors.New("Unable to execute task")
+			}
+			for _,domain := range project.Domains {
+				for _,network := range domain.Networks {
+					server := ExportImportLocalServers{
+						Network: NetworkReference{
+							DomainId: domain.Id,
+							DomainName: domain.Name,
+							NetworkId: network.Id,
+							NetworkName: network.Name,
+						},
+						Servers: network.Servers,
+					}
+					for _, server := range server.Servers {
+						server.PostImport()
+						errorList := server.Validate()
+						if len(errorList) > 0 {
+							_, errorValue := vmio.StripErrorMessages("Local Servers import is invalid, clause(s) :", errorList)
+							response := Response{
+								Status: false,
+								Message: errorValue,
+							}
+							return  response, errors.New("Unable to execute task")
+						}
+					}
+					servers = append(servers, server)
+				}
+			}
+			fmt.Printf("Successfully imported Project '%s' Local Servers to file '%s' in format '%s' ", Name, File, Format)
+			break
+		case CLServer:
+			var servers []ExportImportCloudServers
+			servers, err = UserImportCloudServers(File, Format)
+			if err != nil {
+				response := Response{
+					Status: false,
+					Message: err.Error(),
+				}
+				return  response, errors.New("Unable to execute task")
+			}
+			for _,domain := range project.Domains {
+				for _,network := range domain.Networks {
+					server := ExportImportCloudServers{
+						Network: NetworkReference{
+							DomainId: domain.Id,
+							DomainName: domain.Name,
+							NetworkId: network.Id,
+							NetworkName: network.Name,
+						},
+						Servers: network.CServers,
+					}
+					for _, server := range server.Servers {
+						server.PostImport()
+						errorList := server.Validate()
+						if len(errorList) > 0 {
+							_, errorValue := vmio.StripErrorMessages("Cloud Servers import is invalid, clause(s) :", errorList)
+							response := Response{
+								Status: false,
+								Message: errorValue,
+							}
+							return  response, errors.New("Unable to execute task")
+						}
+					}
+					servers = append(servers, server)
+				}
+			}
+			fmt.Printf("Successfully imported Project '%s' Cloud Servers to file '%s' in format '%s' ", Name, File, Format)
+			break
+		default:
+			//Plans
+			var plans []ExportImportPlans
+			plans, err = UserImportPlans(File, Format)
+			if err != nil {
+				response := Response{
+					Status: false,
+					Message: err.Error(),
+				}
+				return  response, errors.New("Unable to execute task")
+			}
+			for _,domain := range project.Domains {
+				for _,network := range domain.Networks {
+					plan := ExportImportPlans{
+						Network: NetworkReference{
+							DomainId: domain.Id,
+							DomainName: domain.Name,
+							NetworkId: network.Id,
+							NetworkName: network.Name,
+						},
+						Plans: network.Installations,
+					}
+					for _,plan := range plan.Plans {
+						plan.PostImport()
+						errorList := plan.Validate()
+						if len(errorList) > 0 {
+							_, errorValue := vmio.StripErrorMessages("Plans import is invalid, clause(s) :", errorList)
+							response := Response{
+								Status: false,
+								Message: errorValue,
+							}
+							return  response, errors.New("Unable to execute task")
+						}
+					}
+					plans = append(plans, plan)
+				}
+			}
+			fmt.Printf("Successfully imported Project '%s' Installation Plans to file '%s' in format '%s' ", Name, File, Format)
+		}
+	}
+	response := Response{
+		Status: true,
+		Message: "Success",
+	}
 	return  response, nil
 }
 
 func (request *CmdRequest) ExportProject() (Response, error) {
-	response := Response{}
+	Name := ""
+	File := ""
+	Format := ""
+	FullExport := true
+	var ElementType CmdElementType = NoElement
+	var err error
+	for _,option := range request.Arguments.Options {
+		if "name" == CorrectInput(option[0]) {
+			Name = CorrectInput(option[1])
+		} else if "file" == CorrectInput(option[0]) {
+			File = option[1]
+		} else if "format" == CorrectInput(option[0]) {
+			Format = option[1]
+		} else if "full-export" == CorrectInput(option[0]) {
+			FullExport = GetBoolean(option[1])
+		} else if "elem-type" == CorrectInput(option[0]) {
+			ElementType, err = CmdParseElement(option[0],option[1])
+			if err != nil {
+				ElementType = NoElement
+			}
+		}
+	}
+	if strings.TrimSpace(Name) == "" {
+		response := Response{
+			Status: false,
+			Message: "Project Name Field is mandatory",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	if strings.TrimSpace(File) == "" {
+		response := Response{
+			Status: false,
+			Message: "Export File Path Field is mandatory",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	if strings.TrimSpace(Format) == "" {
+		response := Response{
+			Status: false,
+			Message: "Export Format Field is mandatory",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	descriptor, err := vmio.GetProjectDescriptor(Name)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	fmt.Printf("Export File Path : %s, Format: %s\n", File, Format)
+	Full := "no"
+	if FullExport {
+		Full = "yes"
+	}
+	fmt.Printf("Export Full : %s\n", Full)
+	if ! FullExport {
+		ExportDomains := "no"
+		if ElementType == SDomain || ElementType == SProject {
+			ExportDomains = "yes"
+		}
+		ExportNetworks := "no"
+		if ElementType == SNetwork || ElementType == SProject {
+			ExportNetworks = "yes"
+		}
+		ExportServers := "no"
+		if ElementType == LServer || ElementType == SProject {
+			ExportServers = "yes"
+		}
+		ExportCServers := "no"
+		if ElementType == CLServer || ElementType == SProject {
+			ExportCServers = "yes"
+		}
+		ExportPlans := "no"
+		if ElementType == SPlan || ElementType == SProject {
+			ExportPlans = "yes"
+		}
+		fmt.Printf("Export Domains : %s\nExport Networks : %s\nExport Servers : %s\nExport Cloud Servers : %s\nExport Plans : %s\n",
+			ExportDomains, ExportNetworks, ExportServers, ExportCServers, ExportPlans)
+	}
+	if ! FullExport && ElementType == NoElement {
+		response := Response{
+			Status: false,
+			Message: "Nothing to export, application quits ...",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	model.DeleteIfExists(File)
+	if FullExport || ElementType == SProject {
+		project, err := vmio.LoadProject(descriptor.Id)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return  response, errors.New("Unable to execute task")
+		}
+		err = vmio.ExportUserProject(project, File, Format, true)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return  response, errors.New("Unable to execute task")
+		}
+	} else {
+		project, err := vmio.LoadProject(descriptor.Id)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return  response, errors.New("Unable to execute task")
+		}
+		switch ElementType {
+		case SDomain:
+			domains := ExportImportDomains{
+				Domains: []model.ProjectDomain{},
+			}
+			domains.Domains = append(domains.Domains, project.Domains...)
+			err = utils.ExportStructureToFile(File, Format, domains)
+			if err != nil {
+				response := Response{
+					Status: false,
+					Message: err.Error(),
+				}
+				return  response, errors.New("Unable to execute task")
+			}
+			fmt.Printf("Successfully exported Project '%s' Domains to file '%s' in format '%s' ", Name, File, Format)
+			break
+		case SNetwork:
+			var networks []ExportImportNetwork = make([]ExportImportNetwork, 0)
+			for _,domain := range project.Domains {
+				network := ExportImportNetwork{
+					Domain: DomainReference{
+						DomainId: domain.Id,
+						DomainName: domain.Name,
+					},
+					Networks: domain.Networks,
+				}
+				networks = append(networks, network)
+			}
+			err = utils.ExportStructureToFile(File, Format, networks)
+			if err != nil {
+				response := Response{
+					Status: false,
+					Message: err.Error(),
+				}
+				return  response, errors.New("Unable to execute task")
+			}
+			fmt.Printf("Successfully exported Project '%s' Networks to file '%s' in format '%s' ", Name, File, Format)
+			break
+		case  LServer:
+			var servers []ExportImportLocalServers = make([]ExportImportLocalServers, 0)
+				for _,domain := range project.Domains {
+					for _,network := range domain.Networks {
+						server := ExportImportLocalServers{
+							Network: NetworkReference{
+								DomainId: domain.Id,
+								DomainName: domain.Name,
+								NetworkId: network.Id,
+								NetworkName: network.Name,
+							},
+							Servers: network.Servers,
+						}
+						servers = append(servers, server)
+					}
+			}
+			err = utils.ExportStructureToFile(File, Format, servers)
+			if err != nil {
+				response := Response{
+					Status: false,
+					Message: err.Error(),
+				}
+				return  response, errors.New("Unable to execute task")
+			}
+			fmt.Printf("Successfully exported Project '%s' Local Servers to file '%s' in format '%s' ", Name, File, Format)
+			break
+		case CLServer:
+			var servers []ExportImportCloudServers = make([]ExportImportCloudServers, 0)
+			for _,domain := range project.Domains {
+				for _,network := range domain.Networks {
+					server := ExportImportCloudServers{
+						Network: NetworkReference{
+							DomainId: domain.Id,
+							DomainName: domain.Name,
+							NetworkId: network.Id,
+							NetworkName: network.Name,
+						},
+						Servers: network.CServers,
+					}
+					servers = append(servers, server)
+				}
+			}
+			err = utils.ExportStructureToFile(File, Format, servers)
+			if err != nil {
+				response := Response{
+					Status: false,
+					Message: err.Error(),
+				}
+				return  response, errors.New("Unable to execute task")
+			}
+			fmt.Printf("Successfully exported Project '%s' Cloud Servers to file '%s' in format '%s' ", Name, File, Format)
+			break
+		default:
+			//Plans
+			var plans []ExportImportPlans = make([]ExportImportPlans, 0)
+			for _,domain := range project.Domains {
+				for _,network := range domain.Networks {
+					plan := ExportImportPlans{
+						Network: NetworkReference{
+							DomainId: domain.Id,
+							DomainName: domain.Name,
+							NetworkId: network.Id,
+							NetworkName: network.Name,
+						},
+						Plans: network.Installations,
+					}
+					plans = append(plans, plan)
+				}
+			}
+			err = utils.ExportStructureToFile(File, Format, plans)
+			if err != nil {
+				response := Response{
+					Status: false,
+					Message: err.Error(),
+				}
+				return  response, errors.New("Unable to execute task")
+			}
+			fmt.Printf("Successfully exported Project '%s' Installation Plans to file '%s' in format '%s' ", Name, File, Format)
+		}
+	}
+	response := Response{
+		Status: true,
+		Message: "Success",
+	}
 	return  response, nil
 }

@@ -3,8 +3,6 @@ package action
 import "fmt"
 
 func ExecuteRequest(request CmdRequest) bool{
-	//println(request.TypeStr,request.Type)
-	//println(request.SubTypeStr,request.HelpType)
 	switch request.Type {
 		case NoCommand: {
 			if request.HelpType != NoCommand  {

@@ -15,6 +15,7 @@ func SaveIndex(index model.ProjectsIndex) error {
 
 func LoadIndex() (model.ProjectsIndex, error) {
 	index := model.ProjectsIndex{
+		Id: model.NewUUIDString(),
 		Projects: []model.ProjectsDescriptor{},
 	}
 	info := ProjectIndexInfo{
@@ -27,6 +28,7 @@ func LoadIndex() (model.ProjectsIndex, error) {
 
 func ImportIndex(file string, format string) (model.ProjectsIndex, error) {
 	index := model.ProjectsIndex{
+		Id: model.NewUUIDString(),
 		Projects: []model.ProjectsDescriptor{},
 	}
 	info := ProjectIndexInfo{

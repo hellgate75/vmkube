@@ -21,47 +21,47 @@ type CmdRequest struct {
 type CmdRequestType int
 
 const (
-	NoCommand								CmdRequestType = iota;
-	StartInfrastructure			CmdRequestType = iota + 1;
-	StopInfrastructure			CmdRequestType = iota + 1;
-	RestartInfrastructure		CmdRequestType = iota + 1;
-	DestroyInfrastructure		CmdRequestType = iota + 1;
-	ListInfrastructure			CmdRequestType = iota + 1;
-	ListInfrastructures			CmdRequestType = iota + 1;
-	ListConfigs							CmdRequestType = iota + 1;
-	StatusConfig						CmdRequestType = iota + 1;
-	ImportConfig						CmdRequestType = iota + 1;
-	ExportConfig						CmdRequestType = iota + 1;
-	DefineConfig						CmdRequestType = iota + 1;
-	DeleteConfig						CmdRequestType = iota + 1;
-	AlterConfig							CmdRequestType = iota + 1;
-	InfoConfig							CmdRequestType = iota + 1;
-	FinaliseConfig					CmdRequestType = iota + 1;
+	NoCommand								CmdRequestType = iota
+	StartInfrastructure
+	StopInfrastructure
+	RestartInfrastructure
+	DestroyInfrastructure
+	ListInfrastructure
+	ListInfrastructures
+	ListConfigs
+	StatusConfig
+	ImportConfig
+	ExportConfig
+	DefineConfig
+	DeleteConfig
+	AlterConfig	
+	InfoConfig	
+	FinaliseConfig
 )
 
 type CmdSubRequestType int
 
 const (
-	NoSubCommand	CmdSubRequestType = iota;
-	Create 				CmdSubRequestType = iota + 1;
-	Remove 				CmdSubRequestType = iota + 1;
-	Alter  				CmdSubRequestType= iota + 1;
-	Close  				CmdSubRequestType= iota + 1;
-	Open  				CmdSubRequestType= iota + 1;
-	List  				CmdSubRequestType= iota + 1;
-	Detail  				CmdSubRequestType= iota + 1;
+	NoSubCommand	CmdSubRequestType = iota
+	Create
+	Remove
+	Alter
+	Close
+	Open
+	List
+	Detail
 )
 
 type CmdElementType int
 
 const (
-	NoElement					CmdElementType = iota;
-	LServer					  CmdElementType = iota + 1;
-	CLServer					CmdElementType = iota + 1;
-	SNetwork					CmdElementType = iota + 1;
-	SDomain						CmdElementType = iota + 1;
-	SProject		      CmdElementType = iota + 1;
-	SPlan   		      CmdElementType = iota + 1;
+	NoElement					CmdElementType = iota
+	LServer
+	CLServer
+	SNetwork
+	SDomain
+	SProject
+	SPlan
 )
 
 
@@ -85,9 +85,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 		command, error := utils.CmdParse(args[0])
 		ArgCmd.Cmd = command
 		if error == nil {
-			//fmt.Fprintf(os.Stdout, "Arguments: %v\n", args)
 			helper := RecoverCommandHelper(command)
-			//fmt.Fprintf(os.Stdout, "Helper: %v\n", helper)
 			ArgCmd.Helper = helper
 			ArgCmd.Cmd = helper.Command
 			ArgCmd.CmdType = helper.CmdType
@@ -98,8 +96,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 				var SubCommand string
 				var  index int
 				SubCommand, index, error = utils.CmdParseOption(args[1], helper.SubCommands)
-				//fmt.Fprintf(os.Stdout, "Index: %d\n", index)
-				if error == nil  {
+					if error == nil  {
 					ArgCmd.SubCmd = SubCommand
 					if ArgCmd.CmdType != NoCommand {
 						ArgCmd.SubCmdType = helper.SubCmdTypes[index]
@@ -115,7 +112,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 								key, value, error := utils.OptionsParse(optsArgs[index], optsArgs[index+1])
 								if error != nil {
 									passed = false
-									fmt.Fprintln(os.Stdout, "Error: Unable to parse option", optsArgs[index],"for Command",command,"and Sub-Command",SubCommand)
+									fmt.Println("Error: Unable to parse option", optsArgs[index],"for Command",command,"and Sub-Command",SubCommand)
 									break
 								} else {
 									if "elem-type" == strings.ToLower(strings.TrimSpace(key)) {
@@ -123,7 +120,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 										if error == nil && NoElement != elementType {
 											ArgCmd.Element = elementType
 										} else  {
-											fmt.Fprintln(os.Stdout, "Error: Invalid infrastructure element type", value,"for Command",command,"and Sub-Command",SubCommand)
+											fmt.Println("Error: Invalid infrastructure element type", value,"for Command",command,"and Sub-Command",SubCommand)
 											if error != nil {
 												fmt.Fprintf(os.Stderr, "Details: %s \n", error.Error())
 											}
@@ -139,7 +136,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 								}
 							} else if len(optsArgs) < index + 1 {
 								passed = false
-								fmt.Fprintln(os.Stdout, "Error: Uncomplete option", option[index],"for Command",command,"and Sub-Command",SubCommand)
+								fmt.Println("Error: Uncomplete option", option[index],"for Command",command,"and Sub-Command",SubCommand)
 								time.Sleep(100 * time.Millisecond)
 								PrintCommandHelper(command, SubCommand)
 							}
@@ -147,18 +144,18 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 						if passed  {
 							ArgCmd.Options = options
 							if "help" != command && "info-project" != command {
-								fmt.Fprintf(os.Stdout, "Executing command %s ...\n", command)
+								fmt.Printf("Executing command %s ...\n", command)
 							}
 							return  true
 						} else  {
-							fmt.Fprintln(os.Stderr, "One or more options parse failed!!")
+							fmt.Println("One or more options parse failed!!")
 							time.Sleep(100 * time.Millisecond)
 							PrintCommandHelper(command, SubCommand)
 							return  false
 						}
 					}
 				} else {
-					fmt.Fprintln(os.Stderr, "Error:", error)
+					fmt.Println("Error:", error)
 					time.Sleep(100 * time.Millisecond)
 					PrintCommandHelper(command, SubCommand)
 					return  false
@@ -174,7 +171,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 							key, value, error := utils.OptionsParse(optsArgs[index], optsArgs[index+1])
 							if error != nil {
 								passed = false
-								fmt.Fprintln(os.Stderr, "Error: Unable to parse option", option[index],"for Command",command)
+								fmt.Println("Error: Unable to parse option", option[index],"for Command",command)
 								break
 							} else {
 								if "elem-type" == strings.ToLower(strings.TrimSpace(key)) {
@@ -182,7 +179,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 									if error == nil && NoElement != elementType {
 										ArgCmd.Element = elementType
 									} else  {
-										fmt.Fprintln(os.Stderr, "Error: Invalid infrastructure element type", value,"for Command",command)
+										fmt.Println("Error: Invalid infrastructure element type", value,"for Command",command)
 										if error != nil {
 											fmt.Fprintf(os.Stderr, "Details: %s \n", error.Error())
 										}
@@ -198,7 +195,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 							}
 						} else if len(optsArgs) < index + 1 {
 							passed = false
-							fmt.Fprintln(os.Stdout, "Error: Uncomplete option", option[index],"for Command",command)
+							fmt.Println("Error: Uncomplete option", option[index],"for Command",command)
 							time.Sleep(100 * time.Millisecond)
 							PrintCommandHelper(command, "")
 						}
@@ -206,38 +203,38 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 					if passed  {
 						ArgCmd.Options = options
 						if "help" != command && "info-project" != command {
-							fmt.Fprintf(os.Stdout, "Executing command %s ...\n", command)
+							fmt.Printf("Executing command %s ...\n", command)
 							time.Sleep(100 * time.Millisecond)
 						}
 						return  true
 					} else  {
-						fmt.Fprintln(os.Stderr, "Error: One or more options parse failed!!")
+						fmt.Println("Error: One or more options parse failed!!")
 						time.Sleep(100 * time.Millisecond)
 						PrintCommandHelper(command, "")
 						return  false
 					}
 				}
 				if "help" != command && "info-project" != command {
-					fmt.Fprintf(os.Stdout, "Executing command %s ...\n", command)
+					fmt.Printf("Executing command %s ...\n", command)
 					time.Sleep(100 * time.Millisecond)
 				}
 				return  true
 			} else if len(args) >= 1 {
-				fmt.Fprintln(os.Stderr, "Error: Unable to parse Sub-Command...")
+				fmt.Println("Error: Unable to parse Sub-Command...")
 				time.Sleep(100 * time.Millisecond)
 				PrintCommandHelper(command, "")
 			} else  {
-				fmt.Fprintln(os.Stderr, "Error: Unable to parse any parameter...")
+				fmt.Println("Error: Unable to parse any parameter...")
 				time.Sleep(100 * time.Millisecond)
 				PrintCommandHelper(command, "")
 			}
 		} else {
-			fmt.Fprintln(os.Stderr, "Error: Unable to parse command =",args[0])
+			fmt.Printf("Error: Unable to parse command = %s\n",args[0])
 			time.Sleep(100 * time.Millisecond)
 			PrintCommandHelper("help", "")
 		}
 	} else {
-		fmt.Fprintln(os.Stderr, "Error: Insufficient arguments =",len(args))
+		fmt.Printf("Error: Insufficient arguments = %d\n",len(args))
 		time.Sleep(100 * time.Millisecond)
 		PrintCommandHelper("help", "")
 	}

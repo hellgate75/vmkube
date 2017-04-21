@@ -114,6 +114,24 @@ func GetJSONFromObj(m interface{}, prettify bool) []byte {
 	return bytes
 }
 
+func ExportStructureToFile(File string, Format string, structure interface{}) error {
+	var bytesArray []byte = make([]byte, 0)
+	var err error
+	if CorrectInput(Format) == "json" {
+		bytesArray, err = GetJSONFromElem(structure, true)
+		if err != nil {
+			return  err
+		}
+	} else if CorrectInput(Format) == "xml" {
+		bytesArray, err = GetXMLFromElem(structure, true)
+		if err != nil {
+			return  err
+		}
+	} else {
+			return errors.New("File Format '"+Format+"' not available")
+	}
+	return ioutil.WriteFile(File, bytesArray, 0777)
+}
 
 // go binary decoder
 func GetJSONFromElem(m interface{}, prettify bool) ([]byte, error) {

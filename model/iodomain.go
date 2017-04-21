@@ -31,7 +31,7 @@ func (element *Domain) Validate() []error {
 }
 
 func (element *Domain) Load(file string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
@@ -43,7 +43,7 @@ func (element *Domain) Load(file string) error {
 }
 
 func (element *Domain) Import(file string, format string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
@@ -59,9 +59,20 @@ func (element *Domain) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil && element.Id == "" {
-		element.Id = NewUUIDString()
+		err := element.PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return err
+}
+
+func (element *Domain) PostImport() error {
+	element.Id=NewUUIDString()
+	for _,network := range element.Networks {
+		network.PostImport()
+	}
+	return nil
 }
 
 func (element *Domain) Save(file string) error {
@@ -97,7 +108,7 @@ func (element *ProjectDomain) Validate() []error {
 }
 
 func (element *ProjectDomain) Load(file string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
@@ -109,7 +120,7 @@ func (element *ProjectDomain) Load(file string) error {
 }
 
 func (element *ProjectDomain) Import(file string, format string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
@@ -124,59 +135,21 @@ func (element *ProjectDomain) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	if err == nil {
-		element.Id=NewUUIDString()
-		for _,network := range element.Networks {
-			serverMap := make(map[string]string, 0)
-			network.Id = NewUUIDString()
-			for _,server := range network.Servers {
-				id := server.Id
-				if id == "" {
-					id = server.Name
-				}
-				if id != "" {
-					if _,ok := serverMap[id]; ok {
-						bytes := []byte(`Duplicate server Id/Name reference in json : `)
-						bytes = append(bytes,utils.GetJSONFromObj(server, true)...)
-						return errors.New(string(bytes))
-					}
-				}
-				server.Id = NewUUIDString()
-				if id != "" {
-					serverMap[id] = server.Id
-				}
-			}
-			for _,server := range network.CServers {
-				id := server.Id
-				if id == "" {
-					id = server.Name
-				}
-				if id != "" {
-					if _,ok := serverMap[id]; ok {
-						bytes := []byte(`Duplicate cloud server or server Id/Name reference in json : `)
-						bytes = append(bytes,utils.GetJSONFromObj(server, true)...)
-						return errors.New(string(bytes))
-					}
-				}
-				server.Id = NewUUIDString()
-				if id != "" {
-					serverMap[id] = server.Id
-				}
-			}
-			for _,installPlan := range network.Installations {
-				installPlan.Id = NewUUIDString()
-				oldId := installPlan.ServerId
-				if _,ok := serverMap[oldId]; ! ok || oldId == "" {
-					bytes := []byte(`Unable to locate cloud server or server Id/Name in installation plan reference in json : `)
-					bytes = append(bytes,utils.GetJSONFromObj(installPlan, true)...)
-					return errors.New(string(bytes))
-				}
-				value, _ := serverMap[oldId]
-				installPlan.ServerId = value
-			}
+	if err == nil && element.Id == "" {
+		err := element.PostImport()
+		if err != nil {
+			return err
 		}
 	}
 	return err
+}
+
+func (element *ProjectDomain) PostImport() error {
+	element.Id=NewUUIDString()
+	for _,network := range element.Networks {
+		network.PostImport()
+	}
+	return nil
 }
 
 func (element *ProjectDomain) Save(file string) error {

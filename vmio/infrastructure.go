@@ -27,7 +27,6 @@ func (info *InfrastructureInfo) Write() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
 	fileName := baseFolder + string(os.PathSeparator) + "." + info.Infra.ProjectId + ".infrastructure"
-	model.DeleteIfExists(fileName)
 	err := info.Infra.Save(fileName)
 	return err
 }

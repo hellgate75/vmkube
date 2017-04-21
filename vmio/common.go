@@ -5,6 +5,7 @@ import (
 	"errors"
 	"vmkube/utils"
 	"strings"
+	"fmt"
 )
 
 type VMKubeElementsStream interface {
@@ -48,13 +49,21 @@ func StripOptions(options [][]string) (int, string) {
 	for _,option := range options {
 		if counter > 0 {
 			optionsStripped += ","
+		} else {
+			counter++
 		}
 		if len(option) == 1 {
 			optionsStripped += option[0]
 		} else {
 			optionsStripped += strings.Join(option, "=")
 		}
-		counter++
 	}
-	return counter, optionsStripped
+	return len(options), optionsStripped
+}
+func StripErrorMessages(description string, errorList []error) (int, string) {
+	errorsStripped := description
+	for _, singleError := range errorList {
+		errorsStripped += fmt.Sprintf("\n%s", singleError.Error())
+	}
+	return len(errorList), errorsStripped
 }

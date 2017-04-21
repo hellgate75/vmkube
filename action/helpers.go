@@ -170,10 +170,10 @@ var(
 		Options:	[][]string{},
 	}
 	ImportProject CommandHelper = CommandHelper{
-		Command: "import-project",
+		Command: "project",
 		Description: "Import a new project from file",
 		CmdType: ImportConfig,
-		LineHelp: "import-project [OPTIONS]",
+		LineHelp: "project [OPTIONS]",
 		SubCommands: [][]string{},
 		SubCmdTypes: []CmdSubRequestType{},
 		SubCmdHelperTypes: []CmdRequestType{},
@@ -208,7 +208,7 @@ func InitHelpers() {
 		[]string{"info-project", "Provides information about project elements definition"},
 		[]string{"delete-project", "Delete existing closed project"},
 		[]string{"build-project", "Build and existing project and create/modify an infrstructure"},
-		[]string{"import-project", "Import project from existing configuration"},
+		[]string{"project", "Import project from existing configuration"},
 		[]string{"export-project", "Export existing project configuration"},
 	)
 	//Start Infrastructure
@@ -363,31 +363,11 @@ func InitHelpers() {
 	)
 	
 	ImportProject.Options = append(ImportProject.Options,
-		[]string{"elem-type", " <infra element type>", "Type of entity to import in the project (allowed: Server, Cloud-Server, Network, Domain, Project,...)", "true"},
-	)
-
-	ImportProject.Options = append(ImportProject.Options,
 		[]string{"full-import", " <boolean>", "Flag used to describe a full import (default: true), when true element list import will be ignored", "false"},
 	)
 	
 	ImportProject.Options = append(ImportProject.Options,
-		[]string{"import-domain-list", "<boolean>", "Import list of Domains in the project (valid if full-import = false)", "false"},
-	)
-
-	ImportProject.Options = append(ImportProject.Options,
-		[]string{"import-network-list", "<boolean>", "Import list of Networks in the project (valid if full-import = false)", "false"},
-	)
-
-	ImportProject.Options = append(ImportProject.Options,
-		[]string{"import-server-list", "<boolean>", "Import list of Local Servers in the project (valid if full-import = false)", "false"},
-	)
-	
-	ImportProject.Options = append(ImportProject.Options,
-		[]string{"cloud-server-list", "<boolean>", "Import list of Cloud-Servers in the project (valid if full-import = false)", "false"},
-	)
-	
-	ImportProject.Options = append(ImportProject.Options,
-		[]string{"plan-list", "<boolean>", "Import list of Deployment Plans in the project (valid if full-import = false)", "false"},
+		[]string{"elem-type", " <infra element type>", "Type of entity top level in the import (allowed: Server, Cloud-Server, Network, Domain,... valid if full-export = false)", "false"},
 	)
 	
 	//Export Project
@@ -404,21 +384,14 @@ func InitHelpers() {
 	)
 
 	ExportProject.Options = append(ExportProject.Options,
-		[]string{"full-export", " <boolean>", "Flag used to describe a full export (default: true)", "false"},
+		[]string{"full-export", "<boolean>", "Flag used to describe a full export (default: true)", "false"},
 	)
-
+	
 	ExportProject.Options = append(ExportProject.Options,
-		[]string{"domain-list", " <list of domain names>", "List of domain names to export (valid if full-export = false)", "false"},
+		[]string{"elem-type", " <infra element type>", "Type of entity top level in the export (allowed: Server, Cloud-Server, Network, Domain,... valid if full-export = false)", "false"},
 	)
-
-	ExportProject.Options = append(ExportProject.Options,
-		[]string{"network-list", " <list of network names>", "List of network names to export (valid if full-export = false)", "false"},
-	)
-
-	ExportProject.Options = append(ExportProject.Options,
-		[]string{"server-list", " <list of server names>", "List of server names to export (valid if full-export = false)", "false"},
-	)
-
+	
+	
 }
 
 func ParseArgumentHelper() []CommandHelper {

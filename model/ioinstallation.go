@@ -26,7 +26,7 @@ func (element *Installation) Validate() []error {
 }
 
 func (element *Installation) Load(file string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
@@ -38,7 +38,7 @@ func (element *Installation) Load(file string) error {
 }
 
 func (element *Installation) Import(file string, format string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
@@ -54,9 +54,17 @@ func (element *Installation) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil && element.Id == "" {
-		element.Id = NewUUIDString()
+		err := element.PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return err
+}
+
+func (element *Installation) PostImport() error {
+	element.Id = NewUUIDString()
+	return nil
 }
 
 func (element *Installation) Save(file string) error {
@@ -86,7 +94,7 @@ func (element *InstallationPlan) Validate() []error {
 }
 
 func (element *InstallationPlan) Load(file string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
@@ -98,7 +106,7 @@ func (element *InstallationPlan) Load(file string) error {
 }
 
 func (element *InstallationPlan) Import(file string, format string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
@@ -114,9 +122,17 @@ func (element *InstallationPlan) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil && element.Id == "" {
-		element.Id = NewUUIDString()
+		err := element.PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return err
+}
+
+func (element *InstallationPlan) PostImport() error {
+	element.Id = NewUUIDString()
+	return nil
 }
 
 func (element *InstallationPlan) Save(file string) error {

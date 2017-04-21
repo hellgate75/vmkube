@@ -183,13 +183,46 @@ func RemoveServer(name string, id string) ([]byte, error) {
 	return  executeCommand(command)
 }
 
-func ServerStatus(name string, id string) ([]byte, error) {
+func StopServer(name string, id string) ([]byte, error) {
+	var command []string = make([]string, 0)
+	command = append( command,  "docker-machine")
+	command = append( command,  "stop")
+	command = append( command,  name + "-" + id)
+	fmt.Printf("Running Stop command :  '%s'\n", strings.Join(command, " "))
+	return  executeCommand(command)
+}
+
+func StartServer(name string, id string) ([]byte, error) {
+	var command []string = make([]string, 0)
+	command = append( command,  "docker-machine")
+	command = append( command,  "start")
+	command = append( command,  name + "-" + id)
+	fmt.Printf("Running Start command :  '%s'\n", strings.Join(command, " "))
+	return  executeCommand(command)
+}
+
+func RestartServer(name string, id string) ([]byte, error) {
+	var command []string = make([]string, 0)
+	command = append( command,  "docker-machine")
+	command = append( command,  "restart")
+	command = append( command,  name + "-" + id)
+	fmt.Printf("Running Restart command :  '%s'\n", strings.Join(command, " "))
+	return  executeCommand(command)
+}
+
+func ServerStatus(name string, id string) (DockerMachineState, error) {
 	var command []string = make([]string, 0)
 	command = append( command,  "docker-machine")
 	command = append( command,  "status")
 	command = append( command,  name + "-" + id)
 	fmt.Printf("Running Status command :  '%s'\n", strings.Join(command, " "))
-	return  executeCommand(command)
+	bytesArray, err :=  executeCommand(command)
+	state := Docker_Machine_State_None
+	if err != nil {
+		return state, err
+	}
+	state = GetStateFromDockerAnswer(string(bytesArray))
+	return state, nil
 }
 
 func ServerEnv(name string, id string) ([]byte, error) {

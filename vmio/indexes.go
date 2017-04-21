@@ -35,7 +35,6 @@ func (info *ProjectIndexInfo) Write() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
 	fileName := baseFolder + string(os.PathSeparator) + ".vmkubeindex"
-	model.DeleteIfExists(fileName)
 	err := info.Index.Save(fileName)
 	return err
 }

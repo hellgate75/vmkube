@@ -31,7 +31,7 @@ func (element *ProjectsDescriptor) Validate() []error {
 }
 
 func (element *ProjectsDescriptor) Load(file string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
@@ -43,7 +43,7 @@ func (element *ProjectsDescriptor) Load(file string) error {
 }
 
 func (element *ProjectsDescriptor) Import(file string, format string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
@@ -59,9 +59,16 @@ func (element *ProjectsDescriptor) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil && element.Id == "" {
-		element.Id = NewUUIDString()
+		err = element.PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return err
+}
+
+func (element *ProjectsDescriptor) PostImport() error {
+	return nil
 }
 
 func (element *ProjectsDescriptor) Save(file string) error {
@@ -91,7 +98,7 @@ func (element *ProjectsIndex) Validate() []error {
 }
 
 func (element *ProjectsIndex) Load(file string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
@@ -103,7 +110,7 @@ func (element *ProjectsIndex) Load(file string) error {
 }
 
 func (element *ProjectsIndex) Import(file string, format string) error {
-	if ! existsFile(file) {
+	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
@@ -119,9 +126,16 @@ func (element *ProjectsIndex) Import(file string, format string) error {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil && element.Id == "" {
-		element.Id = NewUUIDString()
+		err = element.PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return err
+}
+
+func (element *ProjectsIndex) PostImport() error {
+	return nil
 }
 
 func (element *ProjectsIndex) Save(file string) error {

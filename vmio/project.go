@@ -27,7 +27,6 @@ func (info *ProjectInfo) Write() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
 	fileName := baseFolder + string(os.PathSeparator) + "." + info.Project.Id + ".project"
-	model.DeleteIfExists(fileName)
 	err := info.Project.Save(fileName)
 	return err
 }

@@ -8,14 +8,14 @@ import (
 	"vmkube/utils"
 )
 
-func existsFile(file string) bool {
+func ExistsFile(file string) bool {
 	_,err := os.Stat(file)
 	return  err == nil
 }
 
 func DeleteIfExists(file string) error {
 	_,err := os.Stat(file)
-	if err != nil {
+	if err == nil {
 		return os.Remove(file)
 	}
 	return  err
@@ -32,6 +32,7 @@ func MakeFolderIfNotExists(folder string) error {
 type IONature interface {
 	Load(file string) error
 	Import(file string, format string) error
+	PostImport() error
 	Save(file string) error
 	Validate() []error
 }
@@ -45,11 +46,8 @@ func GetLockFile(id string) string {
 
 func readLocks(containerId string) ([]string, error) {
 	fileName := GetLockFile(containerId)
-	if !existsFile(fileName) {
-		err := utils.CreateNewEmptyFile(fileName)
-		if err != nil {
-			return nil, err
-		}
+	if !ExistsFile(fileName) {
+		return []string{}, nil
 	}
 	file, err := os.OpenFile(fileName, os.O_RDWR, 0777)
 	if err != nil {
@@ -98,36 +96,48 @@ func overwriteLocks(containerId string, lines []string) error {
 
 
 func WriteLock(containerId string, resourceId string) bool {
-	return addLock(containerId, resourceId) == nil
+	if strings.TrimSpace(resourceId) != "" && strings.TrimSpace(resourceId) != "" {
+		return addLock(containerId, resourceId) == nil
+	} else {
+		return false
+	}
 }
 
 func RemoveLock(containerId string, resourceId string) bool {
-	lines, err := readLocks(containerId)
-	if err != nil {
-		return false
-	}
-	newLines := make([]string, 0)
-	for _,line := range lines {
-		if resourceId != line {
-			newLines = append(newLines, line)
+	if strings.TrimSpace(resourceId) != "" && strings.TrimSpace(resourceId) != "" {
+		lines, err := readLocks(containerId)
+		if err != nil {
+			return false
 		}
-	}
-	if len(newLines) == 0 {
-		return os.Remove(GetLockFile(containerId)) == nil
+		newLines := make([]string, 0)
+		for _,line := range lines {
+			if resourceId != line && strings.TrimSpace(resourceId) != "" && strings.TrimSpace(line) != "" {
+				newLines = append(newLines, line)
+			}
+		}
+		if len(newLines) == 0 {
+			return os.Remove(GetLockFile(containerId)) == nil
+		} else {
+			return overwriteLocks(containerId, newLines) == nil
+		}
 	} else {
-		return overwriteLocks(containerId, newLines) == nil
+		return false
 	}
 }
 
 func HasLock(containerId string, resourceId string) bool {
-	lines, err := readLocks(containerId)
-	if err != nil {
+	if strings.TrimSpace(resourceId) != "" && strings.TrimSpace(resourceId) != "" {
+		lines, err := readLocks(containerId)
+		if err != nil {
+			return false
+		}
+		for _,line := range lines {
+			if resourceId == line {
+				return true
+			}
+		}
+		return false
+	} else {
 		return false
 	}
-	for _,line := range lines {
-		if resourceId == line {
-			return true
-		}
-	}
-	return false
 }
