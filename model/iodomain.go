@@ -47,7 +47,7 @@ func (element *Domain) Import(file string, format string) error {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" nor reknown!!")
+		return  errors.New("Format "+format+" not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -58,8 +58,8 @@ func (element *Domain) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	if err == nil && element.Id == "" {
-		err := element.PostImport()
+	for i := 0; i < len(element.Networks); i++ {
+		err := element.Networks[i].PostImport()
 		if err != nil {
 			return err
 		}
@@ -70,7 +70,10 @@ func (element *Domain) Import(file string, format string) error {
 func (element *Domain) PostImport() error {
 	element.Id=NewUUIDString()
 	for _,network := range element.Networks {
-		network.PostImport()
+		err := network.PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -124,7 +127,7 @@ func (element *ProjectDomain) Import(file string, format string) error {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" nor reknown!!")
+		return  errors.New("Format "+format+" not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -146,8 +149,11 @@ func (element *ProjectDomain) Import(file string, format string) error {
 
 func (element *ProjectDomain) PostImport() error {
 	element.Id=NewUUIDString()
-	for _,network := range element.Networks {
-		network.PostImport()
+	for i := 0; i < len(element.Networks); i++ {
+		err := element.Networks[i].PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

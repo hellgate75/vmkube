@@ -35,7 +35,7 @@ func (element *ProjectImport) Import(file string, format string) error {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" nor reknown!!")
+		return  errors.New("Format "+format+" not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -57,8 +57,11 @@ func (element *ProjectImport) Import(file string, format string) error {
 
 func (element *ProjectImport) PostImport() error {
 	element.Id=NewUUIDString()
-	for _,domain := range element.Domains {
-		domain.PostImport()
+	for i := 0; i < len(element.Domains); i++ {
+		err := element.Domains[i].PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -102,7 +105,7 @@ func (element *Project) Import(file string, format string) error {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" nor reknown!!")
+		return  errors.New("Format "+format+" not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -124,8 +127,11 @@ func (element *Project) Import(file string, format string) error {
 
 func (element *Project) PostImport() error {
 	element.Id=NewUUIDString()
-	for _,domain := range element.Domains {
-		domain.PostImport()
+	for i := 0; i < len(element.Domains); i++ {
+		err := element.Domains[i].PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -180,7 +186,7 @@ func (element *Infrastructure) Import(file string, format string) error {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" nor reknown!!")
+		return  errors.New("Format "+format+" not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -202,8 +208,11 @@ func (element *Infrastructure) Import(file string, format string) error {
 
 func (element *Infrastructure) PostImport() error {
 	element.Id=NewUUIDString()
-	for _,domain := range element.Domains {
-		domain.PostImport()
+	for i := 0; i < len(element.Domains); i++ {
+		err := element.Domains[i].PostImport()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

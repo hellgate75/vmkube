@@ -85,6 +85,7 @@ func ImportProject(file string, format string) (model.Project, error) {
 
 func ImportUserProject(file string, format string) (model.Project, error) {
 	imported := model.ProjectImport{
+		Domains: []model.ProjectDomain{},
 	}
 	info := ProjectImportInfo{
 		Format: format,

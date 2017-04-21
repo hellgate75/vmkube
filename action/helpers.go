@@ -81,10 +81,10 @@ var(
 		Options:	[][]string{},
 	}
 	ListInfra CommandHelper = CommandHelper{
-		Command: "status-infra",
+		Command: "infra-status",
 		Description: "List information about a specific infrastructure",
 		CmdType: ListInfrastructure,
-		LineHelp: "status-infra [OPTIONS]",
+		LineHelp: "infra-status [OPTIONS]",
 		SubCommands: [][]string{},
 		SubCmdTypes: []CmdSubRequestType{},
 		SubCmdHelperTypes: []CmdRequestType{},
@@ -111,10 +111,10 @@ var(
 		Options:	[][]string{},
 	}
 	ListProject CommandHelper = CommandHelper{
-		Command: "status-project",
+		Command: "project-status",
 		Description: "List information about a specific project",
 		CmdType: StatusConfig,
-		LineHelp: "status-project [OPTIONS]",
+		LineHelp: "project-status [OPTIONS]",
 		SubCommands: [][]string{},
 		SubCmdTypes: []CmdSubRequestType{},
 		SubCmdHelperTypes: []CmdRequestType{},
@@ -200,10 +200,10 @@ func InitHelpers() {
 		[]string{"stop-infra", "Stop Running Infrastructure"},
 		[]string{"restart-infra", "Restart Running Infrastructure"},
 		[]string{"destroy-infra", "Destroy a specific Infrastructure"},
-		[]string{"status-infra", "Require information about a specific Infrastructure"},
+		[]string{"infra-status", "Require information about a specific Infrastructure"},
 		[]string{"status-all", "Require list of all Infrastructures"},
 		[]string{"list-projects", "Require list of all available projects"},
-		[]string{"status-project", "Require information about a specific projects"},
+		[]string{"project-status", "Require information about a specific projects"},
 		[]string{"define-project", "Define new project"},
 		[]string{"alter-project", "Modify existing project, e.g.: open, close project or add, modify, delete items"},
 		[]string{"info-project", "Provides information about project elements definition"},
@@ -245,7 +245,15 @@ func InitHelpers() {
 	ListProject.Options = append(ListProject.Options,
 		[]string{"name", " <project name>", "Project name", "true"},
 	)
-
+	
+	ListProject.Options = append(ListProject.Options,
+		[]string{"show-all", " <boolean>", "Show full details of project on screen (default: false)", "false"},
+	)
+	
+	ListProject.Options = append(ListProject.Options,
+		[]string{"format", " <json|xml>", "Format used to show details on screen (default: json)", "false"},
+	)
+	
 	//New Project
 	DefineProject.Options = append(DefineProject.Options,
 		[]string{"name", " <project name>", "Project name", "true"},
@@ -256,7 +264,7 @@ func InitHelpers() {
 	)
 
 	DefineProject.Options = append(DefineProject.Options,
-		[]string{"input-format", " <file format>", "(json|xml) Format used to define the project (default: json)", "false"},
+		[]string{"input-format", " <json|xml>", "Format used to define the project (default: json)", "false"},
 	)
 	
 	DefineProject.Options = append(DefineProject.Options,
@@ -322,7 +330,7 @@ func InitHelpers() {
 	)
 
 	AlterProject.Options = append(AlterProject.Options,
-		[]string{"input-format", " <file format>", "(json|xml) Format used to define the infrastructure element (default: json)", "true"},
+		[]string{"input-format", " <json|xml>", "Format used to define the infrastructure element (default: json)", "true"},
 	)
 
 	AlterProject.Options = append(AlterProject.Options,
@@ -360,7 +368,7 @@ func InitHelpers() {
 	)
 
 	ImportProject.Options = append(ImportProject.Options,
-		[]string{"format", " <file format>", "(json|xml) Format used to import project (default: json)", "true"},
+		[]string{"format", " <json|xml>", "Format used to import project (default: json)", "true"},
 	)
 	
 	ImportProject.Options = append(ImportProject.Options,
@@ -393,7 +401,7 @@ func InitHelpers() {
 	)
 
 	ExportProject.Options = append(ExportProject.Options,
-		[]string{"format", " <file format>", "(json|xml) Format used to export project (default: json)", "true"},
+		[]string{"format", " <json|xml>", "Format used to export project (default: json)", "true"},
 	)
 
 	ExportProject.Options = append(ExportProject.Options,

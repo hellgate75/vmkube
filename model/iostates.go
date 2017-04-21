@@ -53,7 +53,7 @@ func (element *InstanceState) Import(file string, format string) error {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" nor reknown!!")
+		return  errors.New("Format "+format+" not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -130,7 +130,7 @@ func (element *NetworkState) Import(file string, format string) error {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" nor reknown!!")
+		return  errors.New("Format "+format+" not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -207,7 +207,7 @@ func (element *DomainState) Import(file string, format string) error {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" nor reknown!!")
+		return  errors.New("Format "+format+" not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -281,7 +281,7 @@ func (element *State) Import(file string, format string) error {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" nor reknown!!")
+		return  errors.New("Format "+format+" not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {

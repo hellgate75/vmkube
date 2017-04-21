@@ -47,7 +47,7 @@ func (element *ProjectsDescriptor) Import(file string, format string) error {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" nor reknown!!")
+		return  errors.New("Format "+format+" not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -114,7 +114,7 @@ func (element *ProjectsIndex) Import(file string, format string) error {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" nor reknown!!")
+		return  errors.New("Format "+format+" not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {

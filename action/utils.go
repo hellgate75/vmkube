@@ -41,7 +41,6 @@ func ParseCommandLine(args []string) (CmdRequest, error) {
 		request.SubTypeStr = arguments.SubCmd
 		request.SubType = arguments.SubCmdType
 		request.HelpType = arguments.SubCmdHelpType
-		//request.CmdElementType = ??
 		request.Arguments = arguments
 	}
 	return  request, error
@@ -148,17 +147,17 @@ func UpdateIndexWithProject(project model.Project) error {
 	
 	var synced, active bool
 	synced = true
-	active = true
+	active = false
 	
 	InfraId := ""
 	InfraName := ""
 	Found := false
 	NewIndexes := make([]model.ProjectsDescriptor, 0)
 	for _,prj := range indexes.Projects {
-		if CorrectInput(prj.Id) != project.Id {
+		if CorrectInput(prj.Name) != CorrectInput(project.Name) {
 			NewIndexes = append(NewIndexes, )
 		} else {
-			synced = prj.Synced
+			synced = (prj.InfraId == "")
 			active = prj.Active
 			InfraId = prj.InfraId
 			InfraName = prj.InfraName
@@ -210,7 +209,7 @@ func UpdateIndexWithProjectsDescriptor(project model.ProjectsDescriptor, addDesc
 	Found := false
 	NewIndexes := make([]model.ProjectsDescriptor, 0)
 	for _,prj := range indexes.Projects {
-		if CorrectInput(prj.Id) != project.Id {
+		if prj.Id != project.Id {
 			NewIndexes = append(NewIndexes, )
 		} else {
 			Found = true
@@ -269,7 +268,7 @@ func UpdateIndexWithInfrastructure(infrastructure model.Infrastructure) error {
 	Found := false
 	NewIndexes := make([]model.ProjectsDescriptor, 0)
 	for _,prj := range indexes.Projects {
-		if CorrectInput(prj.Id) != project.Id {
+		if prj.Id != project.Id {
 			NewIndexes = append(NewIndexes, )
 		} else {
 			CurrentIndex = prj
@@ -286,7 +285,7 @@ func UpdateIndexWithInfrastructure(infrastructure model.Infrastructure) error {
 		Name: project.Name,
 		Open: project.Open,
 		Synced: CurrentIndex.Synced,
-		Active: CurrentIndex.Open,
+		Active: CurrentIndex.Active,
 		InfraId: infrastructure.Id,
 		InfraName: infrastructure.Name,
 	})
