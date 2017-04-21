@@ -34,6 +34,7 @@ var(
 			AlterConfig,
 			InfoConfig,
 			DeleteConfig,
+			BuildConfig,
 			ImportConfig,
 			ExportConfig,
 		},
@@ -162,7 +163,7 @@ var(
 	BuildProject CommandHelper = CommandHelper{
 		Command: "build-project",
 		Description: "Build and existing project and create/modify an infrstructure",
-		CmdType: FinaliseConfig,
+		CmdType: BuildConfig,
 		LineHelp: "build-project [OPTIONS]",
 		SubCommands: [][]string{},
 		SubCmdTypes: []CmdSubRequestType{},
@@ -232,7 +233,7 @@ func InitHelpers() {
 	)
 
 	DestroyInfra.Options = append(DestroyInfra.Options,
-		[]string{"force", " bool", "Flag defining to force destroy, no confirmation will be prompted", "false"},
+		[]string{"force", " <boolean>", "Flag defining to force destroy, no confirmation will be prompted", "false"},
 	)
 
 	//Status Infrastructure
@@ -259,11 +260,11 @@ func InitHelpers() {
 	)
 	
 	DefineProject.Options = append(DefineProject.Options,
-		[]string{"force", " bool", "Flag used to force define project, overwriting existing and closed one, fails in case of built infrastructures (default: false), no confirmation will be prompted", "false"},
+		[]string{"force", " <boolean>", "Flag used to force define project, overwriting existing and closed one, fails in case of built infrastructures (default: false), no confirmation will be prompted", "false"},
 	)
 	
 	DefineProject.Options = append(DefineProject.Options,
-		[]string{"destroy-infra", " bool", "Flag defining to force destroy infrastructure if exists or elsewise fails in case of built project (default: false)", "false"},
+		[]string{"destroy-infra", " <boolean>", "Flag defining to force destroy infrastructure if exists or elsewise fails in case of built project (default: false)", "false"},
 	)
 	
 	//Build Project
@@ -272,11 +273,11 @@ func InitHelpers() {
 	)
 
 	BuildProject.Options = append(BuildProject.Options,
-		[]string{"override", " bool", "Flag defining to override existing infrastructure (default: false)", "false"},
+		[]string{"override", " <boolean>", "Flag defining to override existing infrastructure (default: false)", "false"},
 	)
 
 	BuildProject.Options = append(BuildProject.Options,
-		[]string{"force", " bool", "Flag defining to force modify infrastructure, no confirmation will be prompted", "false"},
+		[]string{"force", " <boolean>", "Flag defining to force modify infrastructure, no confirmation will be prompted", "false"},
 	)
 	//Information on Project Definition
 	InfoProject.SubCommands = append(InfoProject.SubCommands,
@@ -333,11 +334,11 @@ func InitHelpers() {
 	)
 
 	AlterProject.Options = append(AlterProject.Options,
-		[]string{"override", " bool", "Flag defining to override existing infrastructure element (default: false)", "false"},
+		[]string{"override", " <boolean>", "Flag defining to override existing infrastructure element (default: false)", "false"},
 	)
 
 	AlterProject.Options = append(AlterProject.Options,
-		[]string{"force", " bool", "Flag defining to force modify infrastructure element, no confirmation will be prompted", "false"},
+		[]string{"force", " <boolean>", "Flag defining to force modify infrastructure element, no confirmation will be prompted", "false"},
 	)
 
 	//Delete Project
@@ -346,7 +347,7 @@ func InitHelpers() {
 	)
 
 	DeleteProject.Options = append(DeleteProject.Options,
-		[]string{"force", " bool", "Flag defining to force delete, no confirmation will be prompted", "false"},
+		[]string{"force", " <boolean>", "Flag defining to force delete, no confirmation will be prompted", "false"},
 	)
 	
 	//Import Project
@@ -416,6 +417,7 @@ func ParseArgumentHelper() []CommandHelper {
 		AlterProject,
 		InfoProject,
 		DeleteProject,
+		BuildProject,
 		ImportProject,
 		ExportProject,
 	}

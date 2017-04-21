@@ -33,10 +33,10 @@ const (
 	ImportConfig
 	ExportConfig
 	DefineConfig
+	BuildConfig
 	DeleteConfig
 	AlterConfig	
 	InfoConfig	
-	FinaliseConfig
 )
 
 type CmdSubRequestType int

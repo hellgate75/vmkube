@@ -108,6 +108,18 @@ func ExecuteRequest(request CmdRequest) bool{
 			return  error == nil
 		}
 	}
+	case BuildConfig: {
+		if ! request.CheckProject() {
+			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			return  false
+		} else  {
+			response, error := request.BuildProject()
+			if ! response.Status {
+				fmt.Printf("Error: %s, clause: %s\n", error, response.Message)
+			}
+			return  error == nil
+		}
+	}
 	case ImportConfig: {
 		if ! request.CheckProject() {
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)

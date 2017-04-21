@@ -19,6 +19,7 @@ type ProjectActions interface {
 	DeleteProject() (Response, error)
 	ListProjects() (Response, error)
 	StatusProject() (Response, error)
+	BuildProject() (Response, error)
 	ImportProject() (Response, error)
 	ExportProject() (Response, error)
 }
@@ -688,6 +689,14 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 	return Response{
 		Message: "Success",
 		Status: true,}, nil
+}
+
+func (request *CmdRequest) BuildProject() (Response, error) {
+	response := Response{
+		Status: false,
+		Message: "Not Implemented",
+	}
+	return  response, errors.New("Unable to execute task")
 }
 
 func (request *CmdRequest) ImportProject() (Response, error) {

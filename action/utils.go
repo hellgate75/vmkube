@@ -86,7 +86,7 @@ func PrintCommandHelper(command	string, subCommand string) {
 	if "" !=  strings.TrimSpace(strings.ToLower(subCommand)) && "help" !=  strings.TrimSpace(strings.ToLower(subCommand)) {
 		fmt.Fprintln(os.Stdout, "Selected Sub-Command: " + subCommand)
 		for _,option := range helper.SubCommands {
-				fmt.Fprintf(os.Stdout, "%s\t%s\n",  utils.StrPad(option[0], 45), option[1])
+				fmt.Fprintf(os.Stdout, "%s        %s\n",  utils.StrPad(option[0], 50), option[1])
 				found = true
 		}
 		if ! found  {
@@ -107,7 +107,7 @@ func PrintCommandHelper(command	string, subCommand string) {
 			}
 		}
 		for _,option := range helper.SubCommands {
-			fmt.Fprintf(os.Stdout, "%s\t%s\n",  utils.StrPad(option[0], 45), option[1])
+			fmt.Fprintf(os.Stdout, "%s        %s\n",  utils.StrPad(option[0], 50), option[1])
 		}
 	}
 	if found  {
@@ -119,7 +119,7 @@ func PrintCommandHelper(command	string, subCommand string) {
 			if "true" == option[3] {
 				validity = "mandatory"
 			}
-			fmt.Fprintf(os.Stdout, "--%s\t%s\t%s\n",  utils.StrPad(option[0]+option[1], 45), utils.StrPad(validity, 10), option[2])
+			fmt.Fprintf(os.Stdout, "--%s  %s  %s  %s\n",  utils.StrPad(option[0],15),  utils.StrPad(option[1], 25), utils.StrPad(validity, 10), option[2])
 		}
 	} else  {
 		fmt.Fprintln(os.Stdout, "Unable to complete help support ...")
