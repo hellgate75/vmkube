@@ -38,6 +38,11 @@ func (info *InfrastructureInfo) Delete() error {
 	return model.DeleteIfExists(fileName)
 }
 
+func (info *InfrastructureInfo) Evaquate() error {
+	//TODO: Implement infrastructure evacuate
+	return nil
+}
+
 func (info *InfrastructureInfo) Import(file string, format string) error {
 	err := info.Infra.Import(file, format)
 	return  err

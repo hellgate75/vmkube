@@ -7,6 +7,8 @@ import (
 	"errors"
 	"vmkube/utils"
 	"github.com/satori/go.uuid"
+	"vmkube/model"
+	"vmkube/vmio"
 )
 
 func RecoverCommandHelper(helpCommand string) CommandHelper {
@@ -126,3 +128,178 @@ func PrintCommandHelper(command	string, subCommand string) {
 	}
 }
 
+func UpdateIndexWithProject(project model.Project) error {
+	indexes, err := vmio.LoadIndex()
+	
+	if err != nil {
+		return err
+	}
+	
+	iFaceIndex := vmio.IFaceIndex{
+		Id: indexes.Id,
+	}
+	iFaceIndex.WaitForUnlock()
+	
+	indexes, err = vmio.LoadIndex()
+	
+	if err != nil {
+		return err
+	}
+	
+	var synced, active bool
+	synced = true
+	active = true
+	
+	InfraId := ""
+	InfraName := ""
+	Found := false
+	NewIndexes := make([]model.ProjectsDescriptor, 0)
+	for _,prj := range indexes.Projects {
+		if CorrectInput(prj.Id) != project.Id {
+			NewIndexes = append(NewIndexes, )
+		} else {
+			synced = prj.Synced
+			active = prj.Active
+			InfraId = prj.InfraId
+			InfraName = prj.InfraName
+			Found = true
+		}
+	}
+	
+	vmio.LockIndex(indexes)
+	
+	indexes.Projects = append(indexes.Projects, model.ProjectsDescriptor{
+		Id: project.Id,
+		Name: project.Name,
+		Open: project.Open,
+		Synced: synced,
+		Active: active,
+		InfraId: InfraId,
+		InfraName: InfraName,
+	})
+	
+	if Found {
+		indexes.Projects = NewIndexes
+	}
+	
+	err = vmio.SaveIndex(indexes)
+	
+	vmio.UnlockIndex(indexes)
+	
+	return err
+}
+
+func UpdateIndexWithProjectsDescriptor(project model.ProjectsDescriptor, addDescriptor bool) error {
+	indexes, err := vmio.LoadIndex()
+	
+	if err != nil {
+		return err
+	}
+	
+	iFaceIndex := vmio.IFaceIndex{
+		Id: indexes.Id,
+	}
+	iFaceIndex.WaitForUnlock()
+	
+	indexes, err = vmio.LoadIndex()
+	
+	if err != nil {
+		return err
+	}
+	
+	Found := false
+	NewIndexes := make([]model.ProjectsDescriptor, 0)
+	for _,prj := range indexes.Projects {
+		if CorrectInput(prj.Id) != project.Id {
+			NewIndexes = append(NewIndexes, )
+		} else {
+			Found = true
+		}
+	}
+	
+	vmio.LockIndex(indexes)
+	
+	if addDescriptor {
+		NewIndexes = append(NewIndexes, project)
+		indexes.Projects = NewIndexes
+	} else  if Found {
+		indexes.Projects = NewIndexes
+	}
+	
+	err = vmio.SaveIndex(indexes)
+	
+	vmio.UnlockIndex(indexes)
+	
+	return err
+}
+
+func UpdateIndexWithInfrastructure(infrastructure model.Infrastructure) error {
+	indexes, err := vmio.LoadIndex()
+	
+	if err != nil {
+		return err
+	}
+	
+	iFaceIndex := vmio.IFaceIndex{
+		Id: indexes.Id,
+	}
+	iFaceIndex.WaitForUnlock()
+	
+	indexes, err = vmio.LoadIndex()
+	
+	if err != nil {
+		return err
+	}
+	
+	vmio.LockIndex(indexes)
+	
+	iFaceProject := vmio.IFaceProject{
+		Id: infrastructure.ProjectId,
+	}
+	iFaceProject.WaitForUnlock()
+	
+	
+	project, err := vmio.LoadProject(infrastructure.ProjectId)
+	
+	if err != nil {
+		return err
+	}
+
+	CurrentIndex := model.ProjectsDescriptor{}
+	Found := false
+	NewIndexes := make([]model.ProjectsDescriptor, 0)
+	for _,prj := range indexes.Projects {
+		if CorrectInput(prj.Id) != project.Id {
+			NewIndexes = append(NewIndexes, )
+		} else {
+			CurrentIndex = prj
+			Found = true
+		}
+	}
+
+	if ! Found {
+		return errors.New("Project Id: '"+infrastructure.ProjectId+"' for Infrastrcutre '"+infrastructure.Name+"' not found!!")
+	}
+	
+	indexes.Projects = append(indexes.Projects, model.ProjectsDescriptor{
+		Id: project.Id,
+		Name: project.Name,
+		Open: project.Open,
+		Synced: CurrentIndex.Synced,
+		Active: CurrentIndex.Open,
+		InfraId: infrastructure.Id,
+		InfraName: infrastructure.Name,
+	})
+
+	UpdateIndex := len(indexes.Projects) > len(NewIndexes)
+	
+	if UpdateIndex {
+		indexes.Projects = NewIndexes
+	}
+	
+	err = vmio.SaveIndex(indexes)
+	
+	vmio.UnlockIndex(indexes)
+	
+	return err
+}

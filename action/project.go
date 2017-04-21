@@ -68,6 +68,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		}
 		if "force" == CorrectInput(option[0]) {
 			Force = GetBoolean(option[1])
+			option[1] = "true"
 		}
 		if "destroy-infra" == CorrectInput(option[0]) {
 			DestroyInfra = GetBoolean(option[1])
@@ -264,19 +265,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	}
 	iFaceIndex.WaitForUnlock()
 	
-	indexes, err = vmio.LoadIndex()
-	
-	if err != nil {
-		response := Response{
-			Status: false,
-			Message: err.Error(),
-		}
-		return response, errors.New("Unable to execute task")
-	}
-	
-	vmio.LockIndex(indexes)
-	
-	indexes.Projects = append(indexes.Projects, model.ProjectsDescriptor{
+	err = UpdateIndexWithProjectsDescriptor(model.ProjectsDescriptor{
 		Id: project.Id,
 		Name: project.Name,
 		Open: project.Open,
@@ -284,13 +273,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		Active: false,
 		InfraId: "",
 		InfraName: "",
-	})
-	
-	
-	err = vmio.SaveIndex(indexes)
-	
-	vmio.UnlockIndex(indexes)
-	
+	}, true)
 	if err != nil {
 		response := Response{
 			Status: false,
@@ -528,37 +511,15 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 	}
 	iFaceIndex.WaitForUnlock()
 	
-	indexes, err = vmio.LoadIndex()
-	
+	err = UpdateIndexWithProjectsDescriptor(descriptor, false)
+
 	if err != nil {
 		response := Response{
 			Status: false,
 			Message: err.Error(),
 		}
-		return response, errors.New("Unable to execute task")
-	}
-
-	vmio.LockIndex(indexes)
-	
-	
-	NewIndexes := make([]model.ProjectsDescriptor, 0)
-	for _,prj := range indexes.Projects {
-		if CorrectInput(prj.Name) != Name {
-			NewIndexes = append(NewIndexes, )
-		}
-	}
-	SaveIndex := len(indexes.Projects) > len(NewIndexes)
-	if SaveIndex {
-		indexes.Projects = NewIndexes
-		err = vmio.SaveIndex(indexes)
-		if err != nil {
-			response := Response{
-				Status: false,
-				Message: err.Error(),
-			}
-			vmio.UnlockIndex(indexes)
-			return  response, errors.New("Unable to execute task")
-		}
+		vmio.UnlockIndex(indexes)
+		return  response, errors.New("Unable to execute task")
 	}
 	vmio.UnlockIndex(indexes)
 	response := Response{
@@ -704,6 +665,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 	File := ""
 	Format := ""
 	FullImport := true
+	Force := false
 	Sample := false
 	SampleFormat := ""
 	var ElementType CmdElementType = NoElement
@@ -716,6 +678,8 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 		} else if "format" == CorrectInput(option[0]) {
 			Format = option[1]
 		} else if "full-import" == CorrectInput(option[0]) {
+			FullImport = GetBoolean(option[1])
+		} else if "force" == CorrectInput(option[0]) {
 			FullImport = GetBoolean(option[1])
 		} else if "sample" == CorrectInput(option[0]) {
 			Sample = GetBoolean(option[1])
@@ -862,16 +826,38 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
-	model.DeleteIfExists(File)
 	if FullImport || ElementType == SProject {
 		project, err := vmio.LoadProject(descriptor.Id)
-		if err != nil {
-			response := Response{
-				Status: false,
-				Message: err.Error(),
+		if err == nil && project.Id != "" {
+			AllowProjectDeletion := Force
+			AllowProjectBackup := Force
+			if err == nil {
+				if ! AllowProjectDeletion {
+					AllowProjectDeletion = utils.RequestConfirmation("Do you want proceed with deletion process for Project named '"+descriptor.Name+"'?")
+					if ! AllowProjectDeletion {
+						response := Response{
+							Status: false,
+							Message: "User task interruption",
+						}
+						return response, errors.New("Unable to execute task")
+					}
+				}
+				if AllowProjectDeletion && ! AllowProjectBackup {
+					AllowProjectBackup = utils.RequestConfirmation("Do you want backup Project named'"+descriptor.Name+"'?")
+				}
 			}
-			return  response, errors.New("Unable to execute task")
+			
+			if !AllowProjectDeletion {
+				response := Response{
+					Status: false,
+					Message: "Project '"+Name+"' already exists and no force clause specified ...",
+				}
+				return  response, errors.New("Unable to execute task")
+			}
+			
+			request.DeleteProject()
 		}
+		
 		project, err = vmio.ImportUserProject(File, Format)
 		if err != nil {
 			response := Response{
@@ -890,6 +876,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			}
 			return  response, errors.New("Unable to execute task")
 		}
+		
 	} else {
 		project, err := vmio.LoadProject(descriptor.Id)
 		if err != nil {

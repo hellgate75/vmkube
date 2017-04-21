@@ -378,6 +378,11 @@ func InitHelpers() {
 		[]string{"sample-format", " <json|xml>", "Output format for the required sample import instead of import (default: json, valid if full-export = false)", "false"},
 	)
 	
+	ImportProject.Options = append(ImportProject.Options,
+		[]string{"force", " <boolean>", "Flag used to force import project, overwriting existing and closed one, project goes out of sync in case of built infrastructure (default: false), no confirmation will be prompted", "false"},
+	)
+	
+	
 	//Export Project
 	ExportProject.Options = append(ExportProject.Options,
 		[]string{"name", " <project name>", "Project name", "true"},
