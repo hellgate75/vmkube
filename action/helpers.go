@@ -142,7 +142,7 @@ var(
 	}
 	AlterProject CommandHelper = CommandHelper{
 		Command: "alter-project",
-		Description: "Change an existing project",
+		Description: "Modify existing project, e.g.: open, close project or add, modify, delete items",
 		CmdType: AlterConfig,
 		LineHelp: "alter-project [OPTIONS]",
 		SubCommands: [][]string{},
@@ -205,9 +205,9 @@ func InitHelpers() {
 		[]string{"list-projects", "Require list of all released and not released projects"},
 		[]string{"status-project", "Require information about a specific projects"},
 		[]string{"define-project", "Define new project"},
-		[]string{"alter-project", "Alter existing project, e.g.: open, close, finalize, or simply change nodes"},
+		[]string{"alter-project", "Modify existing project, e.g.: open, close project or add, modify, delete items"},
 		[]string{"info-project", "Provides information about project elements definition"},
-		[]string{"delete-project", "Delete existing closed project"},
+		[]string{"delete-project", "Delete existing project"},
 		[]string{"build-project", "Build and existing project and create/modify an infrstructure"},
 		[]string{"import-project", "Import project from existing configuration"},
 		[]string{"export-project", "Export existing project configuration"},
@@ -303,7 +303,7 @@ func InitHelpers() {
 		[]string{"modify", "Alter a project item"},
 		[]string{"delete", "Delete a project item"},
 		[]string{"close", "Close a project for deletion or build"},
-		[]string{"open", "Re-Open a closed project and eventually deactivate infrastructure"},
+		[]string{"open", "Re-Open a closed project and eventually deactivate the infrastructure"},
 	)
 	AlterProject.SubCmdTypes = append(AlterProject.SubCmdTypes,
 		Create,
