@@ -60,6 +60,30 @@ func ExecuteRequest(request CmdRequest) bool{
 			return  error == nil
 		}
 	}
+	case BackupInfrastructure: {
+		if ! request.CheckInfra() {
+			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			return  false
+		} else  {
+			response, error := request.BackupInfra()
+			if ! response.Status {
+				fmt.Printf("Error: %s, clause: %s\n", error, response.Message)
+			}
+			return  error == nil
+		}
+	}
+	case RecoverInfrastructure: {
+		if ! request.CheckInfra() {
+			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			return  false
+		} else  {
+			response, error := request.RecoverInfra()
+			if ! response.Status {
+				fmt.Printf("Error: %s, clause: %s\n", error, response.Message)
+			}
+			return  error == nil
+		}
+	}
 	case ListInfrastructure: {
 		if ! request.CheckInfra() {
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)

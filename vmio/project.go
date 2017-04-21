@@ -15,9 +15,9 @@ type ProjectInfo struct {
 func (info *ProjectInfo) Read() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
-	fileName := baseFolder + string(os.PathSeparator) + "." + info.Project.Id + ".project"
+	fileName := baseFolder + string(os.PathSeparator) + ".prj-" + info.Project.Id + ".vmkube"
 	if _,err := os.Stat(fileName); err!=nil {
-		info.Write()
+		return err
 	}
 	err := info.Project.Load(fileName)
 	return err
@@ -26,7 +26,7 @@ func (info *ProjectInfo) Read() error {
 func (info *ProjectInfo) Write() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
-	fileName := baseFolder + string(os.PathSeparator) + "." + info.Project.Id + ".project"
+	fileName := baseFolder + string(os.PathSeparator) + ".prj-" + info.Project.Id + ".vmkube"
 	err := info.Project.Save(fileName)
 	return err
 }
@@ -34,7 +34,7 @@ func (info *ProjectInfo) Write() error {
 func (info *ProjectInfo) Delete() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
-	fileName := baseFolder + string(os.PathSeparator) + "." + info.Project.Id + ".project"
+	fileName := baseFolder + string(os.PathSeparator) + ".prj-" + info.Project.Id + ".vmkube"
 	return model.DeleteIfExists(fileName)
 }
 

@@ -26,6 +26,8 @@ const (
 	StopInfrastructure
 	RestartInfrastructure
 	DestroyInfrastructure
+	BackupInfrastructure
+	RecoverInfrastructure
 	ListInfrastructure
 	ListInfrastructures
 	ListConfigs

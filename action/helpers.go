@@ -26,6 +26,8 @@ var(
 			StopInfrastructure,
 			RestartInfrastructure,
 			DestroyInfrastructure,
+			BackupInfrastructure,
+			RecoverInfrastructure,
 			ListInfrastructure,
 			ListInfrastructures,
 			ListConfigs,
@@ -75,6 +77,26 @@ var(
 		Description: "Destroy a desired infrastructre (No undo available)",
 		CmdType: DestroyInfrastructure,
 		LineHelp: "destroy-infra [OPTIONS]",
+		SubCommands: [][]string{},
+		SubCmdTypes: []CmdSubRequestType{},
+		SubCmdHelperTypes: []CmdRequestType{},
+		Options:	[][]string{},
+	}
+	BackupInfra CommandHelper = CommandHelper{
+		Command: "backup-infra",
+		Description: "Backup a specific Infrastructure to a backup file",
+		CmdType: BackupInfrastructure,
+		LineHelp: "backup-infra [OPTIONS]",
+		SubCommands: [][]string{},
+		SubCmdTypes: []CmdSubRequestType{},
+		SubCmdHelperTypes: []CmdRequestType{},
+		Options:	[][]string{},
+	}
+	RecoverInfra CommandHelper = CommandHelper{
+		Command: "recover-infra",
+		Description: "Recover a specific Infrastructure from a backup file",
+		CmdType: RecoverInfrastructure,
+		LineHelp: "recover-infra [OPTIONS]",
 		SubCommands: [][]string{},
 		SubCmdTypes: []CmdSubRequestType{},
 		SubCmdHelperTypes: []CmdRequestType{},
@@ -200,6 +222,8 @@ func InitHelpers() {
 		[]string{"stop-infra", "Stop Running Infrastructure"},
 		[]string{"restart-infra", "Restart Running Infrastructure"},
 		[]string{"destroy-infra", "Destroy a specific Infrastructure"},
+		[]string{"backup-infra", "Backup a specific Infrastructure to a backup file"},
+		[]string{"recover-infra", "Recover a specific Infrastructure from a backup file"},
 		[]string{"infra-status", "Require information about a specific Infrastructure"},
 		[]string{"status-all", "Require list of all Infrastructures"},
 		[]string{"list-projects", "Require list of all available projects"},
@@ -235,7 +259,37 @@ func InitHelpers() {
 	DestroyInfra.Options = append(DestroyInfra.Options,
 		[]string{"force", " <boolean>", "Flag defining to force destroy, no confirmation will be prompted", "false"},
 	)
-
+	
+	//Backup Infrastructure
+	BackupInfra.Options = append(BackupInfra.Options,
+		[]string{"name", " <infrastructure name>", "Infrastructure name", "true"},
+	)
+	
+	BackupInfra.Options = append(BackupInfra.Options,
+		[]string{"file", " <file path>", "Full Backup file path, used to define the infrastructure (extension will be changed to .vmkube)", "true"},
+	)
+	
+	//Recover Infrastructure
+	RecoverInfra.Options = append(RecoverInfra.Options,
+		[]string{"name", " <infrastructure name>", "Infrastructure name", "true"},
+	)
+	
+	RecoverInfra.Options = append(RecoverInfra.Options,
+		[]string{"file", " <file path>", "Full Recovery file path, used to define the infrastructure (expected extension .vmkube)", "true"},
+	)
+	
+	RecoverInfra.Options = append(RecoverInfra.Options,
+		[]string{"override", " <boolean>", "Flag defining to force override infrastructure if exists or elsewise fails in case of existing one (default: false)", "false"},
+	)
+	
+	RecoverInfra.Options = append(RecoverInfra.Options,
+		[]string{"project-name", " <project name>", "Project Name used to assign a project to the recovered infrastructure", "false"},
+	)
+	
+	RecoverInfra.Options = append(RecoverInfra.Options,
+		[]string{"force", " <boolean>", "Define to force a project creation, if it doesn't exist, using the recovered infrastructure", "false"},
+	)
+	
 	//Status Infrastructure
 	ListInfra.Options = append(ListInfra.Options,
 		[]string{"name", " <infrastructure name>", "Infrastructure name", "true"},
@@ -247,7 +301,7 @@ func InitHelpers() {
 	)
 	
 	ListProject.Options = append(ListProject.Options,
-		[]string{"show-all", " <boolean>", "Show full details of project on screen (default: false)", "false"},
+		[]string{"show-full", " <boolean>", "Show full details of project on screen (default: false)", "false"},
 	)
 	
 	ListProject.Options = append(ListProject.Options,
@@ -260,11 +314,11 @@ func InitHelpers() {
 	)
 
 	DefineProject.Options = append(DefineProject.Options,
-		[]string{"input-file", " <file path>", "Full Input file path, used to define the project", "false"},
+		[]string{"file", " <file path>", "Full Input file path, used to define the project", "false"},
 	)
 
 	DefineProject.Options = append(DefineProject.Options,
-		[]string{"input-format", " <json|xml>", "Format used to define the project (default: json)", "false"},
+		[]string{"format", " <json|xml>", "Format used to define the project (default: json)", "false"},
 	)
 	
 	DefineProject.Options = append(DefineProject.Options,
@@ -326,19 +380,19 @@ func InitHelpers() {
 	)
 
 	AlterProject.Options = append(AlterProject.Options,
-		[]string{"input-file", " <file path>", "Full Input file path, used to define the infrastructure element", "true"},
+		[]string{"file", " <file path>", "Full Input file path, used to define the infrastructure element", "true"},
 	)
 
 	AlterProject.Options = append(AlterProject.Options,
-		[]string{"input-format", " <json|xml>", "Format used to define the infrastructure element (default: json)", "true"},
+		[]string{"format", " <json|xml>", "Format used to define the infrastructure element (default: json)", "true"},
 	)
 
 	AlterProject.Options = append(AlterProject.Options,
-		[]string{"elem-type", " <infra element type>", "Type of entity to create/modify/delete in the project (allowed: Server, Cloud-Server, Network, Domain,...)", "false"},
+		[]string{"elem-type", " <infra element type>", "Type of entity to create/modify/delete in the project (allowed: Server, Cloud-Server, Network, Domain,...)", "true"},
 	)
 
 	AlterProject.Options = append(AlterProject.Options,
-		[]string{"elem-name", " <name pf entity>", "Entity to create/modify in the project", "false"},
+		[]string{"elem-name", " <name pf entity>", "Entity to create/modify in the project", "true"},
 	)
 
 	AlterProject.Options = append(AlterProject.Options,
@@ -422,6 +476,8 @@ func ParseArgumentHelper() []CommandHelper {
 		StopInfra,
 		RestartInfra,
 		DestroyInfra,
+		BackupInfra,
+		RecoverInfra,
 		ListInfra,
 		ListAllInfras,
 		ListProjects,

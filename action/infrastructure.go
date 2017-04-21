@@ -69,6 +69,22 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 	return  response, errors.New("Unable to execute task")
 }
 
+func (request *CmdRequest) BackupInfra() (Response, error) {
+	response := Response{
+		Status: false,
+		Message: "Not Implemented",
+	}
+	return  response, errors.New("Unable to execute task")
+}
+
+func (request *CmdRequest) RecoverInfra() (Response, error) {
+	response := Response{
+		Status: false,
+		Message: "Not Implemented",
+	}
+	return  response, errors.New("Unable to execute task")
+}
+
 func (request *CmdRequest) StartInfra() (Response, error) {
 	response := Response{
 		Status: false,

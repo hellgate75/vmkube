@@ -53,17 +53,17 @@ func (request *CmdRequest) CheckProject() bool {
 func (request *CmdRequest) CreateProject() (Response, error) {
 	Name := ""
 	InputFile := ""
-	InputFormat := ""
+	InputFormat := "json"
 	Force := false
 	DestroyInfra := false
 	for _,option := range request.Arguments.Options {
 		if "name" == CorrectInput(option[0]) {
 			Name = option[1]
 		}
-		if "input-file" == CorrectInput(option[0]) {
+		if "file" == CorrectInput(option[0]) {
 			InputFile = option[1]
 		}
-		if "input-format" == CorrectInput(option[0]) {
+		if "format" == CorrectInput(option[0]) {
 			InputFormat = option[1]
 		}
 		if "force" == CorrectInput(option[0]) {
@@ -154,7 +154,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			}
 			return  response, errors.New("Unable to execute task")
 		}
-		project.LastMessage = "Project imported from file " + InputFile + " in format " + InputFormat
+		project.LastMessage = "Project imported from file " + InputFile + ", format " + InputFormat
 		project.Name = Name
 	} else {
 		fmt.Printf("\nDefining new empty project %s...\n", Name )
@@ -194,10 +194,10 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 
 	if existsInfrastructure {
 		if AllowInfraBackup {
-			InfraBackup = fmt.Sprintf("%s%s.infra-%s-%s.json",model.GetEmergencyFolder(),string(os.PathSeparator),descriptor.InfraId, descriptor.InfraName)
+			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube",model.GetEmergencyFolder(),string(os.PathSeparator), descriptor.Id, descriptor.Name,descriptor.InfraId, descriptor.InfraName)
 			infra, err := vmio.LoadInfrastructure(descriptor.Id)
 			if err == nil {
-				vmio.ExportInfrastructure(infra,InfraBackup,"json",true)
+				infra.Save(InfraBackup)
 				fmt.Printf("Emergency Infrastructure backup at : %s\n", InfraBackup)
 			}
 		}
@@ -250,21 +250,6 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		}
 	}
 	
-	indexes, err := vmio.LoadIndex()
-	
-	if err != nil {
-		response := Response{
-			Status: false,
-			Message: err.Error(),
-		}
-		return response, errors.New("Unable to execute task")
-	}
-	
-	iFaceIndex := vmio.IFaceIndex{
-		Id: indexes.Id,
-	}
-	iFaceIndex.WaitForUnlock()
-	
 	err = UpdateIndexWithProjectsDescriptor(model.ProjectsDescriptor{
 		Id: project.Id,
 		Name: project.Name,
@@ -301,11 +286,295 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 }
 
 func (request *CmdRequest) AlterProject() (Response, error) {
-	response := Response{
-		Status: false,
-		Message: "Not Implemented",
+	Name := ""
+	File := ""
+	Format := "json"
+	Force := true
+	DestroyInfra := true
+	var ElementType CmdElementType = NoElement
+	ElementName := ""
+	var err error
+	for _,option := range request.Arguments.Options {
+		if "name" == CorrectInput(option[0]) {
+			Name = CorrectInput(option[1])
+		} else if "file" == CorrectInput(option[0]) {
+			File = option[1]
+		} else if "format" == CorrectInput(option[0]) {
+			Format = option[1]
+		} else if "force" == CorrectInput(option[0]) {
+			Force = GetBoolean(option[1])
+		} else if "override" == CorrectInput(option[0]) {
+			DestroyInfra = GetBoolean(option[1])
+		} else if "elem-type" == CorrectInput(option[0]) {
+			ElementType, err = CmdParseElement(option[1])
+			if err != nil {
+				ElementType = NoElement
+			}
+		} else if "elem-name" == CorrectInput(option[0]) {
+			ElementName = option[1]
+		}
 	}
-	return  response, errors.New("Unable to execute task")
+	if strings.TrimSpace(Name) == "" {
+		response := Response{
+			Status: false,
+			Message: "Project Name Field is mandatory",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	if strings.TrimSpace(File) == "" && request.SubType != Open && request.SubType != Close && request.SubType != Remove  {
+		response := Response{
+			Status: false,
+			Message: "Input File Path Field is mandatory",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	if strings.TrimSpace(Format) == "" && request.SubType != Open && request.SubType != Close && request.SubType != Remove {
+		response := Response{
+			Status: false,
+			Message: "Input File Format Field is mandatory",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	if ElementType == NoElement && request.SubType != Open && request.SubType != Close {
+		response := Response{
+			Status: false,
+			Message: "Element Type Field is mandatory, use project-import for massive changes",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	if strings.TrimSpace(ElementName) == "" && request.SubType != Open && request.SubType != Close {
+		response := Response{
+			Status: false,
+			Message: "Element Name Field is mandatory, use project-import for massive changes",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	descriptor, err := vmio.GetProjectDescriptor(Name)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	var project model.Project
+	existsProject := true
+	existsInfrastructure := (descriptor.InfraId != "")
+	switch request.SubType {
+		case Create:
+			switch ElementType {
+				case SProject:
+					response := Response{
+						Status: false,
+						Message: "Entire project define not allowed by alter-project, use import-project or define-project for project import",
+					}
+					return  response, errors.New("Unable to execute task")
+				case SDomain:
+					response := Response{
+						Status: false,
+						Message: "Not Implemented",
+					}
+					return  response, errors.New("Unable to execute task")
+					break
+				case SNetwork:
+					response := Response{
+						Status: false,
+						Message: "Not Implemented",
+					}
+					return  response, errors.New("Unable to execute task")
+					break
+				case LServer:
+					response := Response{
+						Status: false,
+						Message: "Not Implemented",
+					}
+					return  response, errors.New("Unable to execute task")
+					break
+				case CLServer:
+					response := Response{
+						Status: false,
+						Message: "Not Implemented",
+					}
+					return  response, errors.New("Unable to execute task")
+					break
+				default:
+					// Plan
+					response := Response{
+						Status: false,
+						Message: "Not Implemented",
+					}
+					return  response, errors.New("Unable to execute task")
+			}
+			break
+		case Alter:
+			switch ElementType {
+			case SProject:
+				response := Response{
+					Status: false,
+					Message: "Entire project chenge not allowed by alter-project, use import-project or define-project for project replacement",
+				}
+				return  response, errors.New("Unable to execute task")
+			case SDomain:
+				response := Response{
+					Status: false,
+					Message: "Not Implemented",
+				}
+				return  response, errors.New("Unable to execute task")
+				break
+			case SNetwork:
+				response := Response{
+					Status: false,
+					Message: "Not Implemented",
+				}
+				return  response, errors.New("Unable to execute task")
+				break
+			case LServer:
+				response := Response{
+					Status: false,
+					Message: "Not Implemented",
+				}
+				return  response, errors.New("Unable to execute task")
+				break
+			case CLServer:
+				response := Response{
+					Status: false,
+					Message: "Not Implemented",
+				}
+				return  response, errors.New("Unable to execute task")
+				break
+			default:
+				// Plan
+				response := Response{
+					Status: false,
+					Message: "Not Implemented",
+				}
+				return  response, errors.New("Unable to execute task")
+			}
+			break
+		case Remove:
+			response := Response{
+				Status: false,
+				Message: "Not Implemented",
+			}
+			return  response, errors.New("Unable to execute task")
+			break
+		case Open:
+			response := Response{
+				Status: false,
+				Message: "Not Implemented",
+			}
+			return  response, errors.New("Unable to execute task")
+			break
+		case Close:
+			response := Response{
+				Status: false,
+				Message: "Not Implemented",
+			}
+			return  response, errors.New("Unable to execute task")
+			break
+		default:
+			response := Response{
+				Status: false,
+				Message: fmt.Sprintf("Sub-Command %s not provided!!", request.SubTypeStr),
+			}
+			return response, errors.New("Unable to execute task")
+	}
+
+	AllowProjectOverwrite := Force
+	if existsProject && ! AllowProjectOverwrite {
+		AllowProjectOverwrite = utils.RequestConfirmation("Do you want proceed with deletion process for Infrastrcuture named '"+descriptor.InfraName+"'?")
+		if ! AllowProjectOverwrite {
+			response := Response{
+				Status: false,
+				Message: "User task interruption",
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		
+	}
+	
+	AllowInfraDeletion := DestroyInfra
+	AllowInfraBackup := DestroyInfra
+	InfraBackup := ""
+	
+	if descriptor.InfraId != "" {
+		if ! AllowInfraDeletion {
+			AllowInfraDeletion = utils.RequestConfirmation("Do you want proceed with deletion process for Infrastrcuture named '"+descriptor.InfraName+"'?")
+			if ! AllowInfraDeletion {
+				response := Response{
+					Status: false,
+					Message: "User task interruption",
+				}
+				return response, errors.New("Unable to execute task")
+			}
+		}
+		if AllowInfraDeletion && ! AllowInfraBackup {
+			AllowInfraBackup = utils.RequestConfirmation("Do you want backup Infrastrcuture named'"+descriptor.InfraName+"'?")
+		}
+	}
+	
+	if descriptor.InfraId != "" && ! AllowInfraDeletion {
+		response := Response{
+			Status: false,
+			Message: "Project '"+Name+"' already build in Infra '"+descriptor.InfraName+"' and no infrastructure destroy clause specified ...",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	if existsInfrastructure {
+		if AllowInfraBackup {
+			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube",model.GetEmergencyFolder(),string(os.PathSeparator), descriptor.Id, descriptor.Name,descriptor.InfraId, descriptor.InfraName)
+			infra, err := vmio.LoadInfrastructure(descriptor.Id)
+			if err == nil {
+				infra.Save(InfraBackup)
+				fmt.Printf("Emergency Infrastructure backup at : %s\n", InfraBackup)
+			}
+		}
+		response, err := request.DeleteInfra()
+		if err != nil {
+			return response, err
+		}
+	}
+	
+	iFaceProject := vmio.IFaceProject{
+		Id: descriptor.Id,
+	}
+	iFaceProject.WaitForUnlock()
+	
+	
+	vmio.LockProject(project)
+	
+	err = vmio.SaveProject(project)
+	
+	vmio.UnlockProject(project)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		if existsInfrastructure {
+			return  response, errors.New("Unable to execute task, Infrastructure "+descriptor.InfraName+" no longer exist, no rollback available, check emergency backups in logs!!")
+		} else {
+			return  response, errors.New("Unable to execute task")
+		}
+	}
+	
+	if InfraBackup != "" {
+		fmt.Printf("Removing Infrastructure backup at : %s\n", InfraBackup)
+		os.Remove(InfraBackup)
+	}
+	
+	if existsInfrastructure {
+		request.BuildProject()
+	}
+		
+		
+	response := Response{
+		Status: true,
+		Message: "Success",
+	}
+	return  response, nil
+
 }
 
 func (request *CmdRequest) InfoProject() (Response, error) {
@@ -569,7 +838,7 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 	for _,option := range request.Arguments.Options {
 		if "name" == CorrectInput(option[0]) {
 			Name = option[1]
-		} else if "show-all" == CorrectInput(option[0]) {
+		} else if "show-full" == CorrectInput(option[0]) {
 			Details = GetBoolean(option[1])
 		} else if "format" == CorrectInput(option[0]) {
 			Format = CorrectInput(option[1])
@@ -913,7 +1182,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 	}
 	if FullImport || ElementType == SProject {
 		
-		project, err := vmio.ImportUserProject(File, Format)
+		project, err = vmio.ImportUserProject(File, Format)
 		if err != nil {
 			response := Response{
 				Status: false,
@@ -921,7 +1190,8 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			}
 			return  response, errors.New("Unable to execute task")
 		}
-		//project.PostImport()
+		project.Name = Name
+		project.LastMessage = "Project imported from file " + File + ", format " + Format
 		errorList := project.Validate()
 		if len(errorList) > 0 {
 			_, errorValue := vmio.StripErrorMessages("Project import is invalid, clause(s) :", errorList)
@@ -984,6 +1254,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 				project.Domains = append(project.Domains, domain)
 			}
 			if len(domains.Domains) > 0 {
+				project.LastMessage = fmt.Sprintf("Domains (no. %d) imported from file %s, format %s", len(domains.Domains), File, Format)
 				err = vmio.SaveProject(project)
 				if err != nil {
 					response := Response{
@@ -1038,6 +1309,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 				}
 			}
 			if len(networks) > 0 {
+				project.LastMessage = fmt.Sprintf("Networks (no. %d) imported from file %s, format %s", len(networks), File, Format)
 				err = vmio.SaveProject(project)
 				if err != nil {
 					response := Response{
@@ -1098,6 +1370,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 				}
 			}
 			if len(servers) > 0 {
+				project.LastMessage = fmt.Sprintf("Servers (no. %d) imported from file %s, format %s", len(servers), File, Format)
 				err = vmio.SaveProject(project)
 				if err != nil {
 					response := Response{
@@ -1158,6 +1431,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 				}
 			}
 			if len(servers) > 0 {
+				project.LastMessage = fmt.Sprintf("Cloud Servers (no. %d) imported from file %s, format %s", len(servers), File, Format)
 				err = vmio.SaveProject(project)
 				if err != nil {
 					response := Response{
@@ -1248,6 +1522,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 				}
 			}
 			if len(plans) > 0 {
+				project.LastMessage = fmt.Sprintf("Installation Plans (no. %d) imported from file %s, format %s", len(plans), File, Format)
 				err = vmio.SaveProject(project)
 				if err != nil {
 					response := Response{
