@@ -7,19 +7,19 @@ import (
 	"os"
 )
 
-type ActionIndexInfo struct {
+type ProjectIndexInfo struct {
 	Format  	string
 	Index			model.ProjectsIndex
 }
 
 
-func (info *ActionIndexInfo) Read() error {
+func (info *ProjectIndexInfo) Read() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	err := model.MakeFolderIfNotExists(baseFolder)
 	if err != nil {
 		return err
 	}
-	fileName := baseFolder + string(os.PathSeparator) + ".vmkubeaction"
+	fileName := baseFolder + string(os.PathSeparator) + ".vmkubprojectindex"
 	if _,err = os.Stat(fileName); err!=nil {
 		info.Index = model.ProjectsIndex{
 			Id: model.NewUUIDString(),
@@ -31,29 +31,29 @@ func (info *ActionIndexInfo) Read() error {
 	return  err
 }
 
-func (info *ActionIndexInfo) Write() error {
+func (info *ProjectIndexInfo) Write() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
-	fileName := baseFolder + string(os.PathSeparator) + ".vmkubeaction"
+	fileName := baseFolder + string(os.PathSeparator) + ".vmkubprojectindex"
 	err := info.Index.Save(fileName)
 	return err
 }
 
-func (info *ActionIndexInfo) Import(file string, format string) error {
+func (info *ProjectIndexInfo) Import(file string, format string) error {
 	err := info.Index.Import(file, format)
 	return  err
 }
 
 
-func (info *ActionIndexInfo) Delete() error {
+func (info *ProjectIndexInfo) Delete() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
-	fileName := baseFolder + string(os.PathSeparator) + ".vmkubeaction"
+	fileName := baseFolder + string(os.PathSeparator) + ".vmkubprojectindex"
 	return model.DeleteIfExists(fileName)
 }
 
 
-func (info *ActionIndexInfo) Export(prettify bool) ([]byte, error) {
+func (info *ProjectIndexInfo) Export(prettify bool) ([]byte, error) {
 	if "json" == info.Format {
 		return  utils.GetJSONFromElem(info.Index, prettify)
 	} else if "xml" == info.Format {
@@ -62,3 +62,4 @@ func (info *ActionIndexInfo) Export(prettify bool) ([]byte, error) {
 		return  []byte{}, errors.New("Format type : "+info.Format+" not known ...")
 	}
 }
+

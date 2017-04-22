@@ -10,6 +10,15 @@ import (
 	"time"
 )
 
+var SegmentIndexSize int = 30
+
+type SegmentIndexNature interface {
+	New()
+	NewNextFrom(previousIndex utils.Index)
+	NewPreviousFrom(nextIndex utils.Index)
+	Before(segmentIndex RollBackSegmentIndex)
+}
+
 /*
 Describe Action Storage, contains
 
@@ -32,7 +41,31 @@ Describe RollBack Segment, contains
 */
 type RollBackSegment struct {
 	Id                string                  `json:"Id" xml:"Id" mandatory:"yes" descr:"Action Index Unique Identifier" type:"text"`
+	ProjectId         string                  `json:"ProjectId" xml:"ProjectId" mandatory:"yes" descr:"Project Unique Identifier" type:"text"`
 	Storage   []ActionStorage 		            `json:"Storage" xml:"Storage" mandatory:"yes" descr:"Project Storage list" type:"object ActionStorage list"`
+	Index     RollBackSegmentIndex 	          `json:"Index" xml:"Index" mandatory:"yes" descr:"Rollback Segments Index" type:"object RollBackSegmentIndex list"`
+}
+
+
+func (element *RollBackSegment) Load(file string) error {
+	if !model. ExistsFile(file) {
+		return  errors.New("File "+file+" doesn't exist!!")
+	}
+	byteArray, err := ioutil.ReadFile(file)
+	if err != nil {
+		return  err
+	}
+	return json.Unmarshal(model.DecodeBytes(byteArray), &element)
+	
+}
+
+func (element *RollBackSegment) Save(file string) error {
+	byteArray, err := json.Marshal(element)
+	if err != nil {
+		return  err
+	}
+	model.DeleteIfExists(file)
+	return ioutil.WriteFile(file, model.EncodeBytes(byteArray) , 0777)
 }
 
 /*
@@ -48,11 +81,23 @@ type RollBackSegmentIndex struct {
 }
 
 func (element *RollBackSegmentIndex) New() {
-	
+	element.Id = NewUUIDString()
+	element.Index.New(SegmentIndexSize)
+	element.Index = element.Index.Next()
 }
 
-func (element *RollBackSegmentIndex) Before(other RollBackSegmentIndex) bool {
-	return false
+func (element *RollBackSegmentIndex) NewNextFrom(previousIndex utils.Index) {
+	element.Id = NewUUIDString()
+	element.Index = previousIndex.Next()
+}
+
+func (element *RollBackSegmentIndex) NewPreviousFrom(nextIndex utils.Index) {
+	element.Id = NewUUIDString()
+	element.Index = nextIndex.Previous()
+}
+
+func (element *RollBackSegmentIndex) Before(segmentIndex RollBackSegmentIndex) bool {
+	return element.Index.Compare(segmentIndex.Index) < 0
 }
 
 /*
@@ -64,7 +109,29 @@ Describe Projects Index, contains
 */
 type RollBackIndex struct {
 	Id                string                  `json:"Id" xml:"Id" mandatory:"yes" descr:"Action Index Unique Identifier" type:"text"`
-	IndexList         []RollBackSegmentIndex 	`json:"IndexList" xml:"IndexList" mandatory:"yes" descr:"Rollback Segments Index list" type:"object Projects list"`
+	ProjectId         string                  `json:"ProjectId" xml:"ProjectId" mandatory:"yes" descr:"Project Unique Identifier" type:"text"`
+	IndexList         []RollBackSegmentIndex 	`json:"IndexList" xml:"IndexList" mandatory:"yes" descr:"Rollback Segments Index list" type:"object RollBackSegmentIndex list"`
+}
+
+func (element *RollBackIndex) Load(file string) error {
+	if !model. ExistsFile(file) {
+		return  errors.New("File "+file+" doesn't exist!!")
+	}
+	byteArray, err := ioutil.ReadFile(file)
+	if err != nil {
+		return  err
+	}
+	return json.Unmarshal(model.DecodeBytes(byteArray), &element)
+	
+}
+
+func (element *RollBackIndex) Save(file string) error {
+	byteArray, err := json.Marshal(element)
+	if err != nil {
+		return  err
+	}
+	model.DeleteIfExists(file)
+	return ioutil.WriteFile(file, model.EncodeBytes(byteArray) , 0777)
 }
 
 
@@ -172,6 +239,7 @@ Describe Project Action Index, contains
 */
 type ProjectActionIndex struct {
 	Id          string                  `json:"Id" xml:"Id" mandatory:"yes" descr:"Action Index Unique Identifier" type:"text"`
+	ProjectId   string                  `json:"ProjectId" xml:"ProjectId" mandatory:"yes" descr:"Project Unique Identifier" type:"text"`
 	Actions		  []ActionDescriptor 		  `json:"Actions" xml:"Actions" mandatory:"yes" descr:"Project Actions, indexed in VMKube" type:"object ActionDescriptor list"`
 }
 
