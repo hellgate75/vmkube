@@ -7,10 +7,69 @@ import (
 	"vmkube/utils"
 	"encoding/xml"
 	"vmkube/model"
+	"time"
 )
 
+/*
+Describe Action Storage, contains
+
+  * Id          (string)                  Indexes Unique Identifier
+
+  * Projects    ([]ProjectsDescriptor)    Projects indexed in VMKube
+*/
+type ActionStorage struct {
+	Id          string            `json:"Id" xml:"Id" mandatory:"yes" descr:"Rollback Descriptor Unique Identifier" type:"text"`
+	Action      ActionDescriptor  `json:"Action" xml:"Action" mandatory:"yes" descr:"Specific Action" type:"text"`
+	Date        time.Time         `json:"Date" xml:"Date" mandatory:"yes" descr:"Specific Action Rollback registration Date" type:"datetime"`
+}
+
+/*
+Describe RollBack Segment, contains
+
+  * Id          (string)                  Indexes Unique Identifier
+
+  * Projects    ([]ActionStorage)    Projects indexed in VMKube
+*/
+type RollBackSegment struct {
+	Id                string                  `json:"Id" xml:"Id" mandatory:"yes" descr:"Action Index Unique Identifier" type:"text"`
+	Storage   []ActionStorage 		            `json:"Storage" xml:"Storage" mandatory:"yes" descr:"Project Storage list" type:"object ActionStorage list"`
+}
+
+/*
+Describe Projects Index, contains
+
+  * Id          (string)                  Indexes Unique Identifier
+
+  * Index        (utils.Index)            Projects indexed in VMKube
+*/
+type RollBackSegmentIndex struct {
+	Id                string                `json:"Id" xml:"Id" mandatory:"yes" descr:"Action Index Unique Identifier" type:"text"`
+	Index             utils.Index 		      `json:"Index" xml:"Index" mandatory:"yes" descr:"Project Rollback Segment Index" type:"string"`
+}
+
+func (element *RollBackSegmentIndex) New() {
+	
+}
+
+func (element *RollBackSegmentIndex) Before(other RollBackSegmentIndex) bool {
+	return false
+}
+
+/*
+Describe Projects Index, contains
+
+  * Id          (string)                  Indexes Unique Identifier
+
+  * Projects    ([]ProjectsDescriptor)    Projects indexed in VMKube
+*/
+type RollBackIndex struct {
+	Id                string                  `json:"Id" xml:"Id" mandatory:"yes" descr:"Action Index Unique Identifier" type:"text"`
+	IndexList         []RollBackSegmentIndex 	`json:"IndexList" xml:"IndexList" mandatory:"yes" descr:"Rollback Segments Index list" type:"object Projects list"`
+}
+
+
 type ActionDescriptor struct {
-	Id          string            `json:"Id" xml:"Id" mandatory:"yes" descr:"Project Unique Identifier" type:"text"`
+	Id          string            `json:"Id" xml:"Id" mandatory:"yes" descr:"Action Unique Identifier" type:"text"`
 	Request     CmdRequestType  	`json:"Request" xml:"Request" mandatory:"yes" descr:"Request Code" type:"int"`
 	SubRequest  CmdSubRequestType `json:"SubRequest" xml:"SubRequest" mandatory:"yes" descr:"Sub-Request Code" type:"int"`
 	ElementType CmdElementType  	`json:"ElementType" xml:"ElementType" mandatory:"yes" descr:"Elemrnt Type Code" type:"int"`
@@ -18,6 +77,7 @@ type ActionDescriptor struct {
 	JSONImage   string            `json:"JSONImage" xml:"JSONImage" mandatory:"yes" descr:"Element JSON image" type:"text"`
 	FullProject bool  						`json:"FullProject" xml:"FullProject" mandatory:"yes" descr:"Describe if action infear on all project" type:"boolean"`
 	DropAction  bool  						`json:"DropAction" xml:"DropAction" mandatory:"yes" descr:"Describe if action Drops Elements" type:"boolean"`
+	Date        time.Time         `json:"Date" xml:"Date" mandatory:"yes" descr:"Specific Action Date" type:"text"`
 }
 
 func (element *ActionDescriptor) Validate() []error {
@@ -104,18 +164,18 @@ func (element *ActionDescriptor) Save(file string) error {
 }
 
 /*
-Describe Projects Index, contains
+Describe Project Action Index, contains
 
-  * Id          (string)                  Indexes Unique Identifier
+  * Id          (string)               Indexes Unique Identifier
 
-  * Projects    ([]ProjectsDescriptor)    Projects indexed in VMKube
+  * Actions    ([]ActionDescriptor)    Projects ActionDescriptor in VMKube Project
 */
-type ProjectsActionIndex struct {
-	Id          string                  `json:"Id" xml:"Id" mandatory:"yes" descr:"Project Unique Identifier" type:"text"`
-	Actions		  []ActionDescriptor 		`json:"Projects" xml:"Projects" mandatory:"yes" descr:"Projects indexed in VMKube" type:"object Projects list"`
+type ProjectActionIndex struct {
+	Id          string                  `json:"Id" xml:"Id" mandatory:"yes" descr:"Action Index Unique Identifier" type:"text"`
+	Actions		  []ActionDescriptor 		  `json:"Actions" xml:"Actions" mandatory:"yes" descr:"Project Actions, indexed in VMKube" type:"object ActionDescriptor list"`
 }
 
-func (element *ProjectsActionIndex) Validate() []error {
+func (element *ProjectActionIndex) Validate() []error {
 	errorList := make([]error, 0)
 	if element.Id == "" {
 		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
@@ -131,7 +191,7 @@ func (element *ProjectsActionIndex) Validate() []error {
 	return errorList
 }
 
-func (element *ProjectsActionIndex) Load(file string) error {
+func (element *ProjectActionIndex) Load(file string) error {
 	if ! model.ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
@@ -142,7 +202,7 @@ func (element *ProjectsActionIndex) Load(file string) error {
 	return json.Unmarshal(model.DecodeBytes(byteArray), &element)
 }
 
-func (element *ProjectsActionIndex) Import(file string, format string) error {
+func (element *ProjectActionIndex) Import(file string, format string) error {
 	if ! model.ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
@@ -169,7 +229,7 @@ func (element *ProjectsActionIndex) Import(file string, format string) error {
 	return err
 }
 
-func (element *ProjectsActionIndex) PostImport() error {
+func (element *ProjectActionIndex) PostImport() error {
 	if element.Id == "" {
 		element.Id = NewUUIDString()
 	}
@@ -179,7 +239,7 @@ func (element *ProjectsActionIndex) PostImport() error {
 	return nil
 }
 
-func (element *ProjectsActionIndex) Save(file string) error {
+func (element *ProjectActionIndex) Save(file string) error {
 	byteArray, err := json.Marshal(element)
 	if err != nil {
 		return  err

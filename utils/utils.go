@@ -10,6 +10,7 @@ import (
 	"os"
 	"fmt"
 	"io/ioutil"
+	"syscall"
 )
 
 func StrPad(instr string, capping int) string {
@@ -156,3 +157,30 @@ func ToMap(m interface{}) map[string]interface{} {
 func CreateNewEmptyFile(file string) error {
 	return ioutil.WriteFile(file, []byte{}, 0777)
 }
+
+func ReverseString(str string) string {
+	bytesArray, err := syscall.ByteSliceFromString(str)
+	if err != nil {
+		return str
+	}
+	size := len(bytesArray);
+	cycle := len(bytesArray)/2;
+	for i := 0; i < cycle; i++ {
+		var b byte =  bytesArray[i]
+		bytesArray[i] = bytesArray[size -1 - i]
+		bytesArray[size -1 - i] = b
+	}
+	return string(bytesArray);
+}
+
+func ReverseBytesArray(bytesArray []byte) []byte {
+	size := len(bytesArray);
+	cycle := len(bytesArray)/2;
+	for i := 0; i < cycle; i++ {
+		var b byte =  bytesArray[i]
+		bytesArray[i] = bytesArray[size -1 - i]
+		bytesArray[size -1 - i] = b
+	}
+	return bytesArray;
+}
+
