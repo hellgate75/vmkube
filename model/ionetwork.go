@@ -3,7 +3,6 @@ package model
 import (
 	"errors"
 	"io/ioutil"
-	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
 	"vmkube/utils"
@@ -45,12 +44,7 @@ func (element *Network) Load(file string) error {
 	if err != nil {
 		return  err
 	}
-	by, err := base64.RawStdEncoding.DecodeString(string(byteArray))
-	if err != nil {
-		return  err
-	}
-	err = json.Unmarshal(by, &element)
-	return err
+	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *Network) Import(file string, format string) error {
@@ -146,10 +140,7 @@ func (element *Network) Save(file string) error {
 		return  err
 	}
 	DeleteIfExists(file)
-	value := base64.RawStdEncoding.EncodeToString(byteArray)
-	newBytes := []byte(value)
-	err = ioutil.WriteFile(file, newBytes , 0777)
-	return  err
+	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 }
 
 func (element *ProjectNetwork) Validate() []error {
@@ -189,12 +180,7 @@ func (element *ProjectNetwork) Load(file string) error {
 	if err != nil {
 		return  err
 	}
-	by, err := base64.RawStdEncoding.DecodeString(string(byteArray))
-	if err != nil {
-		return  err
-	}
-	err = json.Unmarshal(by, &element)
-	return err
+	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *ProjectNetwork) Import(file string, format string) error {
@@ -292,9 +278,6 @@ func (element *ProjectNetwork) Save(file string) error {
 		return  err
 	}
 	DeleteIfExists(file)
-	value := base64.RawStdEncoding.EncodeToString(byteArray)
-	newBytes := []byte(value)
-	err = ioutil.WriteFile(file, newBytes , 0777)
-	return  err
+	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 }
 

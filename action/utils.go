@@ -12,7 +12,7 @@ import (
 )
 
 func RecoverCommandHelper(helpCommand string) CommandHelper {
-	helperCommands := ParseArgumentHelper()
+	helperCommands := GetArgumentHelpers()
 	for _, helper := range helperCommands {
 		if helper.Command == strings.ToLower(helpCommand) {
 			return  helper
@@ -87,7 +87,7 @@ func PrintCommandHelper(command	string, subCommand string) {
 	if "" !=  strings.TrimSpace(strings.ToLower(subCommand)) && "help" !=  strings.TrimSpace(strings.ToLower(subCommand)) {
 		fmt.Fprintln(os.Stdout, "Selected Sub-Command: " + subCommand)
 		for _,option := range helper.SubCommands {
-				fmt.Fprintf(os.Stdout, "%s        %s\n",  utils.StrPad(option[0], 50), option[1])
+				fmt.Fprintf(os.Stdout, "%s        %s\n",  utils.StrPad(option.Command, 50), option.Description)
 				found = true
 		}
 		if ! found  {
@@ -108,7 +108,7 @@ func PrintCommandHelper(command	string, subCommand string) {
 			}
 		}
 		for _,option := range helper.SubCommands {
-			fmt.Fprintf(os.Stdout, "%s        %s\n",  utils.StrPad(option[0], 50), option[1])
+			fmt.Fprintf(os.Stdout, "%s        %s\n",  utils.StrPad(option.Command, 50), option.Description)
 		}
 	}
 	if found  {
@@ -117,10 +117,10 @@ func PrintCommandHelper(command	string, subCommand string) {
 		}
 		for _,option := range helper.Options {
 			validity := "optional"
-			if "true" == option[3] {
+			if option.Mandatory {
 				validity = "mandatory"
 			}
-			fmt.Fprintf(os.Stdout, "--%s  %s  %s  %s\n",  utils.StrPad(option[0],15),  utils.StrPad(option[1], 25), utils.StrPad(validity, 10), option[2])
+			fmt.Fprintf(os.Stdout, "--%s  %s  %s  %s\n",  utils.StrPad(option.Option,15),  utils.StrPad(option.Type, 25), utils.StrPad(validity, 10), option.Description)
 		}
 	} else  {
 		fmt.Fprintln(os.Stdout, "Unable to complete help support ...")
@@ -301,4 +301,23 @@ func UpdateIndexWithInfrastructure(infrastructure model.Infrastructure) error {
 	vmio.UnlockIndex(indexes)
 	
 	return err
+}
+
+func CmdParseOption(key string, options []SubCommandHelper) (string, int, error) {
+	if len(key) > 0 {
+		if strings.Index(key, "--") == 0  {
+			return key, -1, errors.New("Invalid Argument (wrong characters: --) : " + key)
+		} else	if strings.Index(key, "-") == 0  {
+			return key, -1, errors.New("Invalid Argument (wrong character: -) : " + key)
+		} else  {
+			for index,opts := range options {
+				if CorrectInput(key) == opts.Command  {
+					return  CorrectInput(key), index, nil
+				}
+			}
+			return  key, -1, errors.New("Invalid Argument : " + key)
+		}
+	} else  {
+		return  key, -1, errors.New("Unable to parse Agument : " + key)
+	}
 }

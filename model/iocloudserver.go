@@ -3,11 +3,9 @@ package model
 import (
 	"errors"
 	"io/ioutil"
-	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
 	"vmkube/utils"
-	"bytes"
 )
 
 func (element *CloudInstance) Validate() []error {
@@ -46,12 +44,7 @@ func (element *CloudInstance) Load(file string) error {
 	if err != nil {
 		return  err
 	}
-	by, err := base64.RawStdEncoding.DecodeString(string(byteArray))
-	if err != nil {
-		return  err
-	}
-	err = json.Unmarshal(by, &element)
-	return err
+	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *CloudInstance) Import(file string, format string) error {
@@ -94,12 +87,7 @@ func (element *CloudInstance) Save(file string) error {
 		return  err
 	}
 	DeleteIfExists(file)
-	bb := &bytes.Buffer{}
-	encoder := base64.NewEncoder(base64.StdEncoding, bb)
-	encoder.Write(byteArray)
-	encoder.Close()
-	err = ioutil.WriteFile(file, bb.Bytes() , 0777)
-	return  err
+	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 }
 
 func (element *ProjectCloudServer) Validate() []error {
@@ -135,12 +123,7 @@ func (element *ProjectCloudServer) Load(file string) error {
 	if err != nil {
 		return  err
 	}
-	by, err := base64.RawStdEncoding.DecodeString(string(byteArray))
-	if err != nil {
-		return  err
-	}
-	err = json.Unmarshal(by, &element)
-	return err
+	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *ProjectCloudServer) Import(file string, format string) error {
@@ -181,11 +164,6 @@ func (element *ProjectCloudServer) Save(file string) error {
 		return  err
 	}
 	DeleteIfExists(file)
-	bb := &bytes.Buffer{}
-	encoder := base64.NewEncoder(base64.StdEncoding, bb)
-	encoder.Write(byteArray)
-	encoder.Close()
-	err = ioutil.WriteFile(file, bb.Bytes() , 0777)
-	return  err
+	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 }
 

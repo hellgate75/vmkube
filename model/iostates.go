@@ -44,8 +44,7 @@ func (element *InstanceState) Load(file string) error {
 	if err != nil {
 		return  err
 	}
-	err = json.Unmarshal(DecodeBytes(byteArray), &element)
-	return err
+	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *InstanceState) Import(file string, format string) error {
@@ -86,8 +85,7 @@ func (element *InstanceState) Save(file string) error {
 		return  err
 	}
 	DeleteIfExists(file)
-	err = ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
-	return  err
+	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 }
 
 func (element *NetworkState) Validate() []error {
@@ -123,8 +121,7 @@ func (element *NetworkState) Load(file string) error {
 	if err != nil {
 		return  err
 	}
-	err = json.Unmarshal(DecodeBytes(byteArray), &element)
-	return err
+	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *NetworkState) Import(file string, format string) error {
@@ -168,8 +165,7 @@ func (element *NetworkState) Save(file string) error {
 		return  err
 	}
 	DeleteIfExists(file)
-	err = ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
-	return  err
+	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 }
 
 func (element *DomainState) Validate() []error {
@@ -202,8 +198,7 @@ func (element *DomainState) Load(file string) error {
 	if err != nil {
 		return  err
 	}
-	err = json.Unmarshal(DecodeBytes(byteArray), &element)
-	return err
+	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *DomainState) Import(file string, format string) error {
@@ -247,8 +242,7 @@ func (element *DomainState) Save(file string) error {
 		return  err
 	}
 	DeleteIfExists(file)
-	err = ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
-	return  err
+	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 }
 
 func (element *State) Validate() []error {
@@ -278,8 +272,7 @@ func (element *State) Load(file string) error {
 	if err != nil {
 		return  err
 	}
-	err = json.Unmarshal(DecodeBytes(byteArray), &element)
-	return err
+	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *State) Import(file string, format string) error {
@@ -323,7 +316,6 @@ func (element *State) Save(file string) error {
 		return  err
 	}
 	DeleteIfExists(file)
-	err = ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
-	return  err
+	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 }
 

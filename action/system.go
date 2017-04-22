@@ -97,7 +97,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 			if len(args) > 1 && len(helper.SubCommands) > 0  {
 				var SubCommand string
 				var  index int
-				SubCommand, index, error = utils.CmdParseOption(args[1], helper.SubCommands)
+				SubCommand, index, error = CmdParseOption(args[1], helper.SubCommands)
 					if error == nil  {
 					ArgCmd.SubCmd = SubCommand
 					if ArgCmd.CmdType != NoCommand {

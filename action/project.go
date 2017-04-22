@@ -28,18 +28,18 @@ func (request *CmdRequest) CheckProject() bool {
 	if len(request.Arguments.Helper.Options) > 0 {
 		correctness := true
 		for _,option := range request.Arguments.Helper.Options {
-			if "true" == option[3] {
+			if option.Mandatory {
 				//Mandatory Option
 				found := false
 				for _,argument := range request.Arguments.Options {
-					if CorrectInput(argument[0]) == option[0] {
+					if CorrectInput(argument[0]) == option.Option {
 						found = true
 						break
 					}
 				}
 				if !found {
 					correctness = false
-					fmt.Printf("Option '--%s' is mandatory!!\n", option[0])
+					fmt.Printf("Option '--%s' is mandatory!!\n", option.Option)
 				}
 			}
 		}
@@ -59,18 +59,14 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	for _,option := range request.Arguments.Options {
 		if "name" == CorrectInput(option[0]) {
 			Name = option[1]
-		}
-		if "file" == CorrectInput(option[0]) {
+		} else if "file" == CorrectInput(option[0]) {
 			InputFile = option[1]
-		}
-		if "format" == CorrectInput(option[0]) {
+		} else if "format" == CorrectInput(option[0]) {
 			InputFormat = option[1]
-		}
-		if "force" == CorrectInput(option[0]) {
+		} else if "force" == CorrectInput(option[0]) {
 			Force = GetBoolean(option[1])
 			option[1] = "true"
-		}
-		if "destroy-infra" == CorrectInput(option[0]) {
+		} else if "destroy-infra" == CorrectInput(option[0]) {
 			DestroyInfra = GetBoolean(option[1])
 		}
 	}

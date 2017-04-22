@@ -43,25 +43,6 @@ func CmdParse(key string) (string, error) {
 	}
 }
 
-func CmdParseOption(key string, options [][]string) (string, int, error) {
-	if len(key) > 0 {
-		if strings.Index(key, "--") == 0  {
-			return key, -1, errors.New("Invalid Argument (wrong characters: --) : " + key)
-		} else	if strings.Index(key, "-") == 0  {
-			return key, -1, errors.New("Invalid Argument (wrong character: -) : " + key)
-		} else  {
-			for index,opts := range options {
-				if CorrectInput(key) == opts[0]  {
-					return  CorrectInput(key), index, nil
-				}
-			}
-			return  key, -1, errors.New("Invalid Argument : " + key)
-		}
-	} else  {
-		return  key, -1, errors.New("Unable to parse Agument : " + key)
-	}
-}
-
 func OptionsParse(key string, val string) (string, string, error) {
 	if strings.Index(key, "--") == 0  {
 		return  CorrectInput(key[2:]), val, nil

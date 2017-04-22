@@ -38,8 +38,7 @@ func (element *Domain) Load(file string) error {
 	if err != nil {
 		return  err
 	}
-	err = json.Unmarshal(DecodeBytes(byteArray), &element)
-	return err
+	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *Domain) Import(file string, format string) error {
@@ -86,8 +85,7 @@ func (element *Domain) Save(file string) error {
 		return  err
 	}
 	DeleteIfExists(file)
-	err = ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
-	return  err
+	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 }
 
 func (element *ProjectDomain) Validate() []error {
@@ -120,8 +118,7 @@ func (element *ProjectDomain) Load(file string) error {
 	if err != nil {
 		return  err
 	}
-	err = json.Unmarshal(DecodeBytes(byteArray), &element)
-	return err
+	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *ProjectDomain) Import(file string, format string) error {
@@ -168,7 +165,6 @@ func (element *ProjectDomain) Save(file string) error {
 		return  err
 	}
 	DeleteIfExists(file)
-	err = ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
-	return  err
+	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 }
 
