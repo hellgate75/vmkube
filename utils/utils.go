@@ -186,7 +186,11 @@ func ReverseBytesArray(bytesArray []byte) []byte {
 }
 
 func IdToFileFormat(id string) string {
-	return strings.Replace(id, "-", "_", len(id))
+	return id//strings.Replace(id, "-", "_", len(id))
+}
+
+func NameToFileFormat(id string) string {
+	return strings.Replace(id, " ", "_", len(id))
 }
 
 func ReducedToStringsSlice(reduced []interface{}) []string {

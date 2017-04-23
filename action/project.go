@@ -68,11 +68,6 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			option[1] = "true"
 		} else if "destroy-infra" == CorrectInput(option[0]) {
 			DestroyInfra = GetBoolean(option[1])
-		} else {
-			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
-			return Response{
-				Message: fmt.Sprintf("Argument %s not provided, please review the help", option[0]),
-				Status: false,},errors.New("Unable to execute task")
 		}
 	}
 	if Name == "" {
@@ -195,7 +190,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 
 	if existsInfrastructure {
 		if AllowInfraBackup {
-			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube",model.GetEmergencyFolder(),string(os.PathSeparator), descriptor.Id, descriptor.Name,descriptor.InfraId, descriptor.InfraName)
+			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube",model.GetEmergencyFolder(),string(os.PathSeparator), utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name),utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
 			infra, err := vmio.LoadInfrastructure(descriptor.Id)
 			if err == nil {
 				infra.Save(InfraBackup)
@@ -210,7 +205,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	
 	if existsProject {
 		if AllowProjectBackup {
-			ProjectBackup = fmt.Sprintf("%s%s.project-%s-%s.json",model.GetEmergencyFolder(),string(os.PathSeparator),descriptor.Id, descriptor.Name)
+			ProjectBackup = fmt.Sprintf("%s%s.project-%s-%s.json",model.GetEmergencyFolder(),string(os.PathSeparator),utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name))
 			project, err := vmio.LoadProject(descriptor.Id)
 			if err == nil {
 				vmio.ExportUserProject(project,ProjectBackup,"json",true)
@@ -313,12 +308,13 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			}
 		} else if "elem-name" == CorrectInput(option[0]) {
 			ElementName = option[1]
-		} else {
-			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
-			return Response{
-				Message: fmt.Sprintf("Argument %s not provided, please review the help", option[0]),
-				Status: false,},errors.New("Unable to execute task")
 		}
+		//else {
+		//	PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		//	return Response{
+		//		Message: fmt.Sprintf("Argument %s not provided, please review the help", option[0]),
+		//		Status: false,},errors.New("Unable to execute task")
+		//}
 	}
 	if strings.TrimSpace(Name) == "" {
 		response := Response{
@@ -528,7 +524,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 	}
 	if existsInfrastructure {
 		if AllowInfraBackup {
-			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube",model.GetEmergencyFolder(),string(os.PathSeparator), descriptor.Id, descriptor.Name,descriptor.InfraId, descriptor.InfraName)
+			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube",model.GetEmergencyFolder(),string(os.PathSeparator), utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name),utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
 			infra, err := vmio.LoadInfrastructure(descriptor.Id)
 			if err == nil {
 				infra.Save(InfraBackup)
@@ -540,7 +536,6 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			return response, err
 		}
 	}
-	
 	iFaceProject := vmio.IFaceProject{
 		Id: descriptor.Id,
 	}
@@ -599,11 +594,6 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 				Sample = CorrectInput(option[1])
 			} else if "elem-type" == CorrectInput(option[0]) {
 				TypeVal = option[1]
-			} else {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
-				return Response{
-					Message: fmt.Sprintf("Argument %s not provided, please review the help", option[0]),
-					Status: false,},errors.New("Unable to execute task")
 			}
 		}
 		if TypeVal == "" {
@@ -701,11 +691,6 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 		}
 		if "force" == CorrectInput(option[0]) {
 			Force = GetBoolean(option[1])
-		} else {
-			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
-			return Response{
-				Message: fmt.Sprintf("Argument %s not provided, please review the help", option[0]),
-				Status: false,},errors.New("Unable to execute task")
 		}
 	}
 	AllowProjectDeletion := Force
@@ -858,11 +843,6 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 			Details = GetBoolean(option[1])
 		} else if "format" == CorrectInput(option[0]) {
 			Format = CorrectInput(option[1])
-		} else {
-			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
-			return Response{
-				Message: fmt.Sprintf("Argument %s not provided, please review the help", option[0]),
-				Status: false,},errors.New("Unable to execute task")
 		}
 	}
 	if Name == "" {
@@ -1190,7 +1170,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			
 			
 			if AllowProjectBackup {
-				ProjectBackup = fmt.Sprintf("%s%s.project-%s-%s.json",model.GetEmergencyFolder(),string(os.PathSeparator),descriptor.Id, descriptor.Name)
+				ProjectBackup = fmt.Sprintf("%s%s.project-%s-%s.json",model.GetEmergencyFolder(),string(os.PathSeparator),utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name))
 				project, err := vmio.LoadProject(descriptor.Id)
 				if err == nil {
 					vmio.ExportUserProject(project,ProjectBackup,"json",true)
@@ -1590,11 +1570,6 @@ func (request *CmdRequest) ExportProject() (Response, error) {
 			if err != nil {
 				ElementType = NoElement
 			}
-		} else {
-			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
-			return Response{
-				Message: fmt.Sprintf("Argument %s not provided, please review the help", option[0]),
-				Status: false,},errors.New("Unable to execute task")
 		}
 	}
 	if strings.TrimSpace(Name) == "" {
