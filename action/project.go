@@ -83,6 +83,22 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	AllowInfraBackup := DestroyInfra
 	
 	descriptor, err := vmio.GetProjectDescriptor(Name)
+
+	var ProjectJSON string = ""
+	
+	if err == nil {
+		oldProject, err2 := vmio.LoadProject(descriptor.Id)
+		
+		if err2 != nil && oldProject.Id != "" {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		ProjectJSON = string(utils.GetJSONFromObj(oldProject, true))
+	}
+	
 	if err == nil {
 		if ! AllowProjectDeletion {
 			AllowProjectDeletion = utils.RequestConfirmation("Do you want proceed with deletion process for Project named '"+descriptor.Name+"'?")
@@ -130,6 +146,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
+	
 	existsProject := (err == nil)
 	existsInfrastructure := (descriptor.InfraId != "")
 	existanceClause := "n't"
@@ -202,7 +219,6 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			return response, err
 		}
 	}
-	
 	if existsProject {
 		if AllowProjectBackup {
 			ProjectBackup = fmt.Sprintf("%s%s.project-%s-%s.json",model.GetEmergencyFolder(),string(os.PathSeparator),utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name))
@@ -273,6 +289,27 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		fmt.Printf("Removing Infrastructure backup at : %s\n", InfraBackup)
 		os.Remove(InfraBackup)
 	}
+	
+	
+	if existsProject && existsInfrastructure {
+		AddProjectChangeActions(descriptor.Id, ActionDescriptor{
+			Id: NewUUIDString(),
+			Date: time.Now(),
+			DropAction: true,
+			ElementType: SProject,
+			ElementName: descriptor.Name,
+			FullProject: true,
+			JSONImage: ProjectJSON,
+			Request: request.Type,
+			SubRequest: request.SubType,
+		})
+	}
+	
+	if existsInfrastructure {
+		request.Arguments.Options = append(request.Arguments.Options, []string{"rebuild", "true"})
+		request.BuildProject()
+	}
+	
 	
 	response := Response{
 		Status: true,
@@ -565,7 +602,10 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 		os.Remove(InfraBackup)
 	}
 	
+	
+	
 	if existsInfrastructure {
+		request.Arguments.Options = append(request.Arguments.Options, []string{"rebuild", "true"})
 		request.BuildProject()
 	}
 		
@@ -945,18 +985,50 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 				}
 			}
 		}
+		fmt.Println("")
+		fmt.Println("Changes :")
+		changes, err := LoadProjectActionChanges(descriptor.Id)
+		if err !=nil {
+			fmt.Println("Unable to load changes")
+		} else {
+			if len(changes.Actions) > 0 {
+				for _,change := range changes.Actions {
+					isFull := "no"
+					if change.FullProject {
+						isFull = "yes"
+					}
+					fmt.Printf("Change: Id: %s - Request: %s - Sub-Request: %s - Element Type: %s - Element Name : %s - Full-Impact : %s\n", change.Id, CmdRequestDescriptors[change.Request], CmdSubRequestDescriptors[change.SubRequest], CmdElementTypeDescriptors[change.ElementType], change.ElementName, isFull )
+					fmt.Printf("JSON : %s\n", change.JSONImage )
+				}
+			} else {
+				fmt.Println("No changes available")
+			}
+		}
 	}
 	return Response{
 		Message: "Success",
-		Status: true,}, nil
+		Status: true,
+	}, nil
 }
 
 func (request *CmdRequest) BuildProject() (Response, error) {
+	//response := Response{
+	//	Status: false,
+	//	Message: "Not Implemented",
+	//}
+	//return  response, errors.New("Unable to execute task")
+	Name := ""
+	for _,option := range request.Arguments.Options {
+		if "name" == CorrectInput(option[0]) {
+			Name = option[1]
+		}
+	}
+	fmt.Printf("Unable to complete Rebuild of project %s : Build Project not implemented!!\n", Name)
 	response := Response{
 		Status: false,
 		Message: "Not Implemented",
 	}
-	return  response, errors.New("Unable to execute task")
+	return  response, nil
 }
 
 func (request *CmdRequest) ImportProject() (Response, error) {
@@ -1088,6 +1160,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 		}
 		return response, errors.New("Unable to execute task")
 	}
+	
 	fmt.Printf("Import File Path : %s, Format: %s\n", File, Format)
 	Full := "no"
 	if FullImport || ElementType == SProject {
@@ -1139,8 +1212,15 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 	
 	project, err = vmio.LoadProject(descriptor.Id)
 	
+	existsProject := false
+	existsInfrastructure := descriptor.InfraId != ""
+	
+	var ProjectJSON string = ""
+
 	if err == nil && project.Id != "" {
+		existsProject = true
 		Found = true
+		ProjectJSON = string(utils.GetJSONFromObj(project, true))
 		if FullImport || ElementType == SProject {
 			AllowProjectDeletion := Force
 			AllowProjectBackup := Force
@@ -1542,6 +1622,26 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 		fmt.Printf("Removing Project backup file : %s\n", ProjectBackup)
 		err = model.DeleteIfExists(ProjectBackup)
 	}
+	if existsProject && existsInfrastructure {
+		AddProjectChangeActions(descriptor.Id, ActionDescriptor{
+			Id: NewUUIDString(),
+			Date: time.Now(),
+			DropAction: true,
+			ElementType: SProject,
+			ElementName: descriptor.Name,
+			FullProject: true,
+			JSONImage: ProjectJSON,
+			Request: request.Type,
+			SubRequest: request.SubType,
+		})
+	}
+	
+	if existsInfrastructure {
+		request.Arguments.Options = append(request.Arguments.Options, []string{"rebuild", "true"})
+		request.BuildProject()
+	}
+	
+	
 	response := Response{
 		Status: true,
 		Message: "Success",

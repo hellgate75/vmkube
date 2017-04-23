@@ -9,11 +9,6 @@ import (
 	"vmkube/vmio"
 )
 
-type Response struct {
-	Status	bool
-	Message	string
-}
-
 type ExportImportDomains struct {
 	Domains []model.ProjectDomain
 }

@@ -302,7 +302,7 @@ func InitHelpers() {
 			Description: "Require information about a specific Infrastructure",
 		},
 		SubCommandHelper{
-			Command: "status-al",
+			Command: "status-all",
 			Description: "Require list of all Infrastructures",
 		},
 		SubCommandHelper{

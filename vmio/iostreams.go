@@ -6,7 +6,7 @@ import (
 )
 
 func SaveIndex(index model.ProjectsIndex) error {
-	info := ProjectIndexInfo{
+	info := ProjectIndexInfo {
 		Format: "",
 		Index: index,
 	}
@@ -168,3 +168,4 @@ func ExportInfrastructure(infrastructure model.Infrastructure, file string, form
 	err = ioutil.WriteFile(file, bytes, 0777)
 	return err
 }
+

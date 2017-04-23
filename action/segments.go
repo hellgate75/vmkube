@@ -114,7 +114,7 @@ func (element *RollBackSegment) Import(file string, format string) error {
 
 func (element *RollBackSegment) PostImport() error {
 	if element.Id == "" {
-		element.Id = NewUUIDString()
+		element.Id = model.NewUUIDString()
 	}
 	return nil
 }
@@ -134,18 +134,18 @@ type RollBackSegmentIndex struct {
 }
 
 func (element *RollBackSegmentIndex) New() {
-	element.Id = NewUUIDString()
+	element.Id = model.NewUUIDString()
 	element.Index.New(SegmentIndexSize)
 	element.Index = element.Index.Next()
 }
 
 func (element *RollBackSegmentIndex) NewNextFrom(previousIndex utils.Index) {
-	element.Id = NewUUIDString()
+	element.Id = model.NewUUIDString()
 	element.Index = previousIndex.Next()
 }
 
 func (element *RollBackSegmentIndex) NewPreviousFrom(nextIndex utils.Index) {
-	element.Id = NewUUIDString()
+	element.Id = model.NewUUIDString()
 	element.Index = nextIndex.Previous()
 }
 
@@ -233,7 +233,7 @@ func (element *RollBackIndex) Import(file string, format string) error {
 
 func (element *RollBackIndex) PostImport() error {
 	if element.Id == "" {
-		element.Id = NewUUIDString()
+		element.Id = model.NewUUIDString()
 	}
 	return nil
 }
@@ -320,7 +320,7 @@ func (element *ActionDescriptor) Import(file string, format string) error {
 
 func (element *ActionDescriptor) PostImport() error {
 	if element.Id == "" {
-		element.Id = NewUUIDString()
+		element.Id = model.NewUUIDString()
 	}
 	return nil
 }
@@ -403,7 +403,7 @@ func (element *ProjectActionIndex) Import(file string, format string) error {
 
 func (element *ProjectActionIndex) PostImport() error {
 	if element.Id == "" {
-		element.Id = NewUUIDString()
+		element.Id = model.NewUUIDString()
 	}
 	for i := 0; i < len(element.Actions); i++ {
 		element.Actions[i].PostImport()

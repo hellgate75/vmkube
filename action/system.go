@@ -8,6 +8,12 @@ import (
 	"strings"
 )
 
+type Response struct {
+	Status	bool
+	Message	string
+}
+
+
 type CmdRequest struct {
 	TypeStr					string
 	Type						CmdRequestType
@@ -41,6 +47,27 @@ const (
 	InfoConfig	
 )
 
+var CmdRequestDescriptors []string = []string{
+	"No Command",
+	"Start Infrastructure",
+	"Stop Infrastructure",
+	"Restart Infrastructure",
+	"Destroy Infrastructure",
+	"Backup Infrastructure",
+	"Recover Infrastructure",
+	"Infrastructure Status",
+	"List Infrastructures",
+	"List Projects",
+	"Project Status",
+	"Import Project",
+	"Export Project",
+	"Define Project",
+	"BuildC Project",
+	"Delete Project",
+	"Alter Project",
+	"Describe Project",
+}
+
 type CmdSubRequestType int
 
 const (
@@ -54,6 +81,19 @@ const (
 	Detail
 )
 
+var CmdSubRequestDescriptors []string = []string{
+	"No Sub-Command",
+	"Create",
+	"Remove",
+	"Modify",
+	"Close",
+	"Open",
+	"List",
+	"Detail",
+}
+
+
+
 type CmdElementType int
 
 const (
@@ -65,6 +105,16 @@ const (
 	SProject
 	SPlan
 )
+
+var CmdElementTypeDescriptors []string = []string{
+	"No Element",
+	"Local Server",
+	"Cloud Server",
+	"Network",
+	"Domain",
+	"Project",
+	"Installation Plan",
+}
 
 
 type CmdArguments struct {
