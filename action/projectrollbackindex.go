@@ -1,29 +1,30 @@
-package vmio
+package action
 
 import (
 	"vmkube/model"
 	"errors"
-	"vmkube/utils"
 	"os"
+	"vmkube/utils"
 )
 
-type ProjectIndexInfo struct {
+type ProjectRollbackIndexInfo struct {
 	Format  	string
-	Index			model.ProjectsIndex
+	Index			RollBackIndex
 }
 
 
-func (info *ProjectIndexInfo) Read() error {
+func (info *ProjectRollbackIndexInfo) Read() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	err := model.MakeFolderIfNotExists(baseFolder)
 	if err != nil {
 		return err
 	}
-	fileName := baseFolder + string(os.PathSeparator) + ".vmkubprojectindex"
+	fileName := baseFolder + string(os.PathSeparator) + info.Index.ProjectId + ".vmkubeactionindex"
 	if _,err = os.Stat(fileName); err!=nil {
-		info.Index = model.ProjectsIndex{
+		info.Index = RollBackIndex{
 			Id: model.NewUUIDString(),
-			Projects: []model.ProjectsDescriptor{},
+			ProjectId: "",
+			IndexList: []RollBackSegmentIndex{},
 		}
 		return nil
 	}
@@ -31,35 +32,35 @@ func (info *ProjectIndexInfo) Read() error {
 	return  err
 }
 
-func (info *ProjectIndexInfo) Write() error {
+func (info *ProjectRollbackIndexInfo) Write() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
-	fileName := baseFolder + string(os.PathSeparator) + ".vmkubprojectindex"
+	fileName := baseFolder + string(os.PathSeparator) + info.Index.ProjectId  + ".vmkubeactionindex"
 	err := info.Index.Save(fileName)
 	return err
 }
 
-func (info *ProjectIndexInfo) Import(file string, format string) error {
+func (info *ProjectRollbackIndexInfo) Import(file string, format string) error {
 	err := info.Index.Import(file, format)
 	return  err
 }
 
 
-func (info *ProjectIndexInfo) Delete() error {
+func (info *ProjectRollbackIndexInfo) Delete() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
-	fileName := baseFolder + string(os.PathSeparator) + ".vmkubprojectindex"
+	fileName := baseFolder + string(os.PathSeparator) + info.Index.ProjectId  + ".vmkubeactionindex"
 	return model.DeleteIfExists(fileName)
 }
 
 
-func (info *ProjectIndexInfo) Export(prettify bool) ([]byte, error) {
+func (info *ProjectRollbackIndexInfo) Export(prettify bool) ([]byte, error) {
 	if "json" == info.Format {
 		return  utils.GetJSONFromElem(info.Index, prettify)
 	} else if "xml" == info.Format {
 		return  utils.GetXMLFromElem(info.Index, prettify)
 	} else {
-		return  []byte{}, errors.New("Format type : "+info.Format+" not known ...")
+		return  []byte{}, errors.New("Format type : "+info.Format+" not provided ...")
 	}
 }
 

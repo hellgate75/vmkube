@@ -113,6 +113,23 @@ type RollBackIndex struct {
 	IndexList         []RollBackSegmentIndex 	`json:"IndexList" xml:"IndexList" mandatory:"yes" descr:"Rollback Segments Index list" type:"object RollBackSegmentIndex list"`
 }
 
+func (element *RollBackIndex) Validate() []error {
+	errorList := make([]error, 0)
+	if element.Id == "" {
+		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
+	}
+	if element.ProjectId == "" {
+		errorList = append(errorList, errors.New("Unassigned Project Unique Identifier field"))
+	}
+	if len(errorList) > 0 {
+		bytes := []byte(`Errors reported in json : `)
+		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
+		errorList = append(errorList, errors.New(string(bytes)))
+	}
+	return errorList
+}
+
+
 func (element *RollBackIndex) Load(file string) error {
 	if !model. ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
@@ -132,6 +149,40 @@ func (element *RollBackIndex) Save(file string) error {
 	}
 	model.DeleteIfExists(file)
 	return ioutil.WriteFile(file, model.EncodeBytes(byteArray) , 0777)
+}
+
+func (element *RollBackIndex) Import(file string, format string) error {
+	if ! model.ExistsFile(file) {
+		return  errors.New("File "+file+" doesn't exist!!")
+	}
+	if format != "json" && format != "xml" {
+		return  errors.New("Format "+format+" not supported!!")
+	}
+	byteArray, err := ioutil.ReadFile(file)
+	if err != nil {
+		return  err
+	}
+	if format == "json" {
+		err = json.Unmarshal(byteArray, &element)
+	} else  {
+		err = xml.Unmarshal(byteArray, &element)
+	}
+	println(element)
+	if err == nil {
+		err := element.PostImport()
+		if err != nil {
+			return err
+		}
+	}
+	println(element)
+	return err
+}
+
+func (element *RollBackIndex) PostImport() error {
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
+	return nil
 }
 
 

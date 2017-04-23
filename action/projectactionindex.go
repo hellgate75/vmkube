@@ -1,16 +1,15 @@
-package vmio
+package action
 
 import (
 	"vmkube/model"
 	"errors"
-	"vmkube/utils"
 	"os"
-	"vmkube/action"
+	"vmkube/utils"
 )
 
 type ProjectActionIndexInfo struct {
 	Format  	string
-	Index			action.ProjectActionIndex
+	Index			ProjectActionIndex
 }
 
 
@@ -22,9 +21,10 @@ func (info *ProjectActionIndexInfo) Read() error {
 	}
 	fileName := baseFolder + string(os.PathSeparator) + info.Index.ProjectId + ".vmkubeactionindex"
 	if _,err = os.Stat(fileName); err!=nil {
-		info.Index = model.ProjectsIndex{
+		info.Index = ProjectActionIndex{
 			Id: model.NewUUIDString(),
-			Projects: []model.ProjectsDescriptor{},
+			ProjectId: "",
+			Actions: []ActionDescriptor{},
 		}
 		return nil
 	}
@@ -60,7 +60,7 @@ func (info *ProjectActionIndexInfo) Export(prettify bool) ([]byte, error) {
 	} else if "xml" == info.Format {
 		return  utils.GetXMLFromElem(info.Index, prettify)
 	} else {
-		return  []byte{}, errors.New("Format type : "+info.Format+" not known ...")
+		return  []byte{}, errors.New("Format type : "+info.Format+" not provided ...")
 	}
 }
 

@@ -22,6 +22,6 @@ func (info *ProjectImportInfo) Export(prettify bool) ([]byte, error) {
 	} else if "xml" == info.Format {
 		return  utils.GetXMLFromElem(info.ProjectImport, prettify)
 	} else {
-		return  []byte{}, errors.New("Format type : "+info.Format+" not known ...")
+		return  []byte{}, errors.New("Format type : "+info.Format+" not provided ...")
 	}
 }
