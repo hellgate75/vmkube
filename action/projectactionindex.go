@@ -19,7 +19,7 @@ func (info *ProjectActionIndexInfo) Read() error {
 	if err != nil {
 		return err
 	}
-	fileName := baseFolder + string(os.PathSeparator) + info.Index.ProjectId + ".actionindex"
+	fileName := baseFolder + string(os.PathSeparator) + "." + info.Index.ProjectId + ".actionindex"
 	if _,err = os.Stat(fileName); err!=nil {
 		info.Index = ProjectActionIndex{
 			Id: model.NewUUIDString(),
@@ -35,7 +35,7 @@ func (info *ProjectActionIndexInfo) Read() error {
 func (info *ProjectActionIndexInfo) Write() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
-	fileName := baseFolder + string(os.PathSeparator) + info.Index.ProjectId  + ".actionindex"
+	fileName := baseFolder + string(os.PathSeparator) + "." + info.Index.ProjectId  + ".actionindex"
 	err := info.Index.Save(fileName)
 	return err
 }
@@ -49,7 +49,7 @@ func (info *ProjectActionIndexInfo) Import(file string, format string) error {
 func (info *ProjectActionIndexInfo) Delete() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
-	fileName := baseFolder + string(os.PathSeparator) + info.Index.ProjectId  + ".actionindex"
+	fileName := baseFolder + string(os.PathSeparator) + "." + info.Index.ProjectId  + ".actionindex"
 	return model.DeleteIfExists(fileName)
 }
 
