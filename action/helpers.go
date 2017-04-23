@@ -683,7 +683,7 @@ func InitHelpers() {
 		HelperOption{
 			Option: "sample",
 			Type: "<boolean>",
-			Description: "Show a sample import output instead of import from file (default: false, valid if full-export = false)",
+			Description: "Show a sample input format instead of import from file (default: false)",
 			Mandatory: false,
 		},
 		HelperOption{
