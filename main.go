@@ -1,4 +1,4 @@
-package vmkube
+package main
 
 import (
 	"os"

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"syscall"
+	"reflect"
 )
 
 func StrPad(instr string, capping int) string {
@@ -184,3 +185,76 @@ func ReverseBytesArray(bytesArray []byte) []byte {
 	return bytesArray;
 }
 
+func IdToFileFormat(id string) string {
+	return strings.Replace(id, "-", "_", len(id))
+}
+
+func ReducedToStringsSlice(reduced []interface{}) []string {
+	arrayOfStrings := make([]string, 0)
+	for _,interfaceX := range reduced {
+		arrayOfStrings = append(arrayOfStrings, reflect.ValueOf(interfaceX).String())
+	}
+	return arrayOfStrings
+}
+
+func ReducedToIntsSlice(reduced []interface{}) []int {
+	arrayOfStrings := make([]int, 0)
+	for _,interfaceX := range reduced {
+		arrayOfStrings = append(arrayOfStrings, int(reflect.ValueOf(interfaceX).Int()))
+	}
+	return arrayOfStrings
+}
+
+func ReduceStruct(field string, list []interface{}) ([]interface{}, error) {
+	sample  := make([]interface{}, 0)
+	fieldIndex := -1
+	if len(list) == 0 {
+		return sample, nil
+	}
+	structure := list[0]
+	if reflect.TypeOf(structure).Kind() != reflect.Struct {
+		return sample, errors.New("Type of interface is not a Struct")
+	}
+	var typeOfField reflect.Type
+	typeStruct := reflect.ValueOf(structure)
+	found := false
+	extraction := false
+	for i := 0; i < typeStruct.NumField(); i++ {
+		typeField := typeStruct.Type().Field(i)
+		typeOfField = typeField.Type
+		if typeField.Name == field {
+			fieldIndex = i
+			found = true
+			valueField := typeStruct.Field(i)
+			if valueField.IsValid(){
+				extraction = true
+				
+			}
+			break
+		}
+	}
+	if ! found {
+		return sample, errors.New(fmt.Sprintf("Field %s not found in structure", field))
+	}
+	if ! extraction {
+		return sample, errors.New(fmt.Sprintf("Field %s not valid in structure", field))
+	}
+//	arrType := typeStruct.Type()
+//	arrElemType := arrType.Elem()
+	resultSliceType := reflect.SliceOf(typeOfField)
+	reduced := reflect.MakeSlice(resultSliceType, 0, len(list))
+	
+	for _,structure := range list {
+		typeStruct := reflect.ValueOf(structure)
+//		typeField := typeStruct.Type().Field(fieldIndex)
+		valueField := typeStruct.Field(fieldIndex)
+		reduced = reflect.Append(reduced, reflect.ValueOf(valueField.Interface()))
+	}
+	ret := make([]interface{}, 0)
+	
+	for i:=0; i<reduced.Len(); i++ {
+		ret = append(ret,reduced.Index(i).Interface())
+	}
+	
+	return ret, nil
+}

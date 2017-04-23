@@ -143,7 +143,6 @@ func (request *CmdRequest) StatusInfra() (Response, error) {
 	for _,option := range request.Arguments.Options {
 		if "name" == CorrectInput(option[0]) {
 			Name = option[1]
-			break
 		}
 	}
 	if Name == "" {

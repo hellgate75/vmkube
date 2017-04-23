@@ -19,7 +19,7 @@ func (info *ProjectRollbackIndexInfo) Read() error {
 	if err != nil {
 		return err
 	}
-	fileName := baseFolder + string(os.PathSeparator) + "." + info.Index.ProjectId + ".rollbacksegmentindex"
+	fileName := baseFolder + string(os.PathSeparator) + "." + utils.IdToFileFormat(info.Index.ProjectId) + ".rollbacksegmentindex"
 	if _,err = os.Stat(fileName); err!=nil {
 		info.Index = RollBackIndex{
 			Id: model.NewUUIDString(),
@@ -35,7 +35,7 @@ func (info *ProjectRollbackIndexInfo) Read() error {
 func (info *ProjectRollbackIndexInfo) Write() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
-	fileName := baseFolder + string(os.PathSeparator) + "." + info.Index.ProjectId  + ".rollbacksegmentindex"
+	fileName := baseFolder + string(os.PathSeparator) + "." + utils.IdToFileFormat(info.Index.ProjectId)  + ".rollbacksegmentindex"
 	err := info.Index.Save(fileName)
 	return err
 }
@@ -49,7 +49,7 @@ func (info *ProjectRollbackIndexInfo) Import(file string, format string) error {
 func (info *ProjectRollbackIndexInfo) Delete() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
-	fileName := baseFolder + string(os.PathSeparator) + "." + info.Index.ProjectId  + ".rollbacksegmentindex"
+	fileName := baseFolder + string(os.PathSeparator) + "." + utils.IdToFileFormat(info.Index.ProjectId)  + ".rollbacksegmentindex"
 	return model.DeleteIfExists(fileName)
 }
 

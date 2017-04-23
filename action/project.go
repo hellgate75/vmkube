@@ -68,6 +68,11 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			option[1] = "true"
 		} else if "destroy-infra" == CorrectInput(option[0]) {
 			DestroyInfra = GetBoolean(option[1])
+		} else {
+			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			return Response{
+				Message: fmt.Sprintf("Argument %s not provided, please review the help", option[0]),
+				Status: false,},errors.New("Unable to execute task")
 		}
 	}
 	if Name == "" {
@@ -308,6 +313,11 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			}
 		} else if "elem-name" == CorrectInput(option[0]) {
 			ElementName = option[1]
+		} else {
+			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			return Response{
+				Message: fmt.Sprintf("Argument %s not provided, please review the help", option[0]),
+				Status: false,},errors.New("Unable to execute task")
 		}
 	}
 	if strings.TrimSpace(Name) == "" {
@@ -589,6 +599,11 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 				Sample = CorrectInput(option[1])
 			} else if "elem-type" == CorrectInput(option[0]) {
 				TypeVal = option[1]
+			} else {
+				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+				return Response{
+					Message: fmt.Sprintf("Argument %s not provided, please review the help", option[0]),
+					Status: false,},errors.New("Unable to execute task")
 			}
 		}
 		if TypeVal == "" {
@@ -686,6 +701,11 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 		}
 		if "force" == CorrectInput(option[0]) {
 			Force = GetBoolean(option[1])
+		} else {
+			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			return Response{
+				Message: fmt.Sprintf("Argument %s not provided, please review the help", option[0]),
+				Status: false,},errors.New("Unable to execute task")
 		}
 	}
 	AllowProjectDeletion := Force
@@ -838,6 +858,11 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 			Details = GetBoolean(option[1])
 		} else if "format" == CorrectInput(option[0]) {
 			Format = CorrectInput(option[1])
+		} else {
+			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			return Response{
+				Message: fmt.Sprintf("Argument %s not provided, please review the help", option[0]),
+				Status: false,},errors.New("Unable to execute task")
 		}
 	}
 	if Name == "" {
@@ -1565,6 +1590,11 @@ func (request *CmdRequest) ExportProject() (Response, error) {
 			if err != nil {
 				ElementType = NoElement
 			}
+		} else {
+			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			return Response{
+				Message: fmt.Sprintf("Argument %s not provided, please review the help", option[0]),
+				Status: false,},errors.New("Unable to execute task")
 		}
 	}
 	if strings.TrimSpace(Name) == "" {
