@@ -43,7 +43,8 @@ type RollBackSegment struct {
 	Id                string                  `json:"Id" xml:"Id" mandatory:"yes" descr:"Action Index Unique Identifier" type:"text"`
 	ProjectId         string                  `json:"ProjectId" xml:"ProjectId" mandatory:"yes" descr:"Project Unique Identifier" type:"text"`
 	Storage   []ActionStorage 		            `json:"Storage" xml:"Storage" mandatory:"yes" descr:"Project Storage list" type:"object ActionStorage list"`
-	Index     RollBackSegmentIndex 	          `json:"Index" xml:"Index" mandatory:"yes" descr:"Rollback Segments Index" type:"object RollBackSegmentIndex list"`
+	Index     RollBackSegmentIndex 	          `json:"Index" xml:"Index" mandatory:"yes" descr:"Rollback Segment Index" type:"object RollBackSegmentIndex list"`
+	Size              int 	                  `json:"Size" xml:"Size" mandatory:"yes" descr:"Rollback Segment Size in Action Storage Elements" type:"object RollBackSegmentIndex list"`
 }
 
 
@@ -67,6 +68,58 @@ func (element *RollBackSegment) Save(file string) error {
 	model.DeleteIfExists(file)
 	return ioutil.WriteFile(file, model.EncodeBytes(byteArray) , 0777)
 }
+
+func (element *RollBackSegment) Validate() []error {
+	errorList := make([]error, 0)
+	if element.Id == "" {
+		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
+	}
+	if element.ProjectId == "" {
+		errorList = append(errorList, errors.New("Unassigned Project Unique Identifier field"))
+	}
+	if len(errorList) > 0 {
+		bytes := []byte(`Errors reported in json : `)
+		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
+		errorList = append(errorList, errors.New(string(bytes)))
+	}
+	return errorList
+}
+
+func (element *RollBackSegment) Import(file string, format string) error {
+	if ! model.ExistsFile(file) {
+		return  errors.New("File "+file+" doesn't exist!!")
+	}
+	if format != "json" && format != "xml" {
+		return  errors.New("Format "+format+" not supported!!")
+	}
+	byteArray, err := ioutil.ReadFile(file)
+	if err != nil {
+		return  err
+	}
+	if format == "json" {
+		err = json.Unmarshal(byteArray, &element)
+	} else  {
+		err = xml.Unmarshal(byteArray, &element)
+	}
+	println(element)
+	if err == nil {
+		err := element.PostImport()
+		if err != nil {
+			return err
+		}
+	}
+	println(element)
+	return err
+}
+
+func (element *RollBackSegment) PostImport() error {
+	if element.Id == "" {
+		element.Id = NewUUIDString()
+	}
+	return nil
+}
+
+
 
 /*
 Describe Projects Index, contains
