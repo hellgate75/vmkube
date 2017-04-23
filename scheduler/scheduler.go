@@ -1,4 +1,4 @@
-package schedule
+package scheduler
 
 
 import (
@@ -6,7 +6,6 @@ import (
 	"time"
 	"strconv"
 	"sync"
-	"vmkube/action"
 	"log"
 	"reflect"
 )
@@ -183,115 +182,8 @@ func (pool *SchedulerPool) Stop() {
 	
 }
 
-type TestJob struct {
-	Name    string
-	Count   int
-	State   bool
-}
-
-func (job TestJob) Start() {
-	if !job.State {
-		job.State = true
-		println("\nJob : " + job.Name  + "   Count : "+ strconv.Itoa(job.Count))
-		for i := 0; i < job.Count; i++ {
-			print(job.Name + " -> " + strconv.Itoa(i) + "  -  ")
-			time.Sleep(10*time.Millisecond)
-			if ! job.State {
-				break
-			}
-		}
-		println("\nJob : " + job.Name  + " completed!!")
-		job.State = false
-	}
-}
-
-func (job TestJob) Stop() {
-	job.State = false
-}
-
-func (job TestJob) Status() bool {
-	return job.State
-}
-
-func TestJobs() {
-	pool := SchedulerPool{
-		Id: action.NewUUIDString(),
-		MaxParallel: 2,
-	}
-	pool.Init()
-	pool.Start()
-	task1 := ScheduleTask{
-		Id: action.NewUUIDString(),
-		Jobs: []Job{
-			{
-				Id: action.NewUUIDString(),
-				Name: "TestJob1",
-				Struct: TestJob{
-					Name: "Job 1",
-					Count: 100,
-				},
-			},
-			{
-				Id: action.NewUUIDString(),
-				Name: "TestJob1",
-				Struct: TestJob{
-					Name: "Job 2",
-					Count: 100,
-				},
-			},
-		},
-	}
-	task2 := ScheduleTask{
-		Id: action.NewUUIDString(),
-		Jobs: []Job{
-			{
-				Id: action.NewUUIDString(),
-				Name: "TestJob1",
-				Struct: TestJob{
-					Name: "Job 3",
-					Count: 100,
-				},
-			},
-			{
-				Id: action.NewUUIDString(),
-				Name: "TestJob1",
-				Struct: TestJob{
-					Name: "Job 4",
-					Count: 100,
-				},
-			},
-		},
-	}
-	task3 := ScheduleTask{
-		Id: action.NewUUIDString(),
-		Jobs: []Job{
-			{
-				Id: action.NewUUIDString(),
-				Name: "TestJob1",
-				Struct: TestJob{
-					Name: "Job 5",
-					Count: 100,
-				},
-			},
-			{
-				Id: action.NewUUIDString(),
-				Name: "TestJob1",
-				Struct: TestJob{
-					Name: "Job 6",
-					Count: 100,
-				},
-			},
-		},
-	}
-	pool.WG.Add(1)
-	go func() {
-		pool.Tasks <- task1
-		pool.Tasks <- task2
-		pool.Tasks <- task3
-	}()
-	go func(pool SchedulerPool) {
-		time.Sleep(5*time.Second)
-		pool.Stop()
-	}(pool)
-	pool.WG.Wait()
+type RunnableStruct interface {
+	Start()
+	Stop()
+	Status() bool
 }
