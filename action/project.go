@@ -55,7 +55,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	InputFile := ""
 	InputFormat := "json"
 	Force := false
-	DestroyInfra := false
+	OverrideInfra := false
 	for _,option := range request.Arguments.Options {
 		if "name" == CorrectInput(option[0]) {
 			Name = option[1]
@@ -66,8 +66,8 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		} else if "force" == CorrectInput(option[0]) {
 			Force = GetBoolean(option[1])
 			option[1] = "true"
-		} else if "destroy-infra" == CorrectInput(option[0]) {
-			DestroyInfra = GetBoolean(option[1])
+		} else if "override-infra" == CorrectInput(option[0]) {
+			OverrideInfra = GetBoolean(option[1])
 		}
 	}
 	if Name == "" {
@@ -78,13 +78,17 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	}
 	
 	AllowProjectDeletion := Force
-	AllowInfraDeletion := DestroyInfra
+	AllowInfraDeletion := OverrideInfra && Force
 	AllowProjectBackup := Force
-	AllowInfraBackup := DestroyInfra
+	AllowInfraBackup := OverrideInfra && Force
 	
 	descriptor, err := vmio.GetProjectDescriptor(Name)
 
 	var ProjectJSON string = ""
+	
+	existsProject := (err == nil)
+	existsInfrastructure := existsProject && (descriptor.InfraId != "")
+	
 	
 	if err == nil {
 		oldProject, err2 := vmio.LoadProject(descriptor.Id)
@@ -123,7 +127,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		return  response, errors.New("Unable to execute task")
 	}
 	
-	if descriptor.InfraId != "" {
+	if descriptor.InfraId != "" && existsInfrastructure {
 		if ! AllowInfraDeletion {
 			AllowInfraDeletion = utils.RequestConfirmation("Do you want proceed with deletion process for Infrastrcuture named '"+descriptor.InfraName+"'?")
 			if ! AllowInfraDeletion {
@@ -139,7 +143,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		}
 	}
 	
-	if descriptor.InfraId != "" && ! AllowInfraDeletion {
+	if descriptor.InfraId != "" && ! AllowInfraDeletion &&  existsInfrastructure {
 		response := Response{
 			Status: false,
 			Message: "Project '"+Name+"' already build in Infra '"+descriptor.InfraName+"' and no infrastructure destroy clause specified ...",
@@ -147,8 +151,6 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		return  response, errors.New("Unable to execute task")
 	}
 	
-	existsProject := (err == nil)
-	existsInfrastructure := (descriptor.InfraId != "")
 	existanceClause := "n't"
 	existanceClause2 := "proceding with definition of new project"
 	if existsProject {
@@ -234,6 +236,23 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		}
 	}
 	
+	if existsInfrastructure {
+		if AllowInfraBackup {
+			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube",model.GetEmergencyFolder(),string(os.PathSeparator), utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name),utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
+			infra, err := vmio.LoadInfrastructure(descriptor.Id)
+			if err == nil {
+				infra.Save(InfraBackup)
+				fmt.Printf("Emergency Infrastructure backup at : %s\n", InfraBackup)
+			}
+		}
+		if (AllowInfraDeletion) {
+			response, err := request.DeleteInfra()
+			if err != nil {
+				return response, err
+			}
+		}
+	}
+	
 	iFaceProject := vmio.IFaceProject{
 		Id: descriptor.Id,
 	}
@@ -290,8 +309,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		os.Remove(InfraBackup)
 	}
 	
-	
-	if existsProject && existsInfrastructure {
+	if existsProject && existsInfrastructure && OverrideInfra {
 		AddProjectChangeActions(descriptor.Id, ActionDescriptor{
 			Id: NewUUIDString(),
 			Date: time.Now(),
@@ -310,7 +328,6 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		request.BuildProject()
 	}
 	
-	
 	response := Response{
 		Status: true,
 		Message: "Success",
@@ -323,7 +340,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 	File := ""
 	Format := "json"
 	Force := true
-	DestroyInfra := true
+	OverrideInfra := false
 	var ElementType CmdElementType = NoElement
 	ElementName := ""
 	var err error
@@ -336,8 +353,8 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			Format = option[1]
 		} else if "force" == CorrectInput(option[0]) {
 			Force = GetBoolean(option[1])
-		} else if "override" == CorrectInput(option[0]) {
-			DestroyInfra = GetBoolean(option[1])
+		} else if "override-infra" == CorrectInput(option[0]) {
+			OverrideInfra = GetBoolean(option[1])
 		} else if "elem-type" == CorrectInput(option[0]) {
 			ElementType, err = CmdParseElement(option[1])
 			if err != nil {
@@ -396,9 +413,21 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 		}
 		return response, errors.New("Unable to execute task")
 	}
+	var ProjectJSON string = ""
+	oldProject, err2 := vmio.LoadProject(descriptor.Id)
+	
+	if err2 != nil && oldProject.Id != "" {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	ProjectJSON = string(utils.GetJSONFromObj(oldProject, true))
 	var project model.Project
 	existsProject := true
 	existsInfrastructure := (descriptor.InfraId != "")
+	
 	switch request.SubType {
 		case Create:
 			switch ElementType {
@@ -532,33 +561,26 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 		
 	}
 	
-	AllowInfraDeletion := DestroyInfra
-	AllowInfraBackup := DestroyInfra
+	AllowInfraDeletion := OverrideInfra && Force
+	AllowInfraBackup := OverrideInfra && Force
 	InfraBackup := ""
 	
 	if descriptor.InfraId != "" {
-		if ! AllowInfraDeletion {
-			AllowInfraDeletion = utils.RequestConfirmation("Do you want proceed with deletion process for Infrastrcuture named '"+descriptor.InfraName+"'?")
-			if ! AllowInfraDeletion {
-				response := Response{
-					Status: false,
-					Message: "User task interruption",
-				}
-				return response, errors.New("Unable to execute task")
-			}
-		}
+		//if ! AllowInfraDeletion {
+		//	AllowInfraDeletion = utils.RequestConfirmation("Do you want proceed with deletion process for Infrastrcuture named '"+descriptor.InfraName+"'?")
+		//	if ! AllowInfraDeletion {
+		//		response := Response{
+		//			Status: false,
+		//			Message: "User task interruption",
+		//		}
+		//		return response, errors.New("Unable to execute task")
+		//	}
+		//}
 		if AllowInfraDeletion && ! AllowInfraBackup {
 			AllowInfraBackup = utils.RequestConfirmation("Do you want backup Infrastrcuture named'"+descriptor.InfraName+"'?")
 		}
 	}
 	
-	if descriptor.InfraId != "" && ! AllowInfraDeletion {
-		response := Response{
-			Status: false,
-			Message: "Project '"+Name+"' already build in Infra '"+descriptor.InfraName+"' and no infrastructure destroy clause specified ...",
-		}
-		return  response, errors.New("Unable to execute task")
-	}
 	if existsInfrastructure {
 		if AllowInfraBackup {
 			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube",model.GetEmergencyFolder(),string(os.PathSeparator), utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name),utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
@@ -568,9 +590,11 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 				fmt.Printf("Emergency Infrastructure backup at : %s\n", InfraBackup)
 			}
 		}
-		response, err := request.DeleteInfra()
-		if err != nil {
-			return response, err
+		if (AllowInfraDeletion) {
+			response, err := request.DeleteInfra()
+			if err != nil {
+				return response, err
+			}
 		}
 	}
 	iFaceProject := vmio.IFaceProject{
@@ -608,8 +632,47 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 		request.Arguments.Options = append(request.Arguments.Options, []string{"rebuild", "true"})
 		request.BuildProject()
 	}
-		
-		
+	
+	if existsProject && existsInfrastructure && OverrideInfra {
+		AddProjectChangeActions(descriptor.Id, ActionDescriptor{
+			Id: NewUUIDString(),
+			Date: time.Now(),
+			DropAction: true,
+			ElementType: SProject,
+			ElementName: descriptor.Name,
+			FullProject: true,
+			JSONImage: ProjectJSON,
+			Request: request.Type,
+			SubRequest: request.SubType,
+		})
+	}
+	
+	if descriptor.InfraId != "" && ! AllowInfraDeletion {
+		err = UpdateIndexWithProjectsDescriptor(model.ProjectsDescriptor{
+			Id: descriptor.Id,
+			Name: descriptor.Name,
+			Open: project.Open,
+			Synced: false,
+			Active: descriptor.Active,
+			InfraId: descriptor.InfraId,
+			InfraName: descriptor.InfraName,
+		}, true)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			request.DeleteProject()
+			return  response, errors.New("Unable to execute task")
+		}
+	}
+	
+	
+	if existsInfrastructure && OverrideInfra {
+		request.Arguments.Options = append(request.Arguments.Options, []string{"rebuild", "true"})
+		request.BuildProject()
+	}
+	
 	response := Response{
 		Status: true,
 		Message: "Success",
@@ -1039,6 +1102,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 	Force := false
 	Sample := false
 	SampleFormat := "json"
+	OverrideInfra := false
 	var ElementType CmdElementType = NoElement
 	var err error
 	for _,option := range request.Arguments.Options {
@@ -1052,6 +1116,8 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			FullImport = GetBoolean(option[1])
 		} else if "force" == CorrectInput(option[0]) {
 			Force = GetBoolean(option[1])
+		} else if "override-infra" == CorrectInput(option[0]) {
+			OverrideInfra = GetBoolean(option[1])
 		} else if "sample" == CorrectInput(option[0]) {
 			Sample = GetBoolean(option[1])
 		} else if "sample-format" == CorrectInput(option[0]) {
@@ -1261,6 +1327,58 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			request.DeleteProject()
 		}
 	}
+	
+	AllowProjectOverwrite := Force
+	if existsProject && ! AllowProjectOverwrite {
+		AllowProjectOverwrite = utils.RequestConfirmation("Do you want proceed with deletion process for Infrastrcuture named '"+descriptor.InfraName+"'?")
+		if ! AllowProjectOverwrite {
+			response := Response{
+				Status: false,
+				Message: "User task interruption",
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		
+	}
+	
+	AllowInfraDeletion := OverrideInfra && Force
+	AllowInfraBackup := OverrideInfra && Force
+	InfraBackup := ""
+	
+	if descriptor.InfraId != "" {
+		if ! AllowInfraDeletion {
+			AllowInfraDeletion = utils.RequestConfirmation("Do you want proceed with deletion process for Infrastrcuture named '"+descriptor.InfraName+"'?")
+			if ! AllowInfraDeletion {
+				response := Response{
+					Status: false,
+					Message: "User task interruption",
+				}
+				return response, errors.New("Unable to execute task")
+			}
+		}
+		if AllowInfraDeletion && ! AllowInfraBackup {
+			AllowInfraBackup = utils.RequestConfirmation("Do you want backup Infrastrcuture named'"+descriptor.InfraName+"'?")
+		}
+	}
+	
+	if existsInfrastructure {
+		if AllowInfraBackup {
+			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube",model.GetEmergencyFolder(),string(os.PathSeparator), utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name),utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
+			infra, err := vmio.LoadInfrastructure(descriptor.Id)
+			if err == nil {
+				infra.Save(InfraBackup)
+				fmt.Printf("Emergency Infrastructure backup at : %s\n", InfraBackup)
+			}
+		}
+		if (AllowInfraDeletion) {
+			response, err := request.DeleteInfra()
+			if err != nil {
+				return response, err
+			}
+		}
+	}
+	
+	
 	if FullImport || ElementType == SProject {
 		
 		project, err = vmio.ImportUserProject(File, Format)
@@ -1636,7 +1754,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 		})
 	}
 	
-	if existsInfrastructure {
+	if existsInfrastructure && OverrideInfra {
 		request.Arguments.Options = append(request.Arguments.Options, []string{"rebuild", "true"})
 		request.BuildProject()
 	}

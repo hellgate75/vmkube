@@ -497,9 +497,9 @@ func InitHelpers() {
 			Mandatory: false,
 		},
 		HelperOption{
-			Option: "destroy-infra",
+			Option: "override-infra",
 			Type: "<boolean>",
-			Description: "Flag defining to force destroy infrastructure if exists or elsewise fails in case of built project (default: false)",
+			Description: "Flag defining to force rebuild project and override infrastructure if exists or elsewise fails in case of built project (default: false)",
 			Mandatory: false,
 		},
 	)
@@ -619,9 +619,9 @@ func InitHelpers() {
 			Mandatory: true,
 		},
 		HelperOption{
-			Option: "override",
+			Option: "override-infra",
 			Type: "<boolean>",
-			Description: "Flag defining to override existing infrastructure element (default: false)",
+			Description: "Flag defining to force rebuild project and override infrastructure element (default: false)",
 			Mandatory: false,
 		},
 		HelperOption{
@@ -690,6 +690,12 @@ func InitHelpers() {
 			Option: "sample-format",
 			Type: "<text: json|xml>",
 			Description: "Output format for the required sample import instead of import (default: json, valid if full-export = false)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "override-infra",
+			Type: "<boolean>",
+			Description: "Flag defining to force rebuild project and override infrastructure element (default: false)",
 			Mandatory: false,
 		},
 		HelperOption{
