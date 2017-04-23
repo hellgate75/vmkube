@@ -8,6 +8,7 @@ import (
 	"sync"
 	"log"
 	"reflect"
+	"fmt"
 )
 
 type ScheduleTask struct {
@@ -126,9 +127,11 @@ func (pool *SchedulerPool) Start() {
 					//Thread Pool Full
 					time.Sleep(1000*time.Millisecond)
 					i := 0
-					log.Println("Pool full - Trimming completed task from : "+strconv.Itoa(len(pool.Pool)))
+					log.Println(fmt.Sprintf("Pool full - Removing completed task from : %s in pool ...", len(pool.Pool)))
+					count := 0
 					for i < len(pool.Pool) {
 						if ! pool.Pool[i].IsRunning() {
+							count ++
 							if i > 0 && i < len(pool.Pool) - 1 {
 								pool.Pool = pool.Pool[:i]
 								pool.Pool = append(pool.Pool, pool.Pool[i+1:]...)
@@ -141,6 +144,7 @@ func (pool *SchedulerPool) Start() {
 							i++
 						}
 					}
+					log.Println(fmt.Sprintf("Pool clean - Removed %d completed tasks!!", count))
 				}
 			}
 			for _,task := range pool.Pool {
