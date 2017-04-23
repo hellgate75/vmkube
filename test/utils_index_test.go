@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"fmt"
-	"log"
 )
 
 var (
@@ -82,8 +81,6 @@ func TestIndexFromInt(t *testing.T) {
 	assert.Equal(t, expected, index1.Value, "From Int 1 Index Instance have a correct value (x01)")
 	expected2 := strings.Repeat(fmt.Sprintf("%c", utils.INDEX_START), 9)
 	expected2 += fmt.Sprintf("%c", (utils.INDEX_START + byte(10)) )
-	log.Println(fmt.Sprintf("%s", expected2))
-	log.Println(fmt.Sprintf("%s", index2.Value))
 	assert.Equal(t, expected2, index2.Value, "From Int 10 Index Instance Must have a correct value (x10)")
 	expected3 := strings.Repeat(fmt.Sprintf("%c", utils.INDEX_START), 8)
 	expected3 += fmt.Sprintf("%c", (utils.INDEX_START + byte(1)) )
@@ -108,8 +105,6 @@ func TestIndexSum(t *testing.T) {
 	assert.Equal(t, expected, index1.Value, "From Int 1 Index Instance have a correct value (x01)")
 	expected2 := strings.Repeat(fmt.Sprintf("%c", utils.INDEX_START), 9)
 	expected2 += fmt.Sprintf("%c", (utils.INDEX_START + byte(11)) )
-	log.Println(fmt.Sprintf("%s", expected2))
-	log.Println(fmt.Sprintf("%s", index2.Value))
 	assert.Equal(t, expected2, index2.Value, "Add Int 10 and One Index Instance Must have a correct value (x10)")
 	expected3 := strings.Repeat(fmt.Sprintf("%c", utils.INDEX_START), 8)
 	expected3 += fmt.Sprintf("%c", (utils.INDEX_START + byte(1)) )
@@ -134,8 +129,6 @@ func TestIndexSubtract(t *testing.T) {
 	assert.Equal(t, expected, index1.Value, "From Int 1 Index Instance have a correct value (x01)")
 	expected2 := strings.Repeat(fmt.Sprintf("%c", utils.INDEX_START), 9)
 	expected2 += fmt.Sprintf("%c", (utils.INDEX_START + byte(11)) )
-	log.Println(fmt.Sprintf("%s", expected2))
-	log.Println(fmt.Sprintf("%s", index2.Value))
 	assert.Equal(t, expected2, index2.Value, "Subtract Int 10 From TwentyOne Index Instance Must have a correct value (x10)")
 	expected3 := strings.Repeat(fmt.Sprintf("%c", utils.INDEX_START), 8)
 	expected3 += fmt.Sprintf("%c", (utils.INDEX_START + byte(1)) )

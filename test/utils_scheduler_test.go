@@ -24,7 +24,6 @@ func (job TestJob) Start() {
 	if !job.State {
 		job.State = true
 		for i := 0; i < job.Count; i++ {
-			println("sending : " + strconv.Itoa(i))
 			job.OutChan <- strconv.Itoa(i)
 			if ! job.State {
 				break
@@ -134,7 +133,6 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 func collectChanValues(chanX chan string, buffer *bytes.Buffer) {
 	for {
 		val := <- chanX
-		println("received : " + val)
 		if val == "" {
 			break
 		}
@@ -164,7 +162,10 @@ func TestSchedulerJobExecution(t *testing.T) {
 	value1 := string(buffer1.Bytes())
 	value2 := string(buffer2.Bytes())
 	value3 := string(buffer3.Bytes())
-	assert.Equal(t, "0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 ", value1, "Expected output for Job Group 1")
-	assert.Equal(t, "0 1 2 3 4 0 1 2 3 4 5 6 7 8 9 ", value2, "Expected output for Job Group 2")
-	assert.Equal(t, "0 1 2 3 4 0 1 2 3 4 ", value3, "Expected output for Job Group 3")
+	expected1 := "0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 "
+	expected2 := "0 1 2 3 4 0 1 2 3 4 5 6 7 8 9 "
+	expected3 := "0 1 2 3 4 0 1 2 3 4 "
+	assert.Equal(t, expected1, value1, "Expected output for Job Group 1")
+	assert.Equal(t, expected2, value2, "Expected output for Job Group 2")
+	assert.Equal(t, expected3, value3, "Expected output for Job Group 3")
 }

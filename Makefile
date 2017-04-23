@@ -29,5 +29,5 @@ install:
 clean:
 > @go clean
 test:
-> @go test
+> @go test -v vmkube/test
 .PHONY: help all init test build exe run clean install

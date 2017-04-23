@@ -107,16 +107,15 @@ func (pool *SchedulerPool) Start() {
 			pool.Pool = make([]ScheduleTask, 0)
 			
 			for pool.Active {
-				log.Println("Pool active ...")
 				if threads > len(pool.Pool) {
-					log.Println("Wait for message ...")
+					log.Println("Waiting for New Task ...")
 					Task := <- pool.Tasks
-					log.Println("Task : " + Task.Id)
 					if Task.Id != "" {
 						if Task.Id == "<close>" {
+							log.Println("Pool manager exits on request ...")
 							break
 						} else {
-							log.Println("Pool Append : " + pool.Id)
+							log.Println("Pool Append Task Id : " + pool.Id)
 							pool.Pool = append(pool.Pool, Task)
 							go Task.Execute()
 						}
@@ -125,10 +124,9 @@ func (pool *SchedulerPool) Start() {
 					}
 				} else {
 					//Thread Pool Full
-					println("All full ... ")
 					time.Sleep(1000*time.Millisecond)
 					i := 0
-					log.Println("Trimming completed task from : "+strconv.Itoa(len(pool.Pool)))
+					log.Println("Pool full - Trimming completed task from : "+strconv.Itoa(len(pool.Pool)))
 					for i < len(pool.Pool) {
 						if ! pool.Pool[i].IsRunning() {
 							if i > 0 && i < len(pool.Pool) - 1 {
