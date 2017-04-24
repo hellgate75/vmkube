@@ -604,7 +604,7 @@ func InitHelpers() {
 			Option: "format",
 			Type: "<text: json|xml>",
 			Description: "Format used to define the infrastructure element (default: json)",
-			Mandatory: true,
+			Mandatory: false,
 		},
 		HelperOption{
 			Option: "elem-type",
@@ -615,8 +615,32 @@ func InitHelpers() {
 		HelperOption{
 			Option: "elem-name",
 			Type: "<text>",
-			Description: "Entity to create/modify in the project",
-			Mandatory: true,
+			Description: "Name of Entity to create/modify in the project",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "elem-id",
+			Type: "<text>",
+			Description: "Id of Entity to modify/delete in the project (used in case of multiple elements with same name)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "anchor-elem-type",
+			Type: "<text>",
+			Description: "Type of anchor entity for new element to create in the project (allowed: Server, Cloud-Server, Network, Domain,...)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "anchor-elem-name",
+			Type: "<text>",
+			Description: "Name of anchor entity for new element to create in the project",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "anchor-elem-id",
+			Type: "<text>",
+			Description: "Id of anchor entity for new element to create in the project (used in case of multiple elements with same name)",
+			Mandatory: false,
 		},
 		HelperOption{
 			Option: "override-infra",

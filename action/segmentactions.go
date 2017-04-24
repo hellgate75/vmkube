@@ -154,6 +154,10 @@ func AddRollBackChangeActions(projectId string,actions ...ActionDescriptor) erro
 	return nil
 }
 
+func DeleteProjectActionChanges(projectId string) error {
+	return DeleteActionIndex(projectId)
+}
+
 func LoadProjectActionChanges(projectId string) (ProjectActionIndex, error) {
 	return LoadProjectActionIndex(projectId)
 }
@@ -162,6 +166,14 @@ func LoadProjectRollBackIndex(projectId string) (RollBackIndex, error) {
 	return LoadRollbackIndex(projectId)
 }
 
+func DeleteProjectRollBackIndex(projectId string) error {
+	return DeleteRollbackIndex(projectId)
+}
+
 func LoadProjectRollBackSegment(projectId string, index RollBackSegmentIndex) (RollBackSegment, error) {
 	return LoadRollbackSegment(projectId, index)
+}
+
+func DeleteProjectRollBackSegment(projectId string, index RollBackSegmentIndex) error {
+	return DeleteRollbackSegment(projectId, index)
 }

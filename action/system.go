@@ -100,20 +100,20 @@ const (
 	NoElement					CmdElementType = iota
 	LServer
 	CLServer
+	SPlan
 	SNetwork
 	SDomain
 	SProject
-	SPlan
 )
 
 var CmdElementTypeDescriptors []string = []string{
 	"No Element",
 	"Local Server",
 	"Cloud Server",
+	"Installation Plan",
 	"Network",
 	"Domain",
 	"Project",
-	"Installation Plan",
 }
 
 

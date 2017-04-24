@@ -20,6 +20,18 @@ func LoadProjectActionIndex(projectId string) (ProjectActionIndex, error) {
 	return info.Index, err
 }
 
+func DeleteActionIndex(projectId string) error {
+	index := ProjectActionIndex{
+		ProjectId: projectId,
+	}
+	info := ProjectActionIndexInfo{
+		Format: "",
+		Index: index,
+	}
+	err := info.Delete()
+	return err
+}
+
 
 func SaveRollbackIndex(index RollBackIndex) error {
 	info := ProjectRollbackIndexInfo{
@@ -39,6 +51,27 @@ func LoadRollbackIndex(projectId string) (RollBackIndex, error) {
 	}
 	err := info.Read()
 	return info.Index, err
+}
+
+
+func DeleteRollbackIndex(projectId string) error {
+	index, err := LoadRollbackIndex(projectId)
+	if err != nil {
+		return err
+	}
+	for _,segmentIndex := range index.IndexList {
+		err = DeleteRollbackSegment(projectId, segmentIndex)
+		if err != nil {
+			return err
+		}
+	}
+	info := ProjectRollbackIndexInfo{
+		Format: "",
+		Index: index,
+	}
+	
+	err = info.Delete()
+	return err
 }
 
 func SaveRollbackSegment(index RollBackSegment) error {
@@ -61,3 +94,17 @@ func LoadRollbackSegment(projectId string, rollbackIndex RollBackSegmentIndex) (
 	err := info.Read()
 	return info.Index, err
 }
+
+func DeleteRollbackSegment(projectId string, rollbackIndex RollBackSegmentIndex) error {
+	index := RollBackSegment{
+		Index: rollbackIndex,
+		ProjectId: projectId,
+	}
+	info := ProjectRollbackSegmentInfo{
+		Format: "",
+		Index: index,
+	}
+	err := info.Delete()
+	return err
+}
+
