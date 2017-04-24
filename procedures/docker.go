@@ -40,12 +40,15 @@ func DefineLocalServerCommand(server model.ProjectServer, imagePath string) []st
 		command = append( command,  "--"+strings.ToLower(driver)+"-cpu-count")
 		command = append( command,  cpus_str)
 	}
-	//if disksize > 0 {
-	//	disksize_str := utils.IntToString(disksize)
-	//	command = append( command,  "--"+strings.ToLower(driver)+"-disk-size")
-	//	command = append( command,  disksize_str)
-	//}
-	fmt.Printf("Disksize %dGB ignored ....\n", disksize)
+	if osname != "rancheros" {
+		if disksize > 0 {
+			disksize_str := utils.IntToString(disksize)
+			command = append( command,  "--"+strings.ToLower(driver)+"-disk-size")
+			command = append( command,  disksize_str)
+		}
+	} else {
+		fmt.Printf("RANCHEROS - Disksize %dGB ignored ....\n", disksize)
+	}
 	if memory > 0 {
 		memory_str := utils.IntToString(memory)
 		command = append( command,  "--"+strings.ToLower(driver)+"-memory")
