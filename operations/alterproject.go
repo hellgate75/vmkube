@@ -210,7 +210,7 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 				} else {
 					plan.ServerId = project.Domains[serverIndexes[0][0]].Networks[serverIndexes[0][1]].Servers[serverIndexes[0][2]].Id
 				}
-				fmt.Printf("Plan Server Id auto-discovery : %s", plan.ServerId)
+				fmt.Printf("Plan Server Id auto-discovery : %s\n", plan.ServerId)
 			} else if numOcc > 1 {
 				return errors.New(fmt.Sprintf("Server Cloud: '%s' Id/Name : '%s' multiple occurrences : %d found in project", cloud, plan.ServerId, numOcc))
 			} else {

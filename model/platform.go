@@ -56,6 +56,21 @@ type SwarmOpt struct {
 	TLSSan          []string  `json:"TLSSan" xml:"TLSSan"`
 }
 
+func ToInstanceSwarmOpt(opt ProjectSwarmOpt) SwarmOpt {
+	return SwarmOpt{
+		Enabled: opt.Enabled,
+		Host: opt.Host,
+		UseAddress: opt.UseAddress,
+		DiscoveryToken: opt.DiscoveryToken,
+		UseExperimental: opt.UseExperimental,
+		IsMaster: opt.IsMaster,
+		Image: opt.Image,
+		JoinOpts: opt.JoinOpts,
+		Strategy: opt.Strategy,
+		TLSSan: opt.TLSSan,
+	}
+}
+
 /*
 Describe Docker Engine options, contains
 	
@@ -83,6 +98,17 @@ type EngineOpt struct {
 	Options           []string  `json:"Options" xml:"Options"`
 }
 
+func ToInstanceEngineOpt(opt ProjectEngineOpt) EngineOpt {
+	return EngineOpt{
+		Environment: opt.Environment,
+		InsecureRegistry: opt.InsecureRegistry,
+		InstallURL: opt.InstallURL,
+		Labels: opt.Labels,
+		Options: opt.Options,
+		RegistryMirror: opt.RegistryMirror,
+		StorageDriver: opt.StorageDriver,
+	}
+}
 
 /*
 Describe Server options, contains
@@ -178,9 +204,18 @@ Describe Installation Type Enum
 type InstallationType int
 
 const(
-	ServerType InstallationType = iota + 1; // value 1
-	HostType   InstallationType = iota + 1; // value 2
+	ServerType InstallationType = iota // value 0
+	HostType
 )
+
+func ToInstanceInstallation(role InstallationRole) InstallationType {
+	switch role {
+	case ServerRole:
+		return ServerType
+	default:
+		return HostType
+	}
+}
 
 /*
 Describe Role Type Enum
@@ -196,11 +231,25 @@ Describe Role Type Enum
 type RoleType int
 
 const(
-	StandAlone      RoleType = iota + 1; // value 1
-	Master          RoleType = iota + 1; // value 2
-	Slave           RoleType = iota + 1; // value 3
-	ClusterMember  	RoleType = iota + 1; // value 4
+	StandAlone      RoleType = iota //value 0
+	Master
+	Slave
+	ClusterMember
 )
+
+func ToInstanceRole(role SystemRole) RoleType {
+	switch role {
+	case StandAloneRole:
+		return StandAlone
+	case MasterRole:
+		return Master
+	case SlaveRole:
+		return Slave
+	default:
+		return ClusterMember
+	}
+}
+
 
 /*
 Describe Environment Type Enum (Rancher OS)
@@ -218,12 +267,27 @@ Describe Environment Type Enum (Rancher OS)
 type EnvironmentType int
 
 const(
-	Cattle        EnvironmentType = iota + 1; // value 1
-	Kubernetes    EnvironmentType = iota + 1; // value 2
-	Mesos         EnvironmentType = iota + 1; // value 3
-	Swarm         EnvironmentType = iota + 1; // value 4
-	Custom        EnvironmentType = iota + 1; // value 5
+	Cattle        EnvironmentType = iota // value 0
+	Kubernetes
+	Mesos
+	Swarm
+	Custom
 )
+
+func ToInstanceEnvironment(env ProjectEnvironment) EnvironmentType {
+	switch env {
+		case CattleEnv:
+			return Cattle
+		case KubernetesEnv:
+			return Kubernetes
+		case MesosEnv:
+			return Mesos
+		case SwarmEnv:
+			return Swarm
+		default:
+			return Custom
+	}
+}
 
 /*
 Describe Server Installation options, contains

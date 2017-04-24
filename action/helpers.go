@@ -513,15 +513,27 @@ func InitHelpers() {
 			Mandatory: true,
 		},
 		HelperOption{
-			Option: "override",
-			Type: "<boolean>",
-			Description: "Flag defining to override existing infrastructure (default: false)",
-			Mandatory: false,
+			Option: "infra-name",
+			Type: "<text>",
+			Description: "Project name",
+			Mandatory: true,
 		},
 		HelperOption{
 			Option: "force",
 			Type: "<boolean>",
-			Description: "Flag defining to force modify infrastructure, no confirmation will be prompted",
+			Description: "Flag defining to force modify infrastructure (default: false), no confirmation will be prompted",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "rebuild",
+			Type: "<boolean>",
+			Description: "Flag defining to rebuild an existing infrastructure (default: false)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "threads",
+			Type: "<integer>",
+			Description: "Number of parallel threads used in Infrastructure build (default: 2)",
 			Mandatory: false,
 		},
 	)
@@ -696,7 +708,7 @@ func InitHelpers() {
 			Option: "file",
 			Type: "<text>",
 			Description: "Full path for file used to import project",
-			Mandatory: true,
+			Mandatory: false,
 		},
 		HelperOption{
 			Option: "format",

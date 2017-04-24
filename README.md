@@ -5,6 +5,20 @@
 Go-Lang Virtual Machine environment manager. This package allow to define projects and build infrastructures on local or remote cloud providers
 
 
+## Prerequisites
+
+* [Go](https://golang.org/dl/) (tested with version 1.8)
+* [Docker](https://www.docker.com/get-docker) and [Docker-Machine](https://docs.docker.com/machine/install-machine/)
+
+One of following :
+* [VMWare Fusion](https://my.vmware.com/en/web/vmware/info/slug/desktop_end_user_computing/vmware_fusion/8_0)
+* [VMWare Workstation Player](https://my.vmware.com/en/web/vmware/free#desktop_end_user_computing/vmware_workstation_player/12_0)
+* [Virtual Box](https://www.virtualbox.org/wiki/Downloads) (VMWare Utilities on mac : `brew install vagrant-vmware-fusion`) 
+* Microsoft [Hyper-V](https://www.manageengine.com/free-hyper-v-configuration/documents.html)
+* Any of the cloud provider [supported by docker](https://docs.docker.com/machine/drivers/)
+
+In order to define machine OSs, you can use any of the [supported ISOs](https://docs.docker.com/machine/drivers/os-base/)
+
 ## Goals
 
 Define a virtual machine remote/local manager based on docker-machine drivers. It defines a smart and simple command-line/web interface to manage environments. 

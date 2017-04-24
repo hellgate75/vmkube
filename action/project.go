@@ -432,7 +432,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
-	if strings.TrimSpace(ElementName) == "" && strings.TrimSpace(ElementId) == "" && request.SubType != Open && request.SubType != Close {
+	if strings.TrimSpace(ElementName) == "" && strings.TrimSpace(ElementId) == "" && ! Sample && request.SubType != Open && request.SubType != Close {
 		response := Response{
 			Status: false,
 			Message: "Element Name Field or Id is mandatory, use project-import for massive changes",
@@ -1215,23 +1215,143 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 }
 
 func (request *CmdRequest) BuildProject() (Response, error) {
-	//response := Response{
-	//	Status: false,
-	//	Message: "Not Implemented",
-	//}
-	//return  response, errors.New("Unable to execute task")
 	Name := ""
+	InfraName := ""
+	Force := false
+	Rebuild := false
+	Threads := 2
 	for _,option := range request.Arguments.Options {
 		if "name" == CorrectInput(option[0]) {
 			Name = option[1]
+		} else if "infra-name" == CorrectInput(option[0]) {
+			InfraName = option[1]
+		} else if "force" == CorrectInput(option[0]) {
+			Force = GetBoolean(option[1])
+		} else if "rebuild" == CorrectInput(option[0]) {
+			Rebuild = GetBoolean(option[1])
+		} else if "threads" == CorrectInput(option[0]) {
+			Threads = GetInteger(option[1], Threads)
 		}
 	}
+	if Name == "" {
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		return Response{
+			Message: "Project Name not provided",
+			Status: false,},errors.New("Unable to execute task")
+	}
+	if InfraName == "" {
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		return Response{
+			Message: "Infrastructure Name not provided",
+			Status: false,},errors.New("Unable to execute task")
+	}
+	descriptor, err := vmio.GetProjectDescriptor(Name)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	existsInfrastructure := (descriptor.InfraId != "")
+	ForceReuild := Force && existsInfrastructure
+	AllowInfraBackup := Force && existsInfrastructure
+	InfraBackup := ""
+	
+	project, err := vmio.LoadProject(descriptor.Id)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	ValidProject := false
+	for _,domain := range project.Domains {
+		if ValidProject {
+			continue
+		}
+		for _,network := range domain.Networks {
+			if len(network.Servers) > 0 {
+				ValidProject = true
+			} else if len(network.CServers) > 0 {
+				ValidProject = true
+			}
+		}
+	}
+	
+	if !ValidProject {
+		response := Response{
+			Status: false,
+			Message: "Project not valid, please define some servers and eventually plans before to build it!!",
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	Infrastructure, err := ProjectToInfrastructure(project)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	fmt.Printf("Infrastructure JSON:\n%s\n", string(utils.GetJSONFromObj(Infrastructure, true)))
+	
+	if existsInfrastructure {
+		if ! Rebuild {
+			response := Response{
+				Status: false,
+				Message: fmt.Sprintf("Infrastructure Named : %s already exists and no rebuild clause provided!!", descriptor.InfraName),
+			}
+			return  response, errors.New("Unable to execute task")
+		} else if ! ForceReuild {
+			ForceReuild = utils.RequestConfirmation("Do you want proceed with override process for existing Infrastructure named '"+descriptor.InfraName+"'?")
+			if ! ForceReuild {
+				response := Response{
+					Status: false,
+					Message: "User task interruption",
+				}
+				return response, errors.New("Unable to execute task")
+			}
+		}
+		
+		if ! AllowInfraBackup {
+			AllowInfraBackup = utils.RequestConfirmation("Do you want backup Infrastructure named'"+descriptor.InfraName+"'?")
+		}
+		
+	}
+
+	if Rebuild {
+		if AllowInfraBackup {
+			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube",model.GetEmergencyFolder(),string(os.PathSeparator), utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name),utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
+			infra, err := vmio.LoadInfrastructure(descriptor.Id)
+			if err == nil {
+				infra.Save(InfraBackup)
+				fmt.Printf("Emergency Infrastructure backup at : %s\n", InfraBackup)
+			}
+		}
+		response, err := request.DeleteInfra()
+		if err != nil {
+			return response, err
+		}
+	}
+	
+	fmt.Println("Now Proceding with machine creation ...!!")
+	
+	
+	
+	
 	fmt.Printf("Unable to complete Rebuild of project %s : Build Project not implemented!!\n", Name)
 	response := Response{
 		Status: false,
 		Message: "Not Implemented",
 	}
-	return  response, nil
+	return  response, errors.New("Unable to execute task")
 }
 
 func (request *CmdRequest) ImportProject() (Response, error) {
@@ -1479,18 +1599,18 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 		}
 	}
 	
-	AllowProjectOverwrite := Force
-	if existsProject && ! AllowProjectOverwrite {
-		AllowProjectOverwrite = utils.RequestConfirmation("Do you want proceed with deletion process for Infrastructure named '"+descriptor.InfraName+"'?")
-		if ! AllowProjectOverwrite {
-			response := Response{
-				Status: false,
-				Message: "User task interruption",
-			}
-			return response, errors.New("Unable to execute task")
-		}
-		
-	}
+	//AllowProjectOverwrite := Force
+	//if existsProject && ! AllowProjectOverwrite {
+	//	AllowProjectOverwrite = utils.RequestConfirmation("Do you want proceed with deletion process for Infrastructure named '"+descriptor.InfraName+"'?")
+	//	if ! AllowProjectOverwrite {
+	//		response := Response{
+	//			Status: false,
+	//			Message: "User task interruption",
+	//		}
+	//		return response, errors.New("Unable to execute task")
+	//	}
+	//
+	//}
 	
 	AllowInfraDeletion := OverrideInfra && Force
 	AllowInfraBackup := OverrideInfra && Force

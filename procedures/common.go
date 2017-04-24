@@ -40,14 +40,7 @@ type MachineActions interface {
 	ServerIPAddress(name string, id string, commandPipe chan MachineMessage)
 }
 
-type SyncDockerMachine struct {
-	Project     model.Project
-	Infra       model.Infrastructure
-	InstanceId  string
-	IsCloud     bool
-}
-
-type AsyncDockerMachine struct {
+type DockerMachine struct {
 	Project     model.Project
 	Infra       model.Infrastructure
 	InstanceId  string
@@ -79,38 +72,13 @@ type MachineMessage struct {
 	Complete    bool
 	State       MachineState
 	Result      string
+	Supply      string
 	Error       error
-	OutReader   io.ReadCloser
-	ErrReader   io.ReadCloser
+	OutReader   io.Reader
+	ErrReader   io.Reader
 }
 
 func executeSyncCommand(command []string) ([]byte, error) {
 	cmd := exec.Command(command[0], command[1:]...)
 	return cmd.CombinedOutput()
-}
-
-func executeAsyncCommand(message MachineMessage, commandPipe chan MachineMessage) {
-	go func(message MachineMessage, commandPipe chan MachineMessage){
-		var outBuff io.ReadCloser
-		var errBuff io.ReadCloser
-		cmd := exec.Command(message.Cmd[0], message.Cmd[1:]...)
-		message.Complete = false
-		//reader, err := cmd.StdoutPipe()
-		//if err == nil {
-		//	outBuff = reader
-		//}
-		//errReader, err := cmd.StderrPipe()
-		//if err == nil {
-		//	errBuff = errReader
-		//}
-		message.OutReader = outBuff
-		message.ErrReader = errBuff
-		commandPipe <- message
-		bytes, err := cmd.CombinedOutput()
-		message.Result = string(bytes)
-		message.Error = err
-		message.Complete = true
-		commandPipe <- message
-		
-	}(message, commandPipe)
 }

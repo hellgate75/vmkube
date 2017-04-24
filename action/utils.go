@@ -9,6 +9,8 @@ import (
 	"os"
 	"vmkube/utils"
 	"github.com/satori/go.uuid"
+	"strconv"
+	"time"
 )
 
 
@@ -65,6 +67,109 @@ func GetBoolean(input string) bool {
 	return CorrectInput(input) == "true"
 }
 
+func GetInteger(input string, defaultValue int) int {
+	num, err := strconv.Atoi(input)
+	if err != nil {
+		return defaultValue
+	}
+	return num
+}
+
+func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error) {
+	infrastructure := model.Infrastructure{}
+	for _,domain := range project.Domains {
+		newDomain := model.Domain{
+			Id: NewUUIDString(),
+			Name: domain.Name,
+			Options: domain.Options,
+			Networks: []model.Network{},
+		}
+		for _,network := range domain.Networks {
+			newNetwork := model.Network{
+				Id: NewUUIDString(),
+				Name: network.Name,
+				Options: network.Options,
+				Instances: []model.Instance{},
+				CInstances: []model.CloudInstance{},
+				Installations: []model.Installation{},
+			}
+			serverConvertionMap := make(map[string]string)
+			for _,server := range network.Servers {
+				var disks []model.Disk = make([]model.Disk,0)
+				disks = append(disks, model.Disk{
+					Id: NewUUIDString(),
+					Name: "sda0",
+					Size: server.DiskSize,
+					Type: 0,
+				})
+				instance := model.Instance{
+					Id: NewUUIDString(),
+					Name: server.Name,
+					Options: server.Options,
+					Cpus: server.Cpus,
+					Memory: server.Memory,
+					Disks: disks,
+					Driver: server.Driver,
+					Engine: model.ToInstanceEngineOpt(server.Engine),
+					Swarm: model.ToInstanceSwarmOpt(server.Swarm),
+					Hostname: server.Hostname,
+					IPAddress: "",
+					NoShare: server.NoShare,
+					OSType: server.OSType,
+					OSVersion: server.OSVersion,
+					Roles: server.Roles,
+					ServerId: server.Id,
+				}
+				if _,ok := serverConvertionMap[server.Id]; ok {
+					return infrastructure, errors.New("Duplicate Server Id in Project : " + server.Id)
+				}
+				serverConvertionMap[server.Id] = instance.Id
+				newNetwork.Instances = append(newNetwork.Instances, instance)
+			}
+			for _,server := range network.CServers {
+				instance := model.CloudInstance{
+					Id: NewUUIDString(),
+					Name: server.Name,
+					Driver: server.Driver,
+					Hostname: server.Hostname,
+					IPAddress: "",
+					Options: server.Options,
+					Roles: server.Roles,
+					ServerId: server.Id,
+				}
+				if _,ok := serverConvertionMap[server.Id]; ok {
+					return infrastructure, errors.New("Duplicate Server Id in Project : " + server.Id)
+				}
+				serverConvertionMap[server.Id] = instance.Id
+				newNetwork.CInstances = append(newNetwork.CInstances, instance)
+			}
+			for _,plan := range network.Installations {
+				if _,ok := serverConvertionMap[plan.ServerId]; ! ok {
+					return infrastructure, errors.New("Invalid server reference in plan : " + plan.ServerId)
+				}
+				instanceId, _  := serverConvertionMap[plan.ServerId]
+				installation := model.Installation{
+					Id: NewUUIDString(),
+					Environment: model.ToInstanceEnvironment(plan.Environment),
+					Role: model.ToInstanceRole(plan.Role),
+					Type: model.ToInstanceInstallation(plan.Type),
+					Errors: false,
+					InstanceId: instanceId,
+					IsCloud: plan.IsCloud,
+					Success: false,
+					LastExecution: time.Now(),
+					LastMessage: "",
+					LogsPath: "",
+					Plan: plan,
+				}
+				newNetwork.Installations = append(newNetwork.Installations, installation)
+			}
+			newDomain.Networks = append(newDomain.Networks, newNetwork)
+		}
+		infrastructure.Domains = append(infrastructure.Domains, newDomain)
+	}
+	return infrastructure, nil
+}
 
 func UpdateIndexWithProject(project model.Project) error {
 	indexes, err := vmio.LoadIndex()
@@ -304,7 +409,7 @@ func PrintCommandHelper(command	string, subCommand string) {
 			}
 		}
 		for _,option := range helper.SubCommands {
-			fmt.Fprintf(os.Stdout, "%s        %s\n",  utils.StrPad(option.Command, 50), option.Description)
+			fmt.Fprintf(os.Stdout, "%s        %s\n",  utils.StrPad(option.Command, 55), option.Description)
 		}
 	}
 	if found  {
@@ -316,7 +421,7 @@ func PrintCommandHelper(command	string, subCommand string) {
 			if option.Mandatory {
 				validity = "mandatory"
 			}
-			fmt.Fprintf(os.Stdout, "--%s  %s  %s  %s\n",  utils.StrPad(option.Option,15),  utils.StrPad(option.Type, 25), utils.StrPad(validity, 10), option.Description)
+			fmt.Fprintf(os.Stdout, "--%s  %s  %s  %s\n",  utils.StrPad(option.Option,20),  utils.StrPad(option.Type, 25), utils.StrPad(validity, 10), option.Description)
 		}
 	} else  {
 		fmt.Fprintln(os.Stdout, "Unable to complete help support ...")
