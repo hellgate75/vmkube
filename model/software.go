@@ -92,7 +92,7 @@ func (isoTemplate *MachineISO)	Download(version string) bool {
 		fmt.Printf("Error while downloading %s - %s\n", url, err)
 		return false
 	}
-	fmt.Printf("%d bytes downloaded.", n)
+	fmt.Printf("%d bytes downloaded.\n", n)
 	_, error := os.Stat(fileName)
 	return ! os.IsNotExist(error)
 }
