@@ -411,10 +411,10 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
-	if strings.TrimSpace(File) == "" && request.SubType != Open && request.SubType != Close && request.SubType != Remove  {
+	if strings.TrimSpace(File) == "" && ! Sample && request.SubType != Open && request.SubType != Close && request.SubType != Remove  {
 		response := Response{
 			Status: false,
-			Message: "Input File Path Field is mandatory",
+			Message: "Input File Path Field is mandatory in Alter Project  Create or Alter operations",
 		}
 		return  response, errors.New("Unable to execute task")
 	}
