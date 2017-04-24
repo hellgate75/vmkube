@@ -787,6 +787,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 		request.BuildProject()
 	}
 	
+	fmt.Println("Alter Project : Command Executed correctly!! ")
 	response := Response{
 		Status: true,
 		Message: "Success",

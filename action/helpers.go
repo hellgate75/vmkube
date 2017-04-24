@@ -598,7 +598,7 @@ func InitHelpers() {
 			Option: "file",
 			Type: "<text>",
 			Description: "Full Input file path, used to define the infrastructure element",
-			Mandatory: true,
+			Mandatory: false,
 		},
 		HelperOption{
 			Option: "format",

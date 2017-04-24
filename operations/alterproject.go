@@ -119,8 +119,7 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 		
 		anchorIndexSet = indexList[0]
 	}
-	
-	if ElementCode <= AnchorElementCode {
+	if int(ElementCode) >= int(AnchorElementCode) {
 		return errors.New(fmt.Sprintf("Incompatible Anchor Type '%s' for Type '%s'!!", ElementTypeDescriptors[anchorTypeElem], ElementTypeDescriptors[typeElem]))
 	}
 	
@@ -131,6 +130,7 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 		if err != nil {
 			return err
 		}
+		domain.Name = name
 		errorsList :=  domain.Validate()
 		if len(errorsList) == 0 {
 			project.Domains = append(project.Domains, domain)
@@ -145,6 +145,7 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 		if err != nil {
 			return err
 		}
+		network.Name = name
 		errorsList :=  network.Validate()
 		if len(errorsList) == 0 {
 			project.Domains[anchorIndexSet[0]].Networks = append(project.Domains[anchorIndexSet[0]].Networks, network)
@@ -159,6 +160,7 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 		if err != nil {
 			return err
 		}
+		server.Name = name
 		errorsList :=  server.Validate()
 		if len(errorsList) == 0 {
 			project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].Servers = append(project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].Servers, server)
@@ -173,6 +175,7 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 		if err != nil {
 			return err
 		}
+		server.Name = name
 		errorsList :=  server.Validate()
 		if len(errorsList) == 0 {
 			project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].CServers = append(project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].CServers, server)
@@ -336,8 +339,6 @@ func AlterElementInProject(project model.Project, typeElem int, name string, id 
 
 func DeleteElementInProject(project model.Project, typeElem int, name string, id string) error {
 	var ElementCode CmdElementTypeDesc = ElementTypeCodes[typeElem]
-	fmt.Printf("Selected Element : %s\n", ElementTypeDescriptors[typeElem])
-	fmt.Printf("Selected Element Code : %d\n", ElementCode)
 	
 	if ElementCode == ProjectDesc {
 		return errors.New("Uable to Delete Entire Project in a project!!")
@@ -352,8 +353,6 @@ func DeleteElementInProject(project model.Project, typeElem int, name string, id
 	}
 	
 	targetIndexSet := indexList[0]
-	
-	fmt.Printf("Discovered Element(s) Locations : %v\n", targetIndexSet)
 	
 	switch ElementCode {
 		case DomainDesc:
