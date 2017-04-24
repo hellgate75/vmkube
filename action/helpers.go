@@ -654,6 +654,18 @@ func InitHelpers() {
 			Description: "Flag defining to force modify infrastructure element, no confirmation will be prompted",
 			Mandatory: false,
 		},
+		HelperOption{
+			Option: "sample",
+			Type: "<boolean>",
+			Description: "Show a sample input format instead of alter project from file (default: false)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "sample-format",
+			Type: "<text: json|xml>",
+			Description: "Output format for the required sample input format instead of alter project (default: json, valid if full-export = false)",
+			Mandatory: false,
+		},
 	)
 
 	//Delete Project

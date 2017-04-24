@@ -84,7 +84,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	AllowInfraBackup := OverrideInfra && Force
 	
 	descriptor, err := vmio.GetProjectDescriptor(Name)
-
+	
 	var ProjectJSON string = ""
 	
 	existsProject := (err == nil)
@@ -214,7 +214,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	}
 	InfraBackup := ""
 	ProjectBackup := ""
-
+	
 	if existsInfrastructure {
 		if AllowInfraBackup {
 			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube",model.GetEmergencyFolder(),string(os.PathSeparator), utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name),utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
@@ -360,6 +360,8 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 	var AnchorElementType CmdElementType = NoElement
 	AnchorElementName := ""
 	AnchorElementId := ""
+	Sample := false
+	SampleFormat := "json"
 	var err error
 	for _,option := range request.Arguments.Options {
 		if "name" == CorrectInput(option[0]) {
@@ -390,6 +392,10 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			AnchorElementId = option[1]
 		} else if "anchor-elem-name" == CorrectInput(option[0]) {
 			AnchorElementName = option[1]
+		}else if "sample" == CorrectInput(option[0]) {
+			Sample = GetBoolean(option[1])
+		} else if "sample-format" == CorrectInput(option[0]) {
+			SampleFormat = option[1]
 		}
 		//else {
 		//	PrintCommandHelper(request.TypeStr, request.SubTypeStr)
@@ -426,13 +432,79 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
-	if strings.TrimSpace(ElementName) == "" && strings.TrimSpace(ElementId) == "" && request.SubType == Open && request.SubType != Close {
+	if strings.TrimSpace(ElementName) == "" && strings.TrimSpace(ElementId) == "" && request.SubType != Open && request.SubType != Close {
 		response := Response{
 			Status: false,
 			Message: "Element Name Field or Id is mandatory, use project-import for massive changes",
 		}
 		return  response, errors.New("Unable to execute task")
 	}
+	
+	if Sample && request.SubType != Open && request.SubType != Close {
+		if CorrectInput(SampleFormat) != "json" && CorrectInput(SampleFormat) != "xml" {
+			response := Response{
+				Status: false,
+				Message: "Sample Format '"+SampleFormat+"' not supported!!",
+			}
+			return  response, errors.New("Unable to execute task")
+		}
+		if ElementType == SProject {
+			if CorrectInput(SampleFormat) == "json" {
+				fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.ProjectSample, true))
+			} else {
+				fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.ProjectSample, true))
+			}
+		} else if ElementType != NoElement {
+			switch ElementType {
+			case SDomain:
+				if CorrectInput(SampleFormat) == "json" {
+					fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.DomainSample, true))
+				} else {
+					fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.DomainSample, true))
+				}
+				break
+			case SNetwork:
+				if CorrectInput(SampleFormat) == "json" {
+					fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.NetworkSample, true))
+				} else {
+					fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.NetworkSample, true))
+				}
+				break
+			case LServer:
+				if CorrectInput(SampleFormat) == "json" {
+					fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.ServerSample, true))
+				} else {
+					fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.ServerSample, true))
+				}
+				break
+			case CLServer:
+				if CorrectInput(SampleFormat) == "json" {
+					fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.CloudServerSample, true))
+				} else {
+					fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.CloudServerSample, true))
+				}
+				break
+			default:
+				if CorrectInput(SampleFormat) == "json" {
+					fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.InstallationPlanSample, true))
+				} else {
+					fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.InstallationPlanSample, true))
+				}
+			}
+		} else {
+			response := Response{
+				Status: false,
+				Message: "Infrastructure Element not supported!!",
+			}
+			return  response, errors.New("Unable to execute task")
+		}
+		response := Response{
+			Status: true,
+			Message: "Success",
+		}
+		return  response, nil
+	}
+	
 	if AnchorElementType == NoElement && request.SubType == Create {
 		response := Response{
 			Status: false,
@@ -478,99 +550,99 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 	existsInfrastructure := (descriptor.InfraId != "")
 	
 	switch request.SubType {
-		case Create:
-			switch ElementType {
-				case SProject:
-					response := Response{
-						Status: false,
-						Message: "Entire project define not allowed by alter-project, use import-project or define-project for project import",
-					}
-					return  response, errors.New("Unable to execute task")
-				default:
-					// Any but Project Type
-					err = operations.AddElementToProject(project, int(ElementType), ElementName, int(AnchorElementType), AnchorElementName, AnchorElementId, File, Format)
-					
-					if err != nil {
-						response := Response{
-							Status: false,
-							Message: err.Error(),
-						}
-						return  response, errors.New("Unable to execute task")
-					}
-			}
-			break
-		case Alter:
-			switch ElementType {
-			case SProject:
-				response := Response{
-					Status: false,
-					Message: "Entire project chenge not allowed by alter-project, use import-project or define-project for project replacement",
-				}
-				return  response, errors.New("Unable to execute task")
-			default:
-				// Any but Project Type
-				err = operations.AlterElementInProject(project, int(ElementType), ElementName, ElementId, File, Format)
-				
-				if err != nil {
-					response := Response{
-						Status: false,
-						Message: err.Error(),
-					}
-					return  response, errors.New("Unable to execute task")
-				}
-			}
-			break
-		case Remove:
-			switch ElementType {
-			case SProject:
-				response := Response{
-					Status: false,
-					Message: "Entire project chenge not allowed by alter-project, use delete-project for project removal",
-				}
-				return  response, errors.New("Unable to execute task")
-			default:
-				// Any but Project Type
-				err = operations.DeleteElementInProject(project, int(ElementType), ElementName, ElementId)
-				
-				if err != nil {
-					response := Response{
-						Status: false,
-						Message: err.Error(),
-					}
-					return  response, errors.New("Unable to execute task")
-				}
-			}
-			break
-		case Open:
-			project, err = operations.OpenProject(project)
-			
-			if err != nil {
-				response := Response{
-					Status: false,
-					Message: err.Error(),
-				}
-				return  response, errors.New("Unable to execute task")
-			}
-			break
-		case Close:
-			project, err = operations.CloseProject(project)
-			
-			if err != nil {
-				response := Response{
-					Status: false,
-					Message: err.Error(),
-				}
-				return  response, errors.New("Unable to execute task")
-			}
-			break
-		default:
+	case Create:
+		switch ElementType {
+		case SProject:
 			response := Response{
 				Status: false,
-				Message: fmt.Sprintf("Sub-Command %s not provided!!", request.SubTypeStr),
+				Message: "Entire project define not allowed by alter-project, use import-project or define-project for project import",
 			}
-			return response, errors.New("Unable to execute task")
+			return  response, errors.New("Unable to execute task")
+		default:
+			// Any but Project Type
+			err = operations.AddElementToProject(project, int(ElementType), ElementName, int(AnchorElementType), AnchorElementName, AnchorElementId, File, Format)
+			
+			if err != nil {
+				response := Response{
+					Status: false,
+					Message: err.Error(),
+				}
+				return  response, errors.New("Unable to execute task")
+			}
+		}
+		break
+	case Alter:
+		switch ElementType {
+		case SProject:
+			response := Response{
+				Status: false,
+				Message: "Entire project chenge not allowed by alter-project, use import-project or define-project for project replacement",
+			}
+			return  response, errors.New("Unable to execute task")
+		default:
+			// Any but Project Type
+			err = operations.AlterElementInProject(project, int(ElementType), ElementName, ElementId, File, Format)
+			
+			if err != nil {
+				response := Response{
+					Status: false,
+					Message: err.Error(),
+				}
+				return  response, errors.New("Unable to execute task")
+			}
+		}
+		break
+	case Remove:
+		switch ElementType {
+		case SProject:
+			response := Response{
+				Status: false,
+				Message: "Entire project chenge not allowed by alter-project, use delete-project for project removal",
+			}
+			return  response, errors.New("Unable to execute task")
+		default:
+			// Any but Project Type
+			err = operations.DeleteElementInProject(project, int(ElementType), ElementName, ElementId)
+			
+			if err != nil {
+				response := Response{
+					Status: false,
+					Message: err.Error(),
+				}
+				return  response, errors.New("Unable to execute task")
+			}
+		}
+		break
+	case Open:
+		project, err = operations.OpenProject(project)
+		
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return  response, errors.New("Unable to execute task")
+		}
+		break
+	case Close:
+		project, err = operations.CloseProject(project)
+		
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return  response, errors.New("Unable to execute task")
+		}
+		break
+	default:
+		response := Response{
+			Status: false,
+			Message: fmt.Sprintf("Sub-Command %s not provided!!", request.SubTypeStr),
+		}
+		return response, errors.New("Unable to execute task")
 	}
-
+	
 	AllowProjectOverwrite := Force
 	if existsProject && ! AllowProjectOverwrite {
 		AllowProjectOverwrite = utils.RequestConfirmation("Do you want proceed with deletion process for Infrastructure named '"+descriptor.InfraName+"'?")
@@ -720,7 +792,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 		Message: "Success",
 	}
 	return  response, nil
-
+	
 }
 
 func (request *CmdRequest) InfoProject() (Response, error) {
@@ -877,9 +949,9 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 	}
 	fmt.Printf("\nProceding with deletion of Project named  '%s'%s...\n", descriptor.Name, existanceClause )
 	
-
+	
 	indexes,err := vmio.LoadIndex()
-
+	
 	if err != nil {
 		response := Response{
 			Status: false,
@@ -914,9 +986,9 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 	}
 	
 	err = info.Delete()
-
+	
 	vmio.UnlockProject(projectMeta)
-
+	
 	if err != nil {
 		response := Response{
 			Status: false,
@@ -932,7 +1004,7 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 	iFaceIndex.WaitForUnlock()
 	
 	err = UpdateIndexWithProjectsDescriptor(descriptor, false)
-
+	
 	if err != nil {
 		response := Response{
 			Status: false,
@@ -1356,7 +1428,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 	existsInfrastructure := descriptor.InfraId != ""
 	
 	var ProjectJSON string = ""
-
+	
 	if err == nil && project.Id != "" {
 		existsProject = true
 		Found = true
@@ -2001,19 +2073,19 @@ func (request *CmdRequest) ExportProject() (Response, error) {
 			break
 		case  LServer:
 			var servers []ExportImportLocalServers = make([]ExportImportLocalServers, 0)
-				for _,domain := range project.Domains {
-					for _,network := range domain.Networks {
-						server := ExportImportLocalServers{
-							Network: NetworkReference{
-								DomainId: domain.Id,
-								DomainName: domain.Name,
-								NetworkId: network.Id,
-								NetworkName: network.Name,
-							},
-							Servers: network.Servers,
-						}
-						servers = append(servers, server)
+			for _,domain := range project.Domains {
+				for _,network := range domain.Networks {
+					server := ExportImportLocalServers{
+						Network: NetworkReference{
+							DomainId: domain.Id,
+							DomainName: domain.Name,
+							NetworkId: network.Id,
+							NetworkName: network.Name,
+						},
+						Servers: network.Servers,
 					}
+					servers = append(servers, server)
+				}
 			}
 			err = utils.ExportStructureToFile(File, Format, servers)
 			if err != nil {
