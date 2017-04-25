@@ -7,20 +7,25 @@ import (
 	"time"
 )
 
-type ElementState int
+type TextColorState int
 
 const(
-	State_Element_Waiting ElementState = iota
-	State_Element_Partial
-	State_Element_Complete
-	State_Element_Error
+	StateColorWhite TextColorState = iota
+	StateColorYellow
+	StateColorGreen
+	StateColorRed
+	StateColorBlack
+	StateColorBlue
+	StateColorCyan
+	StateColorMagenta
+	
 )
 
 type KeyValueElement struct {
-	Id        string
-	Name      string
-	Value     string
-	State     ElementState
+	Id    string
+	Name  string
+	Value string
+	State TextColorState
 }
 
 type KeyValueScreenManager struct {
@@ -37,14 +42,22 @@ type KeyValueScreenManager struct {
 
 func (screenData *KeyValueScreenManager) getElementScreenColor(elem KeyValueElement) int {
 	switch elem.State {
-		case State_Element_Waiting:
+		case StateColorWhite:
 			return tm.WHITE
-		case State_Element_Partial:
+		case StateColorYellow:
 			return tm.YELLOW
-		case State_Element_Complete:
+		case StateColorGreen:
 			return tm.GREEN
-		default:
+		case StateColorRed:
 			return tm.RED
+		case StateColorBlack:
+			return tm.BLACK
+		case StateColorBlue:
+			return tm.BLUE
+		case StateColorCyan:
+			return tm.CYAN
+		default:
+			return tm.MAGENTA
 	}
 	return tm.WHITE
 }

@@ -34,16 +34,16 @@ func main() {
 	for i := 0; i < 10; i++ {
 		time.Sleep(2 * time.Second)
 		elems[i].Value = "processing"
-		elems[i].State = term.State_Element_Partial
+		elems[i].State = term.StateColorYellow
 		manager.CommChannel <- elems[i]
 		time.Sleep(2 * time.Second)
 		if i % 2 == 0 {
 			elems[i].Value = "success!"
-			elems[i].State = term.State_Element_Complete
+			elems[i].State = term.StateColorGreen
 			manager.CommChannel <- elems[i]
 		} else {
 			elems[i].Value = "failed!"
-			elems[i].State = term.State_Element_Error
+			elems[i].State = term.StateColorRed
 			manager.CommChannel <- elems[i]
 		}
 	}
