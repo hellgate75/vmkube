@@ -536,6 +536,18 @@ func InitHelpers() {
 			Description: "Number of parallel threads used in Infrastructure build (default: 2)",
 			Mandatory: false,
 		},
+		HelperOption{
+			Option: "overclock",
+			Type: "<boolean>",
+			Description: "Ignore the capping form the maximum available processors (default: false)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "no-colors",
+			Type: "<boolean>",
+			Description: "Prevent to drive an interactive output, useful for piping results to a file (default: false)",
+			Mandatory: false,
+		},
 	)
 	//Information on Project Definition
 	InfoProject.SubCommands = append(InfoProject.SubCommands,

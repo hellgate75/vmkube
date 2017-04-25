@@ -155,9 +155,14 @@ func DefineLocalServerCommand(server model.ProjectServer, imagePath string) ([]s
 	return command, DiskResize
 }
 
-func (machine *DockerMachine) CreateCloudServer(server model.ProjectCloudServer, commandPipe chan MachineMessage) {
-	name, uuid:= server.Name, server.Id
-	var command []string = DefineCloudServerCommand(server)
+func (machine *DockerMachine)  CreateCloudServer(commandPipe chan MachineMessage) {
+	var name, uuid string
+	if machine.NewInfra {
+		name, uuid= machine.CServer.Name, machine.CServer.Id
+	} else {
+		name, uuid= machine.CInstance.Name, machine.CInstance.ServerId
+	}
+	var command []string = DefineCloudServerCommand(machine.CServer)
 	bytes, err := executeSyncCommand(command)
 	state := Machine_State_Running
 	if err != nil {
@@ -166,10 +171,29 @@ func (machine *DockerMachine) CreateCloudServer(server model.ProjectCloudServer,
 	time.Sleep(3000)
 	machineName := name + "-" + uuid
 	var message string = ""
-	cmd := exec.Command("docker-machine", "stop", machineName)
+	var json string = ""
+	var ipAddress string = ""
+	cmd1 := exec.Command("docker-machine", "inspect", machineName)
+	bytes1, err1 := cmd1.CombinedOutput()
+	if err1 != nil {
+		message += fmt.Sprintf("Inspecting docker machine : %s\n", machineName)
+		message += err1.Error() + "\n"
+	} else {
+		json = fmt.Sprintf("%s\n",bytes1)
+	}
+	machine.CInstance.InspectJSON = json
+	cmd2 := exec.Command("docker-machine", "ip", machineName)
+	bytes2, err2 := cmd2.CombinedOutput()
+	if err2 != nil {
+		message += fmt.Sprintf("Getting IPAddress from docker machine : %s\n", machineName)
+		message += err2.Error() + "\n"
+	} else {
+		ipAddress = fmt.Sprintf("%s\n",bytes2)
+	}
+	cmd3 := exec.Command("docker-machine", "stop", machineName)
 	message += fmt.Sprintf("Stopping docker machine : %s\n", machineName)
-	bytes, err = cmd.CombinedOutput()
-	message += fmt.Sprintf("%s\n",bytes)
+	bytesArray, _ := cmd3.CombinedOutput()
+	message += fmt.Sprintf("%s\n",bytesArray)
 	commandPipe <- MachineMessage{
 		Complete: true,
 		Cmd: command,
@@ -182,11 +206,18 @@ func (machine *DockerMachine) CreateCloudServer(server model.ProjectCloudServer,
 		State: state,
 		InstanceId: machine.InstanceId,
 		IsCloud: machine.IsCloud,
+		IPAddress: ipAddress,
+		InspectJSON: json,
 	}
 }
 
-func (machine *DockerMachine)  CreateServer(server model.ProjectServer, commandPipe chan MachineMessage) {
-	name, uuid, osname, osver:= server.Name, server.Id, server.OSType, server.OSVersion
+func (machine *DockerMachine)  CreateServer(commandPipe chan MachineMessage) {
+	var name, uuid, osname, osver string
+	if machine.NewInfra {
+		name, uuid, osname, osver = machine.Server.Name, machine.Server.Id, machine.Server.OSType, machine.Server.OSVersion
+	} else {
+		name, uuid, osname, osver = machine.Instance.Name, machine.Instance.ServerId, machine.Instance.OSType, machine.Instance.OSVersion
+	}
 	path, success := DownloadISO(osname, osver)
 	if !success {
 		commandPipe <- MachineMessage{
@@ -205,21 +236,40 @@ func (machine *DockerMachine)  CreateServer(server model.ProjectServer, commandP
 	}
 	var command []string
 	var diskSize int
-	command, diskSize = DefineLocalServerCommand(server, path)
+	command, diskSize = DefineLocalServerCommand(machine.Server, path)
 	bytes, err := executeSyncCommand(command)
+	machineName := name + "-" + uuid
 	var message string = ""
 	time.Sleep(3000)
-	machineName := name + "-" + uuid
-	cmd := exec.Command("docker-machine", "stop", machineName)
+	var json string = ""
+	var ipAddress string = ""
+	cmd1 := exec.Command("docker-machine", "inspect", machineName)
+	bytes1, err1 := cmd1.CombinedOutput()
+	if err1 != nil {
+		message += fmt.Sprintf("Inspecting docker machine : %s\n", machineName)
+		message += err1.Error() + "\n"
+	} else {
+		json = fmt.Sprintf("%s\n",bytes1)
+	}
+	machine.Instance.InspectJSON = json
+	cmd2 := exec.Command("docker-machine", "ip", machineName)
+	bytes2, err2 := cmd2.CombinedOutput()
+	if err2 != nil {
+		message += fmt.Sprintf("Getting IPAddress from docker machine : %s\n", machineName)
+		message += err2.Error() + "\n"
+	} else {
+		ipAddress = fmt.Sprintf("%s\n",bytes2)
+	}
+	cmd3 := exec.Command("docker-machine", "stop", machineName)
 	message += fmt.Sprintf("Stopping docker machine : %s\n", machineName)
-	bytesArray, _ := cmd.CombinedOutput()
+	bytesArray, _ := cmd3.CombinedOutput()
 	message += fmt.Sprintf("%s\n",bytesArray)
 	if diskSize > 0 {
 		message += fmt.Sprintf("Resizing disk to %sGB", diskSize)
 		file := model.HomeFolder() + string(os.PathSeparator) + ".docker" + string(os.PathSeparator) + "machine" + string(os.PathSeparator) + "machines" +
-			string(os.PathSeparator) +  name + "-" + uuid + string(os.PathSeparator) + "disk.vmdk"
-		cmd := exec.Command("vmware-vdiskmanager", "-x", fmt.Sprintf("%dGB", diskSize), file)
-		bytesArray, _ := cmd.CombinedOutput()
+			string(os.PathSeparator) +  machineName + string(os.PathSeparator) + "disk.vmdk"
+		cmd4 := exec.Command("vmware-vdiskmanager", "-x", fmt.Sprintf("%dGB", diskSize), file)
+		bytesArray, _ := cmd4.CombinedOutput()
 		message += fmt.Sprintf("%s\n",bytesArray)
 	}
 	commandPipe <- MachineMessage{
@@ -234,10 +284,26 @@ func (machine *DockerMachine)  CreateServer(server model.ProjectServer, commandP
 		State: Machine_State_Stopped,
 		InstanceId: machine.InstanceId,
 		IsCloud: machine.IsCloud,
+		IPAddress: ipAddress,
+		InspectJSON: json,
 	}
 }
 
-func (machine *DockerMachine)  RemoveServer(name string, id string, commandPipe chan MachineMessage) {
+func (machine *DockerMachine)  RemoveServer(commandPipe chan MachineMessage) {
+	var name, id string
+	if machine.IsCloud {
+		if machine.NewInfra {
+			name, id= machine.CServer.Name, machine.CServer.Id
+		} else {
+			name, id= machine.CInstance.Name, machine.CInstance.ServerId
+		}
+	} else {
+		if machine.NewInfra {
+			name, id = machine.Server.Name, machine.Server.Id
+		} else {
+			name, id = machine.Instance.Name, machine.Instance.ServerId
+		}
+	}
 	var command []string = make([]string, 0)
 	command = append( command,  "docker-machine")
 	command = append( command,  "rm")
@@ -263,7 +329,21 @@ func (machine *DockerMachine)  RemoveServer(name string, id string, commandPipe 
 	}
 }
 
-func (machine *DockerMachine)  StopServer(name string, id string, commandPipe chan MachineMessage) {
+func (machine *DockerMachine)  StopServer(commandPipe chan MachineMessage) {
+	var name, id string
+	if machine.IsCloud {
+		if machine.NewInfra {
+			name, id= machine.CServer.Name, machine.CServer.Id
+		} else {
+			name, id= machine.CInstance.Name, machine.CInstance.ServerId
+		}
+	} else {
+		if machine.NewInfra {
+			name, id = machine.Server.Name, machine.Server.Id
+		} else {
+			name, id = machine.Instance.Name, machine.Instance.ServerId
+		}
+	}
 	var command []string = make([]string, 0)
 	command = append( command,  "docker-machine")
 	command = append( command,  "stop")
@@ -288,7 +368,21 @@ func (machine *DockerMachine)  StopServer(name string, id string, commandPipe ch
 	}
 }
 
-func (machine *DockerMachine)  StartServer(name string, id string, commandPipe chan MachineMessage) {
+func (machine *DockerMachine)  StartServer(commandPipe chan MachineMessage) {
+	var name, id string
+	if machine.IsCloud {
+		if machine.NewInfra {
+			name, id= machine.CServer.Name, machine.CServer.Id
+		} else {
+			name, id= machine.CInstance.Name, machine.CInstance.ServerId
+		}
+	} else {
+		if machine.NewInfra {
+			name, id = machine.Server.Name, machine.Server.Id
+		} else {
+			name, id = machine.Instance.Name, machine.Instance.ServerId
+		}
+	}
 	var command []string = make([]string, 0)
 	command = append( command,  "docker-machine")
 	command = append( command,  "start")
@@ -313,7 +407,21 @@ func (machine *DockerMachine)  StartServer(name string, id string, commandPipe c
 	}
 }
 
-func (machine *DockerMachine)  RestartServer(name string, id string, commandPipe chan MachineMessage) {
+func (machine *DockerMachine)  RestartServer(commandPipe chan MachineMessage) {
+	var name, id string
+	if machine.IsCloud {
+		if machine.NewInfra {
+			name, id= machine.CServer.Name, machine.CServer.Id
+		} else {
+			name, id= machine.CInstance.Name, machine.CInstance.ServerId
+		}
+	} else {
+		if machine.NewInfra {
+			name, id = machine.Server.Name, machine.Server.Id
+		} else {
+			name, id = machine.Instance.Name, machine.Instance.ServerId
+		}
+	}
 	var command []string = make([]string, 0)
 	command = append( command,  "docker-machine")
 	command = append( command,  "restart")
@@ -338,7 +446,21 @@ func (machine *DockerMachine)  RestartServer(name string, id string, commandPipe
 	}
 }
 
-func (machine *DockerMachine)  ServerStatus(name string, id string, commandPipe chan MachineMessage) {
+func (machine *DockerMachine)  ServerStatus(commandPipe chan MachineMessage) {
+	var name, id string
+	if machine.IsCloud {
+		if machine.NewInfra {
+			name, id= machine.CServer.Name, machine.CServer.Id
+		} else {
+			name, id= machine.CInstance.Name, machine.CInstance.ServerId
+		}
+	} else {
+		if machine.NewInfra {
+			name, id = machine.Server.Name, machine.Server.Id
+		} else {
+			name, id = machine.Instance.Name, machine.Instance.ServerId
+		}
+	}
 	var command []string = make([]string, 0)
 	command = append( command,  "docker-machine")
 	command = append( command,  "status")
@@ -361,7 +483,21 @@ func (machine *DockerMachine)  ServerStatus(name string, id string, commandPipe 
 	}
 }
 
-func (machine *DockerMachine)  ServerEnv(name string, id string, commandPipe chan MachineMessage) {
+func (machine *DockerMachine)  ServerEnv(commandPipe chan MachineMessage) {
+	var name, id string
+	if machine.IsCloud {
+		if machine.NewInfra {
+			name, id= machine.CServer.Name, machine.CServer.Id
+		} else {
+			name, id= machine.CInstance.Name, machine.CInstance.ServerId
+		}
+	} else {
+		if machine.NewInfra {
+			name, id = machine.Server.Name, machine.Server.Id
+		} else {
+			name, id = machine.Instance.Name, machine.Instance.ServerId
+		}
+	}
 	var command []string = make([]string, 0)
 	command = append( command,  "docker-machine")
 	command = append( command,  "env")
@@ -386,7 +522,21 @@ func (machine *DockerMachine)  ServerEnv(name string, id string, commandPipe cha
 	}
 }
 
-func (machine *DockerMachine)  ServerInspect(name string, id string, commandPipe chan MachineMessage) {
+func (machine *DockerMachine)  ServerInspect(commandPipe chan MachineMessage) {
+	var name, id string
+	if machine.IsCloud {
+		if machine.NewInfra {
+			name, id= machine.CServer.Name, machine.CServer.Id
+		} else {
+			name, id= machine.CInstance.Name, machine.CInstance.ServerId
+		}
+	} else {
+		if machine.NewInfra {
+			name, id = machine.Server.Name, machine.Server.Id
+		} else {
+			name, id = machine.Instance.Name, machine.Instance.ServerId
+		}
+	}
 	var command []string = make([]string, 0)
 	command = append( command,  "docker-machine")
 	command = append( command,  "inspect")
@@ -411,7 +561,21 @@ func (machine *DockerMachine)  ServerInspect(name string, id string, commandPipe
 	}
 }
 
-func (machine *DockerMachine)  ServerIPAddress(name string, id string, commandPipe chan MachineMessage) {
+func (machine *DockerMachine)  ServerIPAddress(commandPipe chan MachineMessage) {
+	var name, id string
+	if machine.IsCloud {
+		if machine.NewInfra {
+			name, id= machine.CServer.Name, machine.CServer.Id
+		} else {
+			name, id= machine.CInstance.Name, machine.CInstance.ServerId
+		}
+	} else {
+		if machine.NewInfra {
+			name, id = machine.Server.Name, machine.Server.Id
+		} else {
+			name, id = machine.Instance.Name, machine.Instance.ServerId
+		}
+	}
 	var command []string = make([]string, 0)
 	command = append( command,  "docker-machine")
 	command = append( command,  "ip")

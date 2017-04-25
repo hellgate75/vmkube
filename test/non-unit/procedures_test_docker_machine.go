@@ -148,9 +148,12 @@ func TestVMFusionDockerMachineCreation() {
 		Project: myProject,
 		InstanceId: Instance1.Id,
 		IsCloud: false,
+		Server: Server1,
+		Instance: Instance1,
+		NewInfra: true,
 	}
 	responseChan := make(chan procedures.MachineMessage)
-	go mySyncDockerMachine.CreateServer(Server1, responseChan)
+	go mySyncDockerMachine.CreateServer(responseChan)
 	wGroup := sync.WaitGroup{}
 	wGroup.Add(1)
 	go func(wGroup *sync.WaitGroup, responseChan chan procedures.MachineMessage) {
@@ -158,6 +161,7 @@ func TestVMFusionDockerMachineCreation() {
 		close(responseChan)
 		fmt.Printf("SyncCommand : %s\nSuccess: %t\n", strings.Join(myResponse.Cmd, " "), (myResponse.Error == nil))
 		fmt.Printf("Response :\n%s\nSupply :\n%s\nComplete: %t\nError: %v\n", myResponse.Result, myResponse.Supply, myResponse.Complete, myResponse.Error)
+		fmt.Printf("Inspection JSON :\n%s\nIPAddress : %s\n", myResponse.InspectJSON, myResponse.IPAddress)
 		wGroup.Done()
 	}(&wGroup, responseChan)
 	wGroup.Wait()
@@ -169,9 +173,12 @@ func TestVirtualBoxDockerMachineCreation() {
 		Project: myProject,
 		InstanceId: Instance1.Id,
 		IsCloud: false,
+		Server: Server2,
+		Instance: Instance2,
+		NewInfra: true,
 	}
 	responseChan := make(chan procedures.MachineMessage)
-	go mySyncDockerMachine.CreateServer(Server2, responseChan)
+	go mySyncDockerMachine.CreateServer(responseChan)
 	wGroup := sync.WaitGroup{}
 	wGroup.Add(1)
 	go func(wGroup *sync.WaitGroup, responseChan chan procedures.MachineMessage) {
@@ -179,6 +186,7 @@ func TestVirtualBoxDockerMachineCreation() {
 		close(responseChan)
 		fmt.Printf("ASyncCommand : %s\nSuccess: %t\n", strings.Join(myResponse.Cmd, " "), (myResponse.Error == nil))
 		fmt.Printf("Response :\n%s\nSupply :\n%s\nComplete: %t\nError: %v\n", myResponse.Result, myResponse.Supply, myResponse.Complete, myResponse.Error)
+		fmt.Printf("Inspection JSON :\n%s\nIPAddress : %s\n", myResponse.InspectJSON, myResponse.IPAddress)
 		wGroup.Done()
 	}(&wGroup, responseChan)
 	wGroup.Wait()

@@ -83,6 +83,9 @@ type SchedulerPool struct {
 	Active        bool
 	Pool          []ScheduleTask
 	WG            sync.WaitGroup
+	KeepAlive     bool
+	PostExecute   bool
+	Callback      func(task ScheduleTask)
 }
 
 func (pool *SchedulerPool) RegisterWaitGroup(wg sync.WaitGroup) {
@@ -94,19 +97,23 @@ func (pool *SchedulerPool) Init() {
 	
 }
 
-func (pool *SchedulerPool) Start() {
+func (pool *SchedulerPool) Start(callback func()) {
 	if ! pool.Active {
 		//start jobs
 		go func(pool *SchedulerPool) {
+			if pool.KeepAlive {
+				pool.WG.Add(1)
+			}
 			var threads = pool.MaxParallel
 			if threads == 0 {
-				threads = runtime.NumCPU()
+				threads = runtime.NumCPU() - 1
 			}
 			log.Println("Max Parallel Processes = " + strconv.Itoa(threads))
 			runtime.GOMAXPROCS(threads + 1)
 			pool.Active = true
 			pool.Pool = make([]ScheduleTask, 0)
 			
+
 			for pool.Active {
 				if threads > len(pool.Pool) {
 					log.Println("Waiting for New Task ...")
@@ -116,6 +123,7 @@ func (pool *SchedulerPool) Start() {
 							log.Println("Pool manager exits on request ...")
 							break
 						} else {
+							pool.WG.Add(1)
 							log.Println("Pool Append Task Id : " + pool.Id)
 							pool.Pool = append(pool.Pool, Task)
 							go Task.Execute()
@@ -132,6 +140,9 @@ func (pool *SchedulerPool) Start() {
 					for i < len(pool.Pool) {
 						if ! pool.Pool[i].IsRunning() {
 							count ++
+							if pool.PostExecute {
+								pool.Callback(pool.Pool[i])
+							}
 							if i > 0 && i < len(pool.Pool) - 1 {
 								pool.Pool = pool.Pool[:i]
 								pool.Pool = append(pool.Pool, pool.Pool[i+1:]...)
@@ -140,6 +151,7 @@ func (pool *SchedulerPool) Start() {
 							}  else {
 								pool.Pool = pool.Pool[:i]
 							}
+							pool.WG.Done()
 						} else {
 							i++
 						}
@@ -154,8 +166,16 @@ func (pool *SchedulerPool) Start() {
 						time.Sleep(1000*time.Millisecond)
 					}
 				}
+				if pool.PostExecute {
+					pool.Callback(task)
+				}
+				pool.WG.Done()
 			}
-			pool.WG.Done()
+			callback()
+			if pool.KeepAlive {
+				pool.WG.Done()
+			}
+			
 		}(pool)
 	}
 }

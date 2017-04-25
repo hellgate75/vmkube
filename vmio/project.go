@@ -35,7 +35,11 @@ func (info *ProjectInfo) Delete() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
 	fileName := baseFolder + string(os.PathSeparator) + ".prj-" + utils.IdToFileFormat(info.Project.Id) + ".vmkube"
-	return model.DeleteIfExists(fileName)
+	_,err := os.Stat(fileName)
+	if err == nil {
+		return model.DeleteIfExists(fileName)
+	}
+	return nil
 }
 
 func (info *ProjectInfo) Import(file string, format string) error {

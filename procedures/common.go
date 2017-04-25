@@ -28,23 +28,28 @@ func DownloadISO(machineType string, version string) (string, bool) {
 }
 
 type MachineActions interface {
-	CreateCloudServer(server model.ProjectCloudServer, commandPipe chan MachineMessage)
-	CreateServer(server model.ProjectServer, commandPipe chan MachineMessage)
-	RemoveServer(name string, id string, commandPipe chan MachineMessage)
-	StopServer(name string, id string, commandPipe chan MachineMessage)
-	StartServer(name string, id string, commandPipe chan MachineMessage)
-	RestartServer(name string, id string, commandPipe chan MachineMessage)
-	ServerStatus(name string, id string, commandPipe chan MachineMessage)
-	ServerEnv(name string, id string, commandPipe chan MachineMessage)
-	ServerInspect(name string, id string, commandPipe chan MachineMessage)
-	ServerIPAddress(name string, id string, commandPipe chan MachineMessage)
+	CreateCloudServer(commandPipe chan MachineMessage)
+	CreateServer(commandPipe chan MachineMessage)
+	RemoveServer(commandPipe chan MachineMessage)
+	StopServer(commandPipe chan MachineMessage)
+	StartServer(commandPipe chan MachineMessage)
+	RestartServer(commandPipe chan MachineMessage)
+	ServerStatus(commandPipe chan MachineMessage)
+	ServerEnv(commandPipe chan MachineMessage)
+	ServerInspect(commandPipe chan MachineMessage)
+	ServerIPAddress(commandPipe chan MachineMessage)
 }
 
 type DockerMachine struct {
 	Project     model.Project
 	Infra       model.Infrastructure
-	InstanceId  string
 	IsCloud     bool
+	InstanceId  string
+	Server      model.ProjectServer
+	CServer     model.ProjectCloudServer
+	Instance    model.Instance
+	CInstance   model.CloudInstance
+	NewInfra    bool
 }
 
 type MachineOperation int
@@ -68,6 +73,8 @@ type MachineMessage struct {
 	Operation   MachineOperation
 	Cmd         []string
 	InstanceId  string
+	IPAddress   string
+	InspectJSON string
 	IsCloud     bool
 	Complete    bool
 	State       MachineState
@@ -81,4 +88,26 @@ type MachineMessage struct {
 func executeSyncCommand(command []string) ([]byte, error) {
 	cmd := exec.Command(command[0], command[1:]...)
 	return cmd.CombinedOutput()
+}
+
+func GetCurrentServerMachine( Project     model.Project,
+												Infra       model.Infrastructure,
+												Server      model.ProjectServer,
+												CServer     model.ProjectCloudServer,
+												Instance    model.Instance,
+												CInstance   model.CloudInstance,
+												InstanceId  string,
+												IsCloud     bool,
+												NewInfra    bool) MachineActions {
+	return MachineActions(&DockerMachine{
+		Project: Project,
+		Infra: Infra,
+		Server: Server,
+		CServer: CServer,
+		Instance:Instance,
+		CInstance:CInstance,
+		InstanceId: InstanceId,
+		IsCloud: IsCloud,
+		NewInfra: NewInfra,
+	})
 }

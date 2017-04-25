@@ -49,7 +49,11 @@ func (info *ProjectIndexInfo) Delete() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
 	fileName := baseFolder + string(os.PathSeparator) + ".vmkubeindex"
-	return model.DeleteIfExists(fileName)
+	_,err := os.Stat(fileName)
+	if err == nil {
+		return model.DeleteIfExists(fileName)
+	}
+	return nil
 }
 
 

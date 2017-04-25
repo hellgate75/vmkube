@@ -45,9 +45,12 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 	pool := scheduler.SchedulerPool{
 		Id: action.NewUUIDString(),
 		MaxParallel: 2,
+		KeepAlive: false,
 	}
 	pool.Init()
-	pool.Start()
+	go pool.Start(func(){
+		pool.WG.Done()
+	})
 	task1 := scheduler.ScheduleTask{
 		Id: action.NewUUIDString(),
 		Jobs: []scheduler.Job{

@@ -35,7 +35,11 @@ func (info *InfrastructureInfo) Delete() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
 	fileName := baseFolder + string(os.PathSeparator) + ".infra-" + utils.IdToFileFormat(info.Infra.ProjectId) + ".vmkube"
-	return model.DeleteIfExists(fileName)
+	_,err := os.Stat(fileName)
+	if err == nil {
+		return model.DeleteIfExists(fileName)
+	}
+	return nil
 }
 
 func (info *InfrastructureInfo) Evaquate() error {

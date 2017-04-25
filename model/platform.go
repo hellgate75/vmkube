@@ -113,73 +113,78 @@ func ToInstanceEngineOpt(opt ProjectEngineOpt) EngineOpt {
 /*
 Describe Server options, contains
 	
-  * Id        (string)     Unique Identifier
+  * Id          (string)     Unique Identifier
 	
-  * ServerId  (string)     Project Server Unique Identifier
+  * ServerId    (string)     Project Server Unique Identifier
   
-  * Name      (string)     Server Local Name
+  * Name        (string)     Server Local Name
    
-  * Roles     ([]string)   Roles used in the deployment plan
+  * Roles       ([]string)   Roles used in the deployment plan
  
-  * Driver    (string)     Server Driver (virtualbox,vmware,hyperv) ref: https://docs.docker.com/machine/drivers/
+  * Driver      (string)     Server Driver (virtualbox,vmware,hyperv) ref: https://docs.docker.com/machine/drivers/
   
-  * Memory    (int)        Memory Size MB
+  * Memory      (int)        Memory Size MB
   
-  * Cpus      (int)        Number of Logical Cores
+  * Cpus        (int)        Number of Logical Cores
   
-  * Swarm     (SwarmOpt)   Swarm Options
+  * Swarm       (SwarmOpt)   Swarm Options
   
-  * Engine    (EngineOpt)  Engine Options
+  * Engine      (EngineOpt)  Engine Options
   
-  * OSType    (string)     Machine OS Type (ref: https://docs.docker.com/machine/drivers/os-base/)
+  * OSType      (string)     Machine OS Type (ref: https://docs.docker.com/machine/drivers/os-base/)
   
-  * OSVersion (string)     Machine OS Version (ref: https://docs.docker.com/machine/drivers/os-base/)
+  * OSVersion   (string)     Machine OS Version (ref: https://docs.docker.com/machine/drivers/os-base/)
   
-  * NoShare   (string)     Do not mount home as shared folder
+  * NoShare     (string)     Do not mount home as shared folder
   
-  * Options   ([][]string) Specific vendor option in format key value pairs array without signs (e.g.: --<driver>)
+  * Options     ([][]string) Specific vendor option in format key value pairs array without signs (e.g.: --<driver>)
   
-  * Hostname  (string)     Network Server Hostname
+  * Hostname    (string)     Network Server Hostname
 
-  * IPAddress (string)     Network IP Address
+  * IPAddress   (string)     Network IP Address
+
+  * InspectJSON (string)      Inspection Data JSON
 */
 type Instance struct {
-	Id        string      `json:"Id" xml:"Id"`
-	ServerId  string      `json:"ServerId" xml:"ServerId"`
-	Name      string      `json:"Name" xml:"Name"`
-	Roles   []string      `json:"Roles" xml:"Roles"`
-	Driver    string      `json:"Driver" xml:"Driver"`
-	Memory      int       `json:"Memory" xml:"Memory"`
-	Cpus        int       `json:"Cpus" xml:"Cpus"`
-	Disks     []Disk      `json:"Disks" xml:"Disks"`
-	Swarm   SwarmOpt      `json:"Swarm" xml:"Swarm"`
-	Engine EngineOpt      `json:"Engine" xml:"Engine"`
-	OSType    string      `json:"OSType" xml:"OSType"`
-	OSVersion string      `json:"OSVersion" xml:"OSVersion"`
-	NoShare     bool      `json:"NoShare" xml:"NoShare"`
-	Options   [][]string  `json:"Options" xml:"Options"`
-	Hostname  string      `json:"Hostname" xml:"Hostname"`
-	IPAddress string      `json:"IPAddress" xml:"IPAddress"`
+	Id          string      `json:"Id" xml:"Id"`
+	ServerId    string      `json:"ServerId" xml:"ServerId"`
+	Name        string      `json:"Name" xml:"Name"`
+	Roles     []string      `json:"Roles" xml:"Roles"`
+	Driver      string      `json:"Driver" xml:"Driver"`
+	Memory        int       `json:"Memory" xml:"Memory"`
+	Cpus          int       `json:"Cpus" xml:"Cpus"`
+	Disks       []Disk      `json:"Disks" xml:"Disks"`
+	Swarm     SwarmOpt      `json:"Swarm" xml:"Swarm"`
+	Engine    EngineOpt      `json:"Engine" xml:"Engine"`
+	OSType      string      `json:"OSType" xml:"OSType"`
+	OSVersion   string      `json:"OSVersion" xml:"OSVersion"`
+	NoShare       bool      `json:"NoShare" xml:"NoShare"`
+	Options     [][]string  `json:"Options" xml:"Options"`
+	Hostname    string      `json:"Hostname" xml:"Hostname"`
+	IPAddress   string      `json:"IPAddress" xml:"IPAddress"`
+	InspectJSON string      `json:"IPAddress" xml:"IPAddress"`
 }
 
 /*
 Describe Cloud Server options, contains
 	
-  * Id        (string)      Unique Identifier
+  * Id          (string)      Unique Identifier
 	
-  * ServerId  (string)      Project Cloud Server Unique Identifier
+  * ServerId    (string)      Project Cloud Server Unique Identifier
   
-  * Name      (string)      Cloud Instance Name
+  * Name        (string)      Cloud Instance Name
   
-  * Driver    (string)      Cloud Server Driver (amazonec2, digitalocean, azure, etc...)
+  * Driver      (string)      Cloud Server Driver (amazonec2, digitalocean, azure, etc...)
   
-  * Hostname  (string)      Cloud Server Hostname
+  * Hostname    (string)      Cloud Server Hostname
   
-  * Roles     ([]string)    Roles used in the deployment plan
+  * Roles       ([]string)    Roles used in the deployment plan
   
-  * Options   ([][]string)  Cloud Server Options
+  * Options     ([][]string)  Cloud Server Options
  
-  * IPAddress (string)      Cloud IP Address
+  * IPAddress   (string)      Cloud IP Address
+
+  * InspectJSON (string)      Inspection Data JSON
  
 	Refers to : https://docs.docker.com/machine/drivers/
 */
@@ -191,7 +196,8 @@ type CloudInstance struct {
 	Hostname  string      `json:"Hostname" xml:"Hostname"`
 	Roles   	[]string    `json:"Roles" xml:"Roles"`
 	Options   [][]string  `json:"Options" xml:"Options"`
-	IPAddress string      `json:"IPAddress" xml:"IPAddress"`
+	IPAddress   string    `json:"IPAddress" xml:"IPAddress"`
+	InspectJSON string    `json:"IPAddress" xml:"IPAddress"`
 }
 
 /*

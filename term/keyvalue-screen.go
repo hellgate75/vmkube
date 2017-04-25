@@ -24,6 +24,7 @@ type KeyValueElement struct {
 	Name  string
 	Value string
 	State TextColorState
+	Ref   interface{}
 }
 
 type KeyValueScreenManager struct {
