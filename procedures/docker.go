@@ -9,6 +9,7 @@ import (
 	"errors"
 	"os/exec"
 	"time"
+	"math/rand"
 )
 
 func DefineCloudServerCommand(server model.ProjectCloudServer) []string {
@@ -212,66 +213,80 @@ func (machine *DockerMachine)  CreateCloudServer(commandPipe chan MachineMessage
 }
 
 func (machine *DockerMachine)  CreateServer(commandPipe chan MachineMessage) {
-	var name, uuid, osname, osver string
-	if machine.NewInfra {
-		name, uuid, osname, osver = machine.Server.Name, machine.Server.Id, machine.Server.OSType, machine.Server.OSVersion
-	} else {
-		name, uuid, osname, osver = machine.Instance.Name, machine.Instance.ServerId, machine.Instance.OSType, machine.Instance.OSVersion
-	}
-	path, success := DownloadISO(osname, osver)
-	if !success {
-		commandPipe <- MachineMessage{
-			Complete: true,
-			Cmd: []string{},
-			Project: machine.Project,
-			Infra: machine.Infra,
-			Operation: CreateServer,
-			Error: errors.New(fmt.Sprintf("Unable to download or recover iso image for OS %s v.%s", osname, osver)),
-			Result: "",
-			State: Machine_State_Error,
-			InstanceId: machine.InstanceId,
-			IsCloud: machine.IsCloud,
-		}
-		return
-	}
+	//var name, uuid, osname, osver string
+	//if machine.NewInfra {
+	//	name, uuid, osname, osver = machine.Server.Name, machine.Server.Id, machine.Server.OSType, machine.Server.OSVersion
+	//} else {
+	//	name, uuid, osname, osver = machine.Instance.Name, machine.Instance.ServerId, machine.Instance.OSType, machine.Instance.OSVersion
+	//}
+	//path, success := DownloadISO(osname, osver)
+	//if !success {
+	//	commandPipe <- MachineMessage{
+	//		Complete: true,
+	//		Cmd: []string{},
+	//		Project: machine.Project,
+	//		Infra: machine.Infra,
+	//		Operation: CreateServer,
+	//		Error: errors.New(fmt.Sprintf("Unable to download or recover iso image for OS %s v.%s", osname, osver)),
+	//		Result: "",
+	//		State: Machine_State_Error,
+	//		InstanceId: machine.InstanceId,
+	//		IsCloud: machine.IsCloud,
+	//	}
+	//	return
+	//}
 	var command []string
-	var diskSize int
-	command, diskSize = DefineLocalServerCommand(machine.Server, path)
-	bytes, err := executeSyncCommand(command)
-	machineName := name + "-" + uuid
+	//var diskSize int
+	//command, diskSize = DefineLocalServerCommand(machine.Server, path)
+	//bytes, err := executeSyncCommand(command)
+	//machineName := name + "-" + uuid
 	var message string = ""
 	time.Sleep(3000)
 	var json string = ""
 	var ipAddress string = ""
-	cmd1 := exec.Command("docker-machine", "inspect", machineName)
-	bytes1, err1 := cmd1.CombinedOutput()
-	if err1 != nil {
-		message += fmt.Sprintf("Inspecting docker machine : %s\n", machineName)
-		message += err1.Error() + "\n"
-	} else {
-		json = fmt.Sprintf("%s\n",bytes1)
+	
+	/*
+	Fake code
+	 */
+	message = "Welldone!!"
+	json = "{\"messge\":\"OK\"}"
+	ipAddress="1.1.1.1"
+	time.Sleep(20*time.Second)
+	bytes := []byte{}
+	var err error
+	if rand.Int() % 5 == 0 {
+		err = errors.New("Cazzo di errore ....")
 	}
-	machine.Instance.InspectJSON = json
-	cmd2 := exec.Command("docker-machine", "ip", machineName)
-	bytes2, err2 := cmd2.CombinedOutput()
-	if err2 != nil {
-		message += fmt.Sprintf("Getting IPAddress from docker machine : %s\n", machineName)
-		message += err2.Error() + "\n"
-	} else {
-		ipAddress = fmt.Sprintf("%s\n",bytes2)
-	}
-	cmd3 := exec.Command("docker-machine", "stop", machineName)
-	message += fmt.Sprintf("Stopping docker machine : %s\n", machineName)
-	bytesArray, _ := cmd3.CombinedOutput()
-	message += fmt.Sprintf("%s\n",bytesArray)
-	if diskSize > 0 {
-		message += fmt.Sprintf("Resizing disk to %sGB", diskSize)
-		file := model.HomeFolder() + string(os.PathSeparator) + ".docker" + string(os.PathSeparator) + "machine" + string(os.PathSeparator) + "machines" +
-			string(os.PathSeparator) +  machineName + string(os.PathSeparator) + "disk.vmdk"
-		cmd4 := exec.Command("vmware-vdiskmanager", "-x", fmt.Sprintf("%dGB", diskSize), file)
-		bytesArray, _ := cmd4.CombinedOutput()
-		message += fmt.Sprintf("%s\n",bytesArray)
-	}
+	
+	//cmd1 := exec.Command("docker-machine", "inspect", machineName)
+	//bytes1, err1 := cmd1.CombinedOutput()
+	//if err1 != nil {
+	//	message += fmt.Sprintf("Inspecting docker machine : %s\n", machineName)
+	//	message += err1.Error() + "\n"
+	//} else {
+	//	json = fmt.Sprintf("%s\n",bytes1)
+	//}
+	//machine.Instance.InspectJSON = json
+	//cmd2 := exec.Command("docker-machine", "ip", machineName)
+	//bytes2, err2 := cmd2.CombinedOutput()
+	//if err2 != nil {
+	//	message += fmt.Sprintf("Getting IPAddress from docker machine : %s\n", machineName)
+	//	message += err2.Error() + "\n"
+	//} else {
+	//	ipAddress = fmt.Sprintf("%s\n",bytes2)
+	//}
+	//cmd3 := exec.Command("docker-machine", "stop", machineName)
+	//message += fmt.Sprintf("Stopping docker machine : %s\n", machineName)
+	//bytesArray, _ := cmd3.CombinedOutput()
+	//message += fmt.Sprintf("%s\n",bytesArray)
+	//if diskSize > 0 {
+	//	message += fmt.Sprintf("Resizing disk to %sGB", diskSize)
+	//	file := model.HomeFolder() + string(os.PathSeparator) + ".docker" + string(os.PathSeparator) + "machine" + string(os.PathSeparator) + "machines" +
+	//		string(os.PathSeparator) +  machineName + string(os.PathSeparator) + "disk.vmdk"
+	//	cmd4 := exec.Command("vmware-vdiskmanager", "-x", fmt.Sprintf("%dGB", diskSize), file)
+	//	bytesArray, _ := cmd4.CombinedOutput()
+	//	message += fmt.Sprintf("%s\n",bytesArray)
+	//}
 	commandPipe <- MachineMessage{
 		Complete: true,
 		Cmd: command,

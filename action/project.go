@@ -1349,7 +1349,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	pool := scheduler.SchedulerPool{
 		Id: NewUUIDString(),
 		MaxParallel: NumThreads,
-		KeepAlive: false,
+		KeepAlive: true,
 		PostExecute: true,
 		Callback: func(task scheduler.ScheduleTask) {
 			//Any completed task come here ....
@@ -1373,13 +1373,12 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	}
 	jobsArrayLen += len(creationCouples)
 	go pool.Start(func() {
-		utils.PrintlnImportant(fmt.Sprintf("Task executed:  %d", jobsArrayLen))
 	})
 	var maxJobNameLen int = 0
 	var termElements []term.KeyValueElement = make([]term.KeyValueElement, 0)
 	for i := 0; i < jobsArrayLen; i++ {
 		if ! creationCouples[i].IsCloud {
-			name := fmt.Sprintf("Create Instance Server %s" + creationCouples[i].Instance.Name)
+			name := fmt.Sprintf("Create Instance Server %s", creationCouples[i].Instance.Name)
 			if existsInfrastructure {
 				name = "Re" + name
 			}
@@ -1389,12 +1388,12 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			termElem := term.KeyValueElement{
 				Id: NewUUIDString(),
 				Name: name,
-				State: term.WHITE,
+				State: term.StateColorWhite,
 				Value: "waiting...",
 			}
 			termElements = append(termElements, termElem)
 		} else {
-			name := fmt.Sprintf("Create Instance Server %s" + creationCouples[i].CInstance.Name)
+			name := fmt.Sprintf("Create Cloud Instance Server %s", creationCouples[i].CInstance.Name)
 			if existsInfrastructure {
 				name = "Re" + name
 			}
@@ -1404,7 +1403,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			termElem := term.KeyValueElement{
 				Id: NewUUIDString(),
 				Name: name,
-				State: term.WHITE,
+				State: term.StateColorWhite,
 				Value: "waiting...",
 			}
 			termElements = append(termElements, termElem)
@@ -1456,14 +1455,14 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			}
 		}
 	}(ServerCreationAnswerChannel,jobsArrayLen,termElements)
-	go func(ServerCreationAnswerChannel chan operations.ServerOperationsJob, jobsArrayLen int, termElements []term.KeyValueElement, errorsList []error){
-		
+	go func(ServerCreationAnswerChannel chan operations.ServerOperationsJob, termElements []term.KeyValueElement){
+		var resultsSeparator string = " status: "
 		var screenManager term.KeyValueScreenManager
 		if ! utils.NO_COLORS {
 			screenManager = term.KeyValueScreenManager{
 				Elements: termElements,
 				MessageMaxLen: 25,
-				Separator: " ... ",
+				Separator: resultsSeparator,
 				OffsetCols: 0,
 				OffsetRows: 0,
 				TextLen: maxJobNameLen,
@@ -1474,7 +1473,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		}
 		
 		var answerCounter int = 0
-		for answerCounter < jobsArrayLen - 1 {
+		for answerCounter < jobsArrayLen {
 			serverOpsJob := <- ServerCreationAnswerChannel
 			machineMessage := serverOpsJob.MachineMessage
 			activity := serverOpsJob.Activity
@@ -1514,21 +1513,22 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 					message = "failed!!"
 				}
 				if activity.IsCloud {
-					fmt.Println(fmt.Sprintf("Create Instance Server %s ... %s", utils.StrPad(activity.CInstance.Name,maxJobNameLen), message))
+					fmt.Println(fmt.Sprintf("%s%s%s", utils.StrPad("Create Cloud Instance Server "+activity.CInstance.Name,maxJobNameLen), resultsSeparator, message))
 				} else {
-					fmt.Println(fmt.Sprintf("Create Instance Server %s ... %s", utils.StrPad(activity.Instance.Name,maxJobNameLen), message))
+					fmt.Println(fmt.Sprintf("%s%s%s", utils.StrPad("Create Instance Server "+activity.Instance.Name,maxJobNameLen), resultsSeparator, message))
 				}
 			} else {
 				//Interactive ...
 				keyTerm := serverOpsJob.OwnState
 				if serverOpsJob.State {
-					keyTerm.State = term.YELLOW
-					keyTerm.Value = term.ScreenBold("failed!!")
+					keyTerm.State = term.StateColorYellow
+					keyTerm.Value = "processing..."
 				} else {
 					if machineMessage.Error != nil {
-						
+						keyTerm.State = term.StateColorRed
+						keyTerm.Value = term.ScreenBold("failed!!")
 					} else {
-						keyTerm.State = term.GREEN
+						keyTerm.State = term.StateColorGreen
 						keyTerm.Value = term.ScreenBold("success!!")
 					}
 				}
@@ -1537,12 +1537,15 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 					errorsList = append(errorsList, machineMessage.Error)
 				}
 			}
-			if !serverOpsJob.State {
+			if ! serverOpsJob.State {
 				answerCounter++
 			}
 		}
-	}(ServerCreationAnswerChannel,jobsArrayLen,termElements,errorsList)
+		pool.Stop()
+	}(ServerCreationAnswerChannel,termElements)
 	pool.WG.Wait()
+	time.Sleep(2*time.Second)
+	utils.PrintlnImportant(fmt.Sprintf("Task executed:  %d", jobsArrayLen))
 	
 	reOpt := ""
 	if existsInfrastructure {
@@ -1583,7 +1586,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	
 
 	response := Response{
-		Status: false,
+		Status: true,
 		Message: "Success",
 	}
 	return response, nil
@@ -1721,7 +1724,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 		}
 		return response, errors.New("Unable to execute task")
 	}
-	if ! descriptor.Open {
+	if descriptor.Id !="" && !descriptor.Open {
 		response := Response{
 			Status: false,
 			Message: "Project closed!!",

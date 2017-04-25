@@ -33,35 +33,35 @@ func (job ServerOperationsJob) Start() {
 		switch job.Activity.Task {
 		case CreateMachine:
 			if job.Activity.IsCloud {
-					machineAdapter.CreateCloudServer(job.CommandPipe)
+				go machineAdapter.CreateCloudServer(job.CommandPipe)
 			} else {
-				machineAdapter.CreateServer(job.CommandPipe)
+				go machineAdapter.CreateServer(job.CommandPipe)
 			}
 			break
 			case DestroyMachine:
-				machineAdapter.RemoveServer(job.CommandPipe)
+				go machineAdapter.RemoveServer(job.CommandPipe)
 				break
 			case StopMachine:
-				machineAdapter.StopServer(job.CommandPipe)
+				go machineAdapter.StopServer(job.CommandPipe)
 				break
 			case StartMachine:
-				machineAdapter.StartServer(job.CommandPipe)
+				go machineAdapter.StartServer(job.CommandPipe)
 				break
 			case RestartMachine:
-				machineAdapter.RestartServer(job.CommandPipe)
+				go machineAdapter.RestartServer(job.CommandPipe)
 				break
 			case MachineStatus:
-				machineAdapter.ServerStatus(job.CommandPipe)
+				go machineAdapter.ServerStatus(job.CommandPipe)
 				break
 			case MachineEnv:
-				machineAdapter.ServerEnv(job.CommandPipe)
+				go machineAdapter.ServerEnv(job.CommandPipe)
 				break
 			case MachineInspect:
-				machineAdapter.ServerInspect(job.CommandPipe)
+				go machineAdapter.ServerInspect(job.CommandPipe)
 				break
 			case MachineIPAddress:
 				break
-				machineAdapter.ServerIPAddress(job.CommandPipe)
+				go machineAdapter.ServerIPAddress(job.CommandPipe)
 			default:
 				panic("No matching ActivityTask for Job")
 		}

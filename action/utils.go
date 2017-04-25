@@ -77,6 +77,7 @@ func GetInteger(input string, defaultValue int) int {
 
 func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error) {
 	infrastructure := model.Infrastructure{}
+	infrastructure.Id = NewUUIDString()
 	for _,domain := range project.Domains {
 		newDomain := model.Domain{
 			Id: NewUUIDString(),
