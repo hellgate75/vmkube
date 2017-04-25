@@ -1,7 +1,6 @@
 package term
 
 import (
-	tm "github.com/buger/goterm"
 	"fmt"
 	"vmkube/utils"
 	"time"
@@ -43,28 +42,28 @@ type KeyValueScreenManager struct {
 func (screenData *KeyValueScreenManager) getElementScreenColor(elem KeyValueElement) int {
 	switch elem.State {
 		case StateColorWhite:
-			return tm.WHITE
+			return WHITE
 		case StateColorYellow:
-			return tm.YELLOW
+			return YELLOW
 		case StateColorGreen:
-			return tm.GREEN
+			return GREEN
 		case StateColorRed:
-			return tm.RED
+			return RED
 		case StateColorBlack:
-			return tm.BLACK
+			return BLACK
 		case StateColorBlue:
-			return tm.BLUE
+			return BLUE
 		case StateColorCyan:
-			return tm.CYAN
+			return CYAN
 		default:
-			return tm.MAGENTA
+			return MAGENTA
 	}
-	return tm.WHITE
+	return WHITE
 }
 
 
 func (screenData *KeyValueScreenManager) drawGrid() {
-	tm.Clear() // Clear current screen
+	ScreenClear() // Clear current screen
 	if screenData.TextLen == 0 {
 		for _,elem := range screenData.Elements {
 			if len(elem.Name) > screenData.TextLen {
@@ -73,10 +72,10 @@ func (screenData *KeyValueScreenManager) drawGrid() {
 		}
 	}
 	for i := 0; i< len(screenData.Elements); i++  {
-		tm.MoveCursor(i + screenData.OffsetCols + 1, screenData.OffsetRows + 1)
-		text := tm.Color(fmt.Sprintf("%s%s%s", utils.StrPad(screenData.Elements[i].Name, screenData.TextLen), screenData.Separator, utils.StrPad(screenData.Elements[i].Value, screenData.MessageMaxLen)), screenData.getElementScreenColor(screenData.Elements[i]))
-		tm.Println(text)
-		tm.Flush()
+		ScreenMoveCursor(i + screenData.OffsetCols + 1, screenData.OffsetRows + 1)
+		text := ScreenColor(fmt.Sprintf("%s%s%s", utils.StrPad(screenData.Elements[i].Name, screenData.TextLen), screenData.Separator, ScreenBold(utils.StrPad(screenData.Elements[i].Value, screenData.MessageMaxLen))), screenData.getElementScreenColor(screenData.Elements[i]))
+		ScreenPrintln(text)
+		ScreenFlush()
 	}
 	go func(screenData *KeyValueScreenManager){
 		for screenData.Active {
@@ -84,10 +83,10 @@ func (screenData *KeyValueScreenManager) drawGrid() {
 			index := screenData.IndexOf(update)
 			if index >= 0 {
 				screenData.Elements[index] = update
-				tm.MoveCursor(index + screenData.OffsetCols + 1, screenData.OffsetRows + 1)
-				text := tm.Color(fmt.Sprintf("%s%s%s", utils.StrPad(screenData.Elements[index].Name, screenData.TextLen), screenData.Separator, utils.StrPad(screenData.Elements[index].Value, screenData.MessageMaxLen)), screenData.getElementScreenColor(screenData.Elements[index]))
-				tm.Println(text)
-				tm.Flush()
+				ScreenMoveCursor(index + screenData.OffsetCols + 1, screenData.OffsetRows + 1)
+				text := ScreenColor(fmt.Sprintf("%s%s%s", utils.StrPad(screenData.Elements[index].Name, screenData.TextLen), screenData.Separator, ScreenBold(utils.StrPad(screenData.Elements[index].Value, screenData.MessageMaxLen))), screenData.getElementScreenColor(screenData.Elements[index]))
+				ScreenPrintln(text)
+				ScreenFlush()
 			}
 		}
 	}(screenData)
@@ -124,7 +123,7 @@ func (screenData *KeyValueScreenManager) IndexOf(elem KeyValueElement) int {
 func (screenData *KeyValueScreenManager) Stop() {
 	time.Sleep(1 * time.Second)
 	screenData.CtrlChannel <- false
-	tm.Clear()
+	ScreenClear()
 }
 
 func (screenData *KeyValueScreenManager) Start() {
@@ -133,19 +132,19 @@ func (screenData *KeyValueScreenManager) Start() {
 }
 
 //func ProjectOnScreen(grid []ProjectBoxElem, channel chan ProjectBoxElem, onOfCChannel chan bool) {
-//	tm.Clear() // Clear current screen
+//	Clear() // Clear current screen
 //	for _,elem := range grid {
-//		tm.Println(fmt.Sprintf())
+//		Println(fmt.Sprintf())
 //	}
 //
 //	for {
 //		// By moving cursor to top-left position we ensure that console output
 //		// will be overwritten each time, instead of adding new.
-//		tm.MoveCursor(1, 1)
+//		MoveCursor(1, 1)
 //
-//		tm.Println("Current Time:", time.Now().Format(time.RFC1123))
+//		Println("Current Time:", time.Now().Format(time.RFC1123))
 //
-//		tm.Flush() // Call it every time at the end of rendering
+//		Flush() // Call it every time at the end of rendering
 //
 //		time.Sleep(time.Second)
 //	}

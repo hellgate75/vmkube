@@ -11,14 +11,13 @@ func NewUUIDString()	string {
 	return  uuid.NewV4().String()
 }
 
-
 func main() {
 	var elems []term.KeyValueElement = make([]term.KeyValueElement, 0)
 	for i := 0; i < 10; i++ {
 		elems = append(elems, term.KeyValueElement{
 			Id: NewUUIDString(),
 			Name: fmt.Sprintf("Test Line Number %d", (i+1)),
-			Value: "",
+			Value: "waiting...",
 		})
 	}
 	manager := term.KeyValueScreenManager{
