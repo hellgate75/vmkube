@@ -16,12 +16,12 @@ import (
 )
 
 func StrPad(instr string, capping int) string {
-	strlen := len(instr)
-	if strlen == capping  {
+	strLen := len(instr)
+	if strLen == capping  {
 		return  instr
 	} else  {
-		if strlen < capping {
-			padding := strings.Repeat(" ", (capping-strlen))
+		if strLen < capping {
+			padding := strings.Repeat(" ", (capping- strLen))
 			return  instr + padding
 		} else {
 			val := instr[0:(capping-2)]

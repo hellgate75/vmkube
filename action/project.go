@@ -1572,6 +1572,8 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		return response, errors.New("Unable to execute task")
 	}
 	
+	utils.PrintlnWarning(fmt.Sprintf("Saving new Project '%s' Infrastrcucture '%s' descriptors", Name, InfraName))
+	
 	err = vmio.SaveInfrastructure(Infrastructure)
 	
 	if err != nil {
