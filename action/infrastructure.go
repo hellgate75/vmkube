@@ -34,7 +34,7 @@ func (request *CmdRequest) CheckInfra() bool {
 				}
 				if !found {
 					correctness = false
-					fmt.Printf("Option '--%s' is mandatory!!\n", option.Option)
+					utils.PrintlnError(fmt.Sprintf("Option '--%s' is mandatory!!\n", option.Option))
 				}
 			}
 		}
@@ -119,9 +119,9 @@ func (request *CmdRequest) ListInfras() (Response, error) {
 		return  response, errors.New("Unable to execute task")
 	}
 	if len(indexes.Projects) > 0 {
-		fmt.Printf("%s  %s  %s\n", utils.StrPad("Infrastructure Id", 40), utils.StrPad("Infrastructure Name", 40), utils.StrPad("Active", 6))
+		utils.PrintlnImportant(fmt.Sprintf("%s  %s  %s", utils.StrPad("Infrastructure Id", 40), utils.StrPad("Infrastructure Name", 40), utils.StrPad("Active", 6)))
 	} else {
-		fmt.Printf("No Infrastructures found\n")
+		utils.PrintlnImportant("No Infrastructures found")
 	}
 	for _,index := range indexes.Projects {
 		active := "no"

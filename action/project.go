@@ -40,7 +40,7 @@ func (request *CmdRequest) CheckProject() bool {
 				}
 				if !found {
 					correctness = false
-					fmt.Printf("Option '--%s' is mandatory!!\n", option.Option)
+					utils.PrintlnError(fmt.Sprintf("Option '--%s' is mandatory!!", option.Option))
 				}
 			}
 		}
@@ -165,10 +165,10 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		existanceClause = ""
 		existanceClause2 = "proceding with overwrite of existing project"
 	}
-	fmt.Printf("\nProject: %s does%s exist, now %s...\n", Name, existanceClause, existanceClause2 )
+	utils.PrintlnWarning(fmt.Sprintf("\nProject: %s does%s exist, now %s...", Name, existanceClause, existanceClause2 ))
 	project := model.Project{}
 	if InputFile != "" && InputFormat != "" {
-		fmt.Printf("\nLoading project %s from file '%s' using format '%s'...\n", Name, InputFile, InputFormat )
+		utils.PrintlnWarning(fmt.Sprintf("\nLoading project %s from file '%s' using format '%s'...", Name, InputFile, InputFormat ))
 		project, err = vmio.ImportUserProject(InputFile, InputFormat)
 		if err != nil {
 			response := Response{
@@ -180,7 +180,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		project.LastMessage = "Project imported from file " + InputFile + ", format " + InputFormat
 		project.Name = Name
 	} else {
-		fmt.Printf("\nDefining new empty project %s...\n", Name )
+		utils.PrintlnWarning(fmt.Sprintf("\nDefining new empty project %s...", Name ))
 		project.Id = NewUUIDString()
 		project.Name = Name
 		project.Created = time.Now()
@@ -221,7 +221,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			infra, err := vmio.LoadInfrastructure(descriptor.Id)
 			if err == nil {
 				infra.Save(InfraBackup)
-				fmt.Printf("Emergency Infrastructure backup at : %s\n", InfraBackup)
+				utils.PrintlnImportant(fmt.Sprintf("Emergency Infrastructure backup at : %s", InfraBackup))
 			}
 		}
 		response, err := request.DeleteInfra()
@@ -235,7 +235,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			project, err := vmio.LoadProject(descriptor.Id)
 			if err == nil {
 				vmio.ExportUserProject(project,ProjectBackup,"json",true)
-				fmt.Printf("Emergency Project backup at : %s\n", ProjectBackup)
+				utils.PrintlnImportant(fmt.Sprintf("Emergency Project backup at : %s", ProjectBackup))
 			}
 		}
 		request.Arguments.Options = append(request.Arguments.Options, []string{"skip-indexes", "true"})
@@ -251,7 +251,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			infra, err := vmio.LoadInfrastructure(descriptor.Id)
 			if err == nil {
 				infra.Save(InfraBackup)
-				fmt.Printf("Emergency Infrastructure backup at : %s\n", InfraBackup)
+				utils.PrintlnImportant(fmt.Sprintf("Emergency Infrastructure backup at : %s", InfraBackup))
 			}
 		}
 		if (AllowInfraDeletion) {
@@ -313,12 +313,12 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	}
 	
 	if ProjectBackup != "" {
-		fmt.Printf("Removing Project backup at : %s\n", ProjectBackup)
+		utils.PrintlnWarning(fmt.Sprintf("Removing Project backup at : %s", ProjectBackup))
 		os.Remove(ProjectBackup)
 	}
 	
 	if InfraBackup != "" {
-		fmt.Printf("Removing Infrastructure backup at : %s\n", InfraBackup)
+		utils.PrintlnWarning(fmt.Sprintf("Removing Infrastructure backup at : %s", InfraBackup))
 		os.Remove(InfraBackup)
 	}
 	
@@ -682,7 +682,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			infra, err := vmio.LoadInfrastructure(descriptor.Id)
 			if err == nil {
 				infra.Save(InfraBackup)
-				fmt.Printf("Emergency Infrastructure backup at : %s\n", InfraBackup)
+				utils.PrintlnImportant(fmt.Sprintf("Emergency Infrastructure backup at : %s", InfraBackup))
 			}
 		}
 		if (AllowInfraDeletion) {
@@ -717,7 +717,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 	}
 	
 	if InfraBackup != "" {
-		fmt.Printf("Removing Infrastructure backup at : %s\n", InfraBackup)
+		utils.PrintlnWarning(fmt.Sprintf("Removing Infrastructure backup at : %s", InfraBackup))
 		os.Remove(InfraBackup)
 	}
 	
@@ -787,7 +787,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 		request.BuildProject()
 	}
 	
-	fmt.Println("Alter Project : Command Executed correctly!! ")
+	utils.PrintlnSuccess("Alter Project : Command Executed correctly!!")
 	response := Response{
 		Status: true,
 		Message: "Success",
@@ -815,11 +815,10 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 			}
 		}
 		if TypeVal == "" {
-			fmt.Println("Element Type not provided ...\n")
 			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 			return Response{
-				Message: "",
-				Status: true,}, nil
+				Message: "Element Type not provided",
+				Status: false,}, nil
 		} else {
 			if Sample != "" {
 				if "json" == Sample || "xml" == Sample {
@@ -829,7 +828,7 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 							if "json" == Sample {
 								bytes, err := utils.GetJSONFromElem(define.Sample, true)
 								if err != nil {
-									fmt.Printf("Error printing in output format : %s\n", Sample)
+									utils.PrintlnError(fmt.Sprintf("Error: Output format '%s' not provided", Sample))
 									PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 									return Response{
 										Message: "",
@@ -842,7 +841,7 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 							} else {
 								bytes, err := utils.GetXMLFromElem(define.Sample, true)
 								if err != nil {
-									fmt.Printf("Error printing in output format : %s\n", Sample)
+									utils.PrintlnError(fmt.Sprintf("Error: Output format '%s' not provided", Sample))
 									PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 									return Response{
 										Message: "",
@@ -855,13 +854,13 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 							}
 						}
 					}
-					fmt.Printf("Unable to find Type : %s\n",TypeVal)
+					utils.PrintlnError(fmt.Sprintf("Project Type '%s' not provided",TypeVal))
 					PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 					return Response{
 						Message: "",
 						Status: true,}, nil
 				}
-				fmt.Printf("Wrong output format : %s\n", Sample)
+				utils.PrintlnError(fmt.Sprintf("Error: Output format '%s' not provided", Sample))
 				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 				return Response{
 					Message: "",
@@ -878,14 +877,14 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 								Message: "",
 								Status: true,}, nil
 						}
-						fmt.Printf("Unable to describe Type : %s\n",TypeVal)
+						utils.PrintlnError(fmt.Sprintf("Project Type '%s' not provided",TypeVal))
 						PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 						return Response{
 							Message: "",
 							Status: true,}, nil
 					}
 				}
-				fmt.Printf("Unable to find Type : %s\n",TypeVal)
+				utils.PrintlnError(fmt.Sprintf("Project Type '%s' not provided",TypeVal))
 				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 				return Response{
 					Message: "",
@@ -948,7 +947,7 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 	if existsInfrastructure {
 		existanceClause = " and proceding with deletion of existing Infrastructure named'"+descriptor.InfraName+"'"
 	}
-	fmt.Printf("\nProceding with deletion of Project named  '%s'%s...\n", descriptor.Name, existanceClause )
+	utils.PrintlnWarning(fmt.Sprintf("\nProceding with deletion of Project named  '%s'%s...", descriptor.Name, existanceClause ))
 	
 	
 	indexes,err := vmio.LoadIndex()
@@ -1016,7 +1015,7 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 	}
 	vmio.UnlockIndex(indexes)
 	if ! SkipIndexes {
-		fmt.Printf("\nProceding with deletion of indexes for Project named  '%s'...\n", descriptor.Name )
+		utils.PrintlnWarning(fmt.Sprintf("\nProceding with deletion of indexes for Project named  '%s'...", descriptor.Name ))
 		err := DeleteProjectActionChanges(descriptor.Id)
 		if err != nil {
 			response := Response{
@@ -1052,9 +1051,9 @@ func (request *CmdRequest) ListProjects() (Response, error) {
 		return  response, errors.New("Unable to execute task")
 	}
 	if len(indexes.Projects) > 0 {
-		fmt.Printf("%s  %s  %s  %s  %s\n", utils.StrPad("Project Id", 40), utils.StrPad("Project Name", 40), utils.StrPad("Open", 4), utils.StrPad("Infrastructure Name", 40), utils.StrPad("Active", 6))
+		utils.PrintlnImportant(fmt.Sprintf("%s  %s  %s  %s  %s", utils.StrPad("Project Id", 40), utils.StrPad("Project Name", 40), utils.StrPad("Open", 4), utils.StrPad("Infrastructure Name", 40), utils.StrPad("Active", 6)))
 	} else {
-		fmt.Println("No Projects found\n")
+		utils.PrintlnImportant("No Projects found")
 	}
 	for _,index := range indexes.Projects {
 		open := "no"
@@ -1204,7 +1203,7 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 					fmt.Printf("JSON : %s\n", change.JSONImage )
 				}
 			} else {
-				fmt.Println("No changes available")
+				utils.PrintlnImportant("No changes available")
 			}
 		}
 	}
@@ -1300,7 +1299,8 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		return  response, errors.New("Unable to execute task")
 	}
 	
-	fmt.Printf("Infrastructure JSON:\n%s\n", string(utils.GetJSONFromObj(Infrastructure, true)))
+	utils.PrintlnImportant("Infrastructure JSON:")
+	fmt.Printf("%s\n", string(utils.GetJSONFromObj(Infrastructure, true)))
 	
 	if existsInfrastructure {
 		if ! Rebuild {
@@ -1332,7 +1332,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			infra, err := vmio.LoadInfrastructure(descriptor.Id)
 			if err == nil {
 				infra.Save(InfraBackup)
-				fmt.Printf("Emergency Infrastructure backup at : %s\n", InfraBackup)
+				utils.PrintlnImportant(fmt.Sprintf("Emergency Infrastructure backup at : %s", InfraBackup))
 			}
 		}
 		response, err := request.DeleteInfra()
@@ -1341,11 +1341,11 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		}
 	}
 	
-	fmt.Println("Now Proceding with machine creation ...!!")
+	utils.PrintlnImportant("Now Proceding with machine creation ...!!")
 	
 	
 	
-	fmt.Printf("Unable to complete Rebuild of project %s : Build Project not implemented!!\n", Name)
+	utils.PrintlnError(fmt.Sprintf("Unable to complete Rebuild of project %s : Build Project not implemented!!", Name))
 	response := Response{
 		Status: false,
 		Message: "Not Implemented",
@@ -1586,7 +1586,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 				project, err := vmio.LoadProject(descriptor.Id)
 				if err == nil {
 					vmio.ExportUserProject(project,ProjectBackup,"json",true)
-					fmt.Printf("Emergency Project backup at : %s\n", ProjectBackup)
+					utils.PrintlnImportant(fmt.Sprintf("Emergency Project backup at : %s", ProjectBackup))
 				}
 			}
 			
@@ -1637,7 +1637,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			infra, err := vmio.LoadInfrastructure(descriptor.Id)
 			if err == nil {
 				infra.Save(InfraBackup)
-				fmt.Printf("Emergency Infrastructure backup at : %s\n", InfraBackup)
+				utils.PrintlnImportant(fmt.Sprintf("Emergency Infrastructure backup at : %s", InfraBackup))
 			}
 		}
 		if (AllowInfraDeletion) {
@@ -1687,7 +1687,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			UpdateIndexWithProjectsDescriptor(descriptor, false)
 			return  response, errors.New("Unable to execute task")
 		}
-		fmt.Printf("Successfully imported Project '%s' from file '%s' in format '%s'\n", Name, File, Format)
+		utils.PrintlnSuccess(fmt.Sprintf("Successfully imported Project '%s' from file '%s' in format '%s'", Name, File, Format))
 	} else {
 		if ! Found {
 			response := Response{
@@ -1732,9 +1732,9 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 					}
 					return  response, errors.New("Unable to execute task")
 				}
-				fmt.Printf("Successfully imported Project '%s' Domains from file '%s' in format '%s'\n", Name, File, Format)
+				utils.PrintlnSuccess(fmt.Sprintf("Successfully imported Project '%s' Domains from file '%s' in format '%s'", Name, File, Format))
 			} else {
-				fmt.Printf("Warning: No Domain to import from file '%s' in format '%s'\n", File, Format)
+				utils.PrintlnWarning(fmt.Sprintf("Warning: No Domain to import from file '%s' in format '%s'", File, Format))
 			}
 			break
 		case SNetwork:
@@ -1787,9 +1787,9 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 					}
 					return  response, errors.New("Unable to execute task")
 				}
-				fmt.Printf("Successfully imported Project '%s' Networks from file '%s' in format '%s'\n", Name, File, Format)
+				utils.PrintlnSuccess(fmt.Sprintf("Successfully imported Project '%s' Networks from file '%s' in format '%s'", Name, File, Format))
 			} else {
-				fmt.Printf("Warning: No Network to import from file '%s' in format '%s'\n", File, Format)
+				utils.PrintlnWarning(fmt.Sprintf("Warning: No Network to import from file '%s' in format '%s'", File, Format))
 			}
 			break
 		case  LServer:
@@ -1848,9 +1848,9 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 					}
 					return  response, errors.New("Unable to execute task")
 				}
-				fmt.Printf("Successfully imported Project '%s' Local Servers from file '%s' in format '%s'\n", Name, File, Format)
+				utils.PrintlnSuccess(fmt.Sprintf("Successfully imported Project '%s' Local Servers from file '%s' in format '%s'", Name, File, Format))
 			} else {
-				fmt.Printf("Warning: No Server to import from file '%s' in format '%s'\n", File, Format)
+				utils.PrintlnWarning(fmt.Sprintf("Warning: No Server to import from file '%s' in format '%s'", File, Format))
 			}
 			break
 		case CLServer:
@@ -1909,9 +1909,9 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 					}
 					return  response, errors.New("Unable to execute task")
 				}
-				fmt.Printf("Successfully imported Project '%s' Cloud Servers from file '%s' in format '%s'\n", Name, File, Format)
+				utils.PrintlnSuccess(fmt.Sprintf("Successfully imported Project '%s' Cloud Servers from file '%s' in format '%s'", Name, File, Format))
 			} else {
-				fmt.Printf("Warning: No Server to import from file '%s' in format '%s'\n", File, Format)
+				utils.PrintlnWarning(fmt.Sprintf("Warning: No Server to import from file '%s' in format '%s'", File, Format))
 			}
 			break
 		default:
@@ -2000,14 +2000,14 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 					}
 					return  response, errors.New("Unable to execute task")
 				}
-				fmt.Printf("Successfully imported Project '%s' Installation Plans from file '%s' in format '%s'\n", Name, File, Format)
+				utils.PrintlnSuccess(fmt.Sprintf("Successfully imported Project '%s' Installation Plans from file '%s' in format '%s'", Name, File, Format))
 			} else {
-				fmt.Printf("Warning: No Plan to import from file '%s' in format '%s'\n", File, Format)
+				utils.PrintlnWarning(fmt.Sprintf("Warning: No Plan to import from file '%s' in format '%s'", File, Format))
 			}
 		}
 	}
 	if ProjectBackup != "" {
-		fmt.Printf("Removing Project backup file : %s\n", ProjectBackup)
+		utils.PrintlnWarning(fmt.Sprintf("Removing Project backup file : %s", ProjectBackup))
 		err = model.DeleteIfExists(ProjectBackup)
 	}
 	if existsProject && existsInfrastructure {
@@ -2167,7 +2167,7 @@ func (request *CmdRequest) ExportProject() (Response, error) {
 				}
 				return  response, errors.New("Unable to execute task")
 			}
-			fmt.Printf("Successfully exported Project '%s' Domains to file '%s' in format '%s'\n ", Name, File, Format)
+			utils.PrintlnSuccess(fmt.Sprintf("Successfully exported Project '%s' Domains to file '%s' in format '%s' ", Name, File, Format))
 			break
 		case SNetwork:
 			var networks []ExportImportNetwork = make([]ExportImportNetwork, 0)
@@ -2189,7 +2189,7 @@ func (request *CmdRequest) ExportProject() (Response, error) {
 				}
 				return  response, errors.New("Unable to execute task")
 			}
-			fmt.Printf("Successfully exported Project '%s' Networks to file '%s' in format '%s'\n", Name, File, Format)
+			utils.PrintlnSuccess(fmt.Sprintf("Successfully exported Project '%s' Networks to file '%s' in format '%s'", Name, File, Format))
 			break
 		case  LServer:
 			var servers []ExportImportLocalServers = make([]ExportImportLocalServers, 0)
@@ -2215,7 +2215,7 @@ func (request *CmdRequest) ExportProject() (Response, error) {
 				}
 				return  response, errors.New("Unable to execute task")
 			}
-			fmt.Printf("Successfully exported Project '%s' Local Servers to file '%s' in format '%s'\n", Name, File, Format)
+			utils.PrintlnSuccess(fmt.Sprintf("Successfully exported Project '%s' Local Servers to file '%s' in format '%s'", Name, File, Format))
 			break
 		case CLServer:
 			var servers []ExportImportCloudServers = make([]ExportImportCloudServers, 0)
@@ -2241,7 +2241,7 @@ func (request *CmdRequest) ExportProject() (Response, error) {
 				}
 				return  response, errors.New("Unable to execute task")
 			}
-			fmt.Printf("Successfully exported Project '%s' Cloud Servers to file '%s' in format '%s'\n", Name, File, Format)
+			utils.PrintlnSuccess(fmt.Sprintf("Successfully exported Project '%s' Cloud Servers to file '%s' in format '%s'", Name, File, Format))
 			break
 		default:
 			//Plans
@@ -2268,7 +2268,7 @@ func (request *CmdRequest) ExportProject() (Response, error) {
 				}
 				return  response, errors.New("Unable to execute task")
 			}
-			fmt.Printf("Successfully exported Project '%s' Installation Plans to file '%s' in format '%s'\n", Name, File, Format)
+			utils.PrintlnSuccess(fmt.Sprintf("Successfully exported Project '%s' Installation Plans to file '%s' in format '%s'", Name, File, Format))
 		}
 	}
 	response := Response{

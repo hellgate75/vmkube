@@ -53,6 +53,66 @@ func RequestConfirmation(reason string) bool {
 	return (CorrectInput(text) == "y" || CorrectInput(text) == "yes")
 }
 
+func PrintWarning(text string) {
+	value := term.ScreenColor(text, term.YELLOW)
+	term.ScreenPrint(value)
+	term.ScreenFlush()
+}
+
+func PrintlnWarning(text string) {
+	value := term.ScreenColor(text, term.YELLOW)
+	term.ScreenPrintln(value)
+	term.ScreenFlush()
+}
+
+func PrintError(text string) {
+	value := term.ScreenColor(text, term.RED)
+	term.ScreenPrint(value)
+	term.ScreenFlush()
+}
+
+func PrintlnError(text string) {
+	value := term.ScreenColor(text, term.RED)
+	term.ScreenPrintln(value)
+	term.ScreenFlush()
+}
+
+
+func PrintInfo(text string) {
+	value := term.ScreenColor(text, term.WHITE)
+	term.ScreenPrint(value)
+	term.ScreenFlush()
+}
+
+func PrintlnInfo(text string) {
+	value := term.ScreenColor(text, term.WHITE)
+	term.ScreenPrintln(value)
+	term.ScreenFlush()
+}
+
+func PrintSuccess(text string) {
+	value := term.ScreenColor(text, term.GREEN)
+	term.ScreenPrint(value)
+	term.ScreenFlush()
+}
+
+func PrintlnSuccess(text string) {
+	value := term.ScreenColor(text, term.GREEN)
+	term.ScreenPrintln(value)
+	term.ScreenFlush()
+}
+
+func PrintImportant(text string) {
+	value := term.ScreenBold(text)
+	term.ScreenPrint(value)
+	term.ScreenFlush()
+}
+
+func PrintlnImportant(text string) {
+	value := term.ScreenBold(text)
+	term.ScreenPrintln(value)
+	term.ScreenFlush()
+}
 
 
 func CmdParse(key string) (string, error) {

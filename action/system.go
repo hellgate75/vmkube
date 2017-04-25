@@ -3,7 +3,6 @@ package action
 import (
 	"vmkube/utils"
 	"fmt"
-	"os"
 	"time"
 	"strings"
 )
@@ -164,7 +163,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 								key, value, error := utils.OptionsParse(optsArgs[index], optsArgs[index+1])
 								if error != nil {
 									passed = false
-									fmt.Println("Error: Unable to parse option", optsArgs[index],"for Command",command,"and Sub-Command",SubCommand)
+									utils.PrintlnError(fmt.Sprintf("Error: Unable to parse option %s for Command %s and Sub-Command %s", optsArgs[index], command,SubCommand))
 									break
 								} else {
 									if "elem-type" == strings.ToLower(strings.TrimSpace(key)) {
@@ -172,9 +171,9 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 										if error == nil && NoElement != elementType {
 											ArgCmd.Element = elementType
 										} else  {
-											fmt.Println("Error: Invalid infrastructure element type", value,"for Command",command,"and Sub-Command",SubCommand)
+											utils.PrintlnError(fmt.Sprintf("Error: Invalid infrastructure element type %s for Command %s and Sub-Command %s", value, command,SubCommand))
 											if error != nil {
-												fmt.Fprintf(os.Stderr, "Details: %s \n", error.Error())
+												utils.PrintlnError(fmt.Sprintf("Details: %s", error.Error()))
 											}
 											time.Sleep(100 * time.Millisecond)
 											PrintCommandHelper(command, SubCommand)
@@ -188,7 +187,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 								}
 							} else if len(optsArgs) < index + 1 {
 								passed = false
-								fmt.Println("Error: Uncomplete option", option[index],"for Command",command,"and Sub-Command",SubCommand)
+								utils.PrintlnError(fmt.Sprintf("Error: Uncomplete option %s for Command %s and Sub-Command %s",option[index],command,SubCommand))
 								time.Sleep(100 * time.Millisecond)
 								PrintCommandHelper(command, SubCommand)
 							}
@@ -196,7 +195,9 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 						if passed  {
 							ArgCmd.Options = options
 							if "help" != command && "info-project" != command {
-								fmt.Printf("Executing command %s ...\n", command)
+								utils.PrintInfo("Executing command ")
+								utils.PrintImportant(command)
+								utils.PrintlnInfo(" ...")
 							}
 							return  true
 						} else  {
@@ -223,7 +224,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 							key, value, error := utils.OptionsParse(optsArgs[index], optsArgs[index+1])
 							if error != nil {
 								passed = false
-								fmt.Println("Error: Unable to parse option", option[index],"for Command",command)
+								utils.PrintlnError(fmt.Sprintf("Error: Unable to parse option %s for Command %s", option[index], command))
 								break
 							} else {
 								if "elem-type" == strings.ToLower(strings.TrimSpace(key)) {
@@ -231,9 +232,9 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 									if error == nil && NoElement != elementType {
 										ArgCmd.Element = elementType
 									} else  {
-										fmt.Println("Error: Invalid infrastructure element type", value,"for Command",command)
+										utils.PrintlnError(fmt.Sprintf("Error: Invalid infrastructure element type %s for Command %s", value, command))
 										if error != nil {
-											fmt.Fprintf(os.Stderr, "Details: %s \n", error.Error())
+											utils.PrintlnError(fmt.Sprintf("Details: %s", error.Error()))
 										}
 										time.Sleep(100 * time.Millisecond)
 										PrintCommandHelper(command, "")
@@ -255,19 +256,23 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 					if passed  {
 						ArgCmd.Options = options
 						if "help" != command && "info-project" != command {
-							fmt.Printf("Executing command %s ...\n", command)
+							utils.PrintInfo("Executing command ")
+							utils.PrintImportant(command)
+							utils.PrintlnInfo(" ...")
 							time.Sleep(100 * time.Millisecond)
 						}
 						return  true
 					} else  {
-						fmt.Println("Error: One or more options parse failed!!")
+						utils.PrintlnError("Error: One or more options parse failed!!")
 						time.Sleep(100 * time.Millisecond)
 						PrintCommandHelper(command, "")
 						return  false
 					}
 				}
 				if "help" != command && "info-project" != command {
-					fmt.Printf("Executing command %s ...\n", command)
+					utils.PrintInfo("Executing command ")
+					utils.PrintImportant(command)
+					utils.PrintlnInfo(" ...")
 					time.Sleep(100 * time.Millisecond)
 				}
 				return  true
