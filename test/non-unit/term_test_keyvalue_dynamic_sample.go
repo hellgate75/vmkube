@@ -22,11 +22,12 @@ func main() {
 	}
 	manager := term.KeyValueScreenManager{
 		Elements: elems,
-		MessageMaxLen: 15,
+		MessageMaxLen: 25,
 		Separator: " ... ",
 		OffsetCols: 0,
 		OffsetRows: 0,
 		TextLen: 0,
+		BoldValue: false,
 	}
 	manager.Init()
 	manager.Start()
@@ -37,11 +38,11 @@ func main() {
 		manager.CommChannel <- elems[i]
 		time.Sleep(2 * time.Second)
 		if i % 2 == 0 {
-			elems[i].Value = "success!"
+			elems[i].Value = term.ScreenBold("success!")
 			elems[i].State = term.StateColorGreen
 			manager.CommChannel <- elems[i]
 		} else {
-			elems[i].Value = "failed!"
+			elems[i].Value = term.ScreenBold("failed!")
 			elems[i].State = term.StateColorRed
 			manager.CommChannel <- elems[i]
 		}

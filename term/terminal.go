@@ -117,23 +117,37 @@ func ScreenMoveCursor(x int, y int) {
 }
 
 // Move cursor up relative the current position
-func ScreenMoveCursorUp(bias int) {
-	fmt.Fprintf(Buffer, "\033[%dA", bias);
+func ScreenMoveCursorUp(spaces int) {
+	fmt.Fprintf(Buffer, "\033[%dA", spaces);
 }
 
 // Move cursor down relative the current position
-func ScreenMoveCursorDown(bias int) {
-	fmt.Fprintf(Buffer, "\033[%dB", bias);
+func ScreenMoveCursorDown(spaces int) {
+	fmt.Fprintf(Buffer, "\033[%dB", spaces);
 }
 
 // Move cursor forward relative the current position
-func ScreenMoveCursorForward(bias int) {
-	fmt.Fprintf(Buffer, "\033[%dC", bias);
+func ScreenMoveCursorForward(spaces int) {
+	fmt.Fprintf(Buffer, "\033[%dC", spaces);
 }
 
 // Move cursor backward relative the current position
-func ScreenMoveCursorBackward(bias int) {
-	fmt.Fprintf(Buffer, "\033[%dD", bias);
+func ScreenMoveCursorBackward(spaces int) {
+	fmt.Fprintf(Buffer, "\033[%dD", spaces);
+}
+
+// Negative is Left/Top ward positive is Right/Down ward
+func ScreenMoveCursorRelative(XSpaces int,YSpaces int) {
+	if XSpaces > 0 {
+		ScreenMoveCursorDown(XSpaces)
+	} else if XSpaces < 0 {
+		ScreenMoveCursorUp(-XSpaces)
+	}
+	if YSpaces > 0 {
+		ScreenMoveCursorForward(YSpaces)
+	} else if XSpaces < 0 {
+		ScreenMoveCursorBackward(-YSpaces)
+	}
 }
 
 // Move string to possition
@@ -141,7 +155,7 @@ func ScreenMoveTo(str string, x int, y int) (out string) {
 	x, y = GetScreenXY(x, y)
 	
 	return applyScreenTransform(str, func(idx int, line string) string {
-		return fmt.Sprintf("\033[%d;%dH%s", y+idx, x, line)
+		return fmt.Sprintf("\033[%d;%dH%s", x+idx, y, line)
 	})
 }
 
@@ -243,8 +257,11 @@ func ScreenFlush() {
 		if idx > ScreenHeight() {
 			return
 		}
-		
-		OutStream.WriteString(str + "\n")
+		if idx > 0 {
+			OutStream.WriteString("\n" + str)
+		} else {
+			OutStream.WriteString(str)
+		}
 	}
 	
 	OutStream.Flush()
@@ -281,3 +298,19 @@ func ScreenContext(data string, idx, max int) string {
 	return data[start:end]
 }
 
+
+func StrPad(instr string, capping int) string {
+	strlen := len(instr)
+	if strlen == capping  {
+		return  instr
+	} else  {
+		if strlen < capping {
+			padding := strings.Repeat(" ", (capping-strlen))
+			return  instr + padding
+		} else {
+			val := instr[0:(capping-2)]
+			val += ".."
+			return  val
+		}
+	}
+}

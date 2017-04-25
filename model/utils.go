@@ -145,3 +145,4 @@ func PrintFieldsRecursively(fields []FieldData, index int) {
 		PrintFieldsRecursively(field.Fields, index + 1)
 	}
 }
+

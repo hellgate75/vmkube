@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"syscall"
 	"reflect"
+	"vmkube/term"
 )
 
 func StrPad(instr string, capping int) string {
@@ -29,6 +30,31 @@ func StrPad(instr string, capping int) string {
 		}
 	}
 }
+
+
+func RequestConfirmation(reason string) bool {
+	text := ""
+	reader := bufio.NewReader(os.Stdin)
+	options := "y/n/yes/no"
+	options = term.ScreenBold(options)
+	allText := fmt.Sprintf("%s Confirm operation [%s] : ", reason, options)
+	term.ScreenPrint(allText)
+	term.ScreenFlush()
+	term.ScreenMoveCursorRelative(-1, len(allText) + 2)
+	text, _ = reader.ReadString('\n')
+	fmt.Println("")
+	if CorrectInput(text) != "y" && CorrectInput(text) != "yes" && CorrectInput(text) != "n" && CorrectInput(text) != "no" {
+		text := "y/n/yes/no"
+		text = term.ScreenBold(text)
+		answer := "Current text is not allowed :"
+		answer = term.ScreenColor(answer, term.RED)
+		term.ScreenPrintln(fmt.Sprintf("%s : %s\n", answer, text))
+		term.ScreenFlush()
+		return  RequestConfirmation(reason)
+	}
+	return (CorrectInput(text) == "y" || CorrectInput(text) == "yes")
+}
+
 
 
 func CmdParse(key string) (string, error) {
@@ -66,18 +92,6 @@ func StringToInt(s string) (int,error) {
 
 func IntToString(n int) string {
 	return strconv.Itoa(n)
-}
-
-func RequestConfirmation(reason string) bool {
-	text := ""
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Fprintf(os.Stdout, "%s.Confirm operation [y/n/yes/no] : ", reason)
-	text, _ = reader.ReadString('\n')
-	if CorrectInput(text) != "y" && CorrectInput(text) != "yes" && CorrectInput(text) != "n" && CorrectInput(text) != "no" {
-		fmt.Fprintf(os.Stdout, "Current text is not allowed : %s\n", text)
-		return  RequestConfirmation(reason)
-	}
-	return (CorrectInput(text) == "y" || CorrectInput(text) == "yes")
 }
 
 

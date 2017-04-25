@@ -2,8 +2,8 @@ package main
 
 import (
 	"os"
-	"fmt"
 	"vmkube/action"
+	"vmkube/term"
 )
 
 func init() {
@@ -22,7 +22,8 @@ func main() {
 		if response  {
 			os.Exit(0)
 		} else  {
-			fmt.Fprintln(os.Stderr, "Errors During Command Execution!!")
+			term.ScreenPrintln(term.ScreenColor("Errors During Command Execution!!", term.RED))
+			term.ScreenFlush()
 			os.Exit(1)
 		}
 	} else  {

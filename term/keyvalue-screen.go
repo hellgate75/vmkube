@@ -2,7 +2,6 @@ package term
 
 import (
 	"fmt"
-	"vmkube/utils"
 	"time"
 )
 
@@ -37,6 +36,7 @@ type KeyValueScreenManager struct {
 	OffsetCols    int
 	OffsetRows    int
 	Separator     string
+	BoldValue     bool
 }
 
 func (screenData *KeyValueScreenManager) getElementScreenColor(elem KeyValueElement) int {
@@ -73,7 +73,12 @@ func (screenData *KeyValueScreenManager) drawGrid() {
 	}
 	for i := 0; i< len(screenData.Elements); i++  {
 		ScreenMoveCursor(i + screenData.OffsetCols + 1, screenData.OffsetRows + 1)
-		text := ScreenColor(fmt.Sprintf("%s%s%s", utils.StrPad(screenData.Elements[i].Name, screenData.TextLen), screenData.Separator, ScreenBold(utils.StrPad(screenData.Elements[i].Value, screenData.MessageMaxLen))), screenData.getElementScreenColor(screenData.Elements[i]))
+		var text string
+		if screenData.BoldValue {
+			text = ScreenColor(fmt.Sprintf("%s%s%s", StrPad(screenData.Elements[i].Name, screenData.TextLen), screenData.Separator, ScreenBold(StrPad(screenData.Elements[i].Value, screenData.MessageMaxLen))), screenData.getElementScreenColor(screenData.Elements[i]))
+		} else {
+			text = ScreenColor(fmt.Sprintf("%s%s%s", StrPad(screenData.Elements[i].Name, screenData.TextLen), screenData.Separator, StrPad(screenData.Elements[i].Value, screenData.MessageMaxLen)), screenData.getElementScreenColor(screenData.Elements[i]))
+		}
 		ScreenPrintln(text)
 		ScreenFlush()
 	}
@@ -84,7 +89,12 @@ func (screenData *KeyValueScreenManager) drawGrid() {
 			if index >= 0 {
 				screenData.Elements[index] = update
 				ScreenMoveCursor(index + screenData.OffsetCols + 1, screenData.OffsetRows + 1)
-				text := ScreenColor(fmt.Sprintf("%s%s%s", utils.StrPad(screenData.Elements[index].Name, screenData.TextLen), screenData.Separator, ScreenBold(utils.StrPad(screenData.Elements[index].Value, screenData.MessageMaxLen))), screenData.getElementScreenColor(screenData.Elements[index]))
+				var text string
+				if screenData.BoldValue {
+					text = ScreenColor(fmt.Sprintf("%s%s%s", StrPad(screenData.Elements[index].Name, screenData.TextLen), screenData.Separator, ScreenBold(StrPad(screenData.Elements[index].Value, screenData.MessageMaxLen))), screenData.getElementScreenColor(screenData.Elements[index]))
+				} else {
+					text = ScreenColor(fmt.Sprintf("%s%s%s", StrPad(screenData.Elements[index].Name, screenData.TextLen), screenData.Separator, StrPad(screenData.Elements[index].Value, screenData.MessageMaxLen)), screenData.getElementScreenColor(screenData.Elements[index]))
+				}
 				ScreenPrintln(text)
 				ScreenFlush()
 			}
@@ -130,23 +140,3 @@ func (screenData *KeyValueScreenManager) Start() {
 	screenData.Active = true
 	screenData.drawGrid()
 }
-
-//func ProjectOnScreen(grid []ProjectBoxElem, channel chan ProjectBoxElem, onOfCChannel chan bool) {
-//	Clear() // Clear current screen
-//	for _,elem := range grid {
-//		Println(fmt.Sprintf())
-//	}
-//
-//	for {
-//		// By moving cursor to top-left position we ensure that console output
-//		// will be overwritten each time, instead of adding new.
-//		MoveCursor(1, 1)
-//
-//		Println("Current Time:", time.Now().Format(time.RFC1123))
-//
-//		Flush() // Call it every time at the end of rendering
-//
-//		time.Sleep(time.Second)
-//	}
-//
-//}
