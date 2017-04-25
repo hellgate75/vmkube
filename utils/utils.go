@@ -40,13 +40,11 @@ func RequestConfirmation(reason string) bool {
 	allText := fmt.Sprintf("%s Confirm operation [%s] : ", reason, options)
 	term.ScreenPrint(allText)
 	term.ScreenFlush()
-	term.ScreenMoveCursorRelative(-1, len(allText) + 2)
 	text, _ = reader.ReadString('\n')
 	fmt.Println("")
 	if CorrectInput(text) != "y" && CorrectInput(text) != "yes" && CorrectInput(text) != "n" && CorrectInput(text) != "no" {
-		text := "y/n/yes/no"
 		text = term.ScreenBold(text)
-		answer := "Current text is not allowed :"
+		answer := "Current text is not allowed"
 		answer = term.ScreenColor(answer, term.RED)
 		term.ScreenPrintln(fmt.Sprintf("%s : %s\n", answer, text))
 		term.ScreenFlush()
