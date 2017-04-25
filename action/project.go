@@ -1345,7 +1345,6 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	
 	
 	
-	
 	fmt.Printf("Unable to complete Rebuild of project %s : Build Project not implemented!!\n", Name)
 	response := Response{
 		Status: false,

@@ -1,0 +1,52 @@
+package main
+
+import (
+	"time"
+	"fmt"
+	"vmkube/term"
+	"github.com/satori/go.uuid"
+)
+
+func NewUUIDString()	string {
+	return  uuid.NewV4().String()
+}
+
+
+func main() {
+	var elems []term.KeyValueElement = make([]term.KeyValueElement, 0)
+	for i := 0; i < 10; i++ {
+		elems = append(elems, term.KeyValueElement{
+			Id: NewUUIDString(),
+			Name: fmt.Sprintf("Test Line Number %d", (i+1)),
+			Value: "",
+		})
+	}
+	manager := term.KeyValueScreenManager{
+		Elements: elems,
+		MessageMaxLen: 15,
+		Separator: " ... ",
+		OffsetCols: 0,
+		OffsetRows: 0,
+		TextLen: 0,
+	}
+	manager.Init()
+	manager.Start()
+	for i := 0; i < 10; i++ {
+		time.Sleep(2 * time.Second)
+		elems[i].Value = "processing"
+		elems[i].State = term.State_Element_Partial
+		manager.CommChannel <- elems[i]
+		time.Sleep(2 * time.Second)
+		if i % 2 == 0 {
+			elems[i].Value = "success!"
+			elems[i].State = term.State_Element_Complete
+			manager.CommChannel <- elems[i]
+		} else {
+			elems[i].Value = "failed!"
+			elems[i].State = term.State_Element_Error
+			manager.CommChannel <- elems[i]
+		}
+	}
+	manager.Stop()
+}
+
