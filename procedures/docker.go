@@ -49,7 +49,9 @@ func DefineLocalServerCommand(server model.ProjectServer, imagePath string) ([]s
 			command = append( command,  disksize_str)
 		}
 	} else {
-		fmt.Printf("RANCHEROS - Disksize %dGB ignored ....\n", disksize)
+		if utils.NO_COLORS {
+			fmt.Printf("RANCHEROS - Disksize %dGB ignored ....\n", disksize)
+		}
 		DiskResize = disksize
 	}
 	if memory > 0 {
@@ -223,7 +225,7 @@ func (machine *DockerMachine)  CreateServer(commandPipe chan MachineMessage, com
 	} else {
 		name, uuid, osname, osver = machine.Instance.Name, machine.Instance.ServerId, machine.Instance.OSType, machine.Instance.OSVersion
 	}
-	path, success := DownloadISO(osname, osver)
+	log, path, success := DownloadISO(osname, osver)
 	if !success {
 		commandPipe <- MachineMessage{
 			Complete: true,
@@ -246,7 +248,7 @@ func (machine *DockerMachine)  CreateServer(commandPipe chan MachineMessage, com
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
 	machineName := name + "-" + uuid
-	var message string = ""
+	var message string = log
 	time.Sleep(3000)
 	var json string = ""
 	var ipAddress string = ""

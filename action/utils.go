@@ -11,6 +11,9 @@ import (
 	"github.com/satori/go.uuid"
 	"strconv"
 	"time"
+	"vmkube/term"
+	"vmkube/scheduler"
+	"vmkube/operations"
 )
 
 
@@ -40,23 +43,23 @@ func ParseCommandLine(args []string) (CmdRequest, error) {
 
 
 func CmdParseElement(value string) (CmdElementType, error) {
-		switch CorrectInput(value) {
-		case "server":
-			return  LServer, nil
-		case "cloud-server":
-			return  CLServer, nil
-		case "network":
-			return  SNetwork, nil
-		case "domain":
-			return  SDomain, nil
-		case "project":
-			return  SProject, nil
-		case "plan":
-			return  SPlan, nil
-		default:
-			return  NoElement, errors.New("Element '"+value+"' is not an infratructure element. Available ones : Server, Cloud-Server, Network, Domain, Plan, Project")
-
-		}
+	switch CorrectInput(value) {
+	case "server":
+		return  LServer, nil
+	case "cloud-server":
+		return  CLServer, nil
+	case "network":
+		return  SNetwork, nil
+	case "domain":
+		return  SDomain, nil
+	case "project":
+		return  SProject, nil
+	case "plan":
+		return  SPlan, nil
+	default:
+		return  NoElement, errors.New("Element '"+value+"' is not an infratructure element. Available ones : Server, Cloud-Server, Network, Domain, Plan, Project")
+		
+	}
 }
 
 func CorrectInput(input string) string {
@@ -330,7 +333,7 @@ func UpdateIndexWithInfrastructure(infrastructure model.Infrastructure) error {
 	if err != nil {
 		return err
 	}
-
+	
 	CurrentIndex := model.ProjectsDescriptor{}
 	Found := false
 	NewIndexes := make([]model.ProjectsDescriptor, 0)
@@ -342,7 +345,7 @@ func UpdateIndexWithInfrastructure(infrastructure model.Infrastructure) error {
 			Found = true
 		}
 	}
-
+	
 	if ! Found {
 		return errors.New("Project Id: '"+infrastructure.ProjectId+"' for Infrastrcutre '"+infrastructure.Name+"' not found!!")
 	}
@@ -356,7 +359,7 @@ func UpdateIndexWithInfrastructure(infrastructure model.Infrastructure) error {
 		InfraId: infrastructure.Id,
 		InfraName: infrastructure.Name,
 	})
-
+	
 	UpdateIndex := len(indexes.Projects) > len(NewIndexes)
 	
 	if UpdateIndex {
@@ -449,4 +452,242 @@ func PrintCommandHelper(command	string, subCommand string) {
 	} else  {
 		fmt.Fprintln(os.Stdout, "Unable to complete help support ...")
 	}
+}
+
+func ConvertActivityTaskInString(task operations.ActivityTask) string {
+	operation := "Create"
+	switch task {
+	case operations.DestroyMachine:
+		operation = "Destroy"
+		break
+	case operations.StartMachine:
+		operation = "Start"
+		break
+	case operations.StopMachine:
+		operation = "Start"
+		break
+	case operations.RestartMachine:
+		operation = "Restart"
+		break
+	case operations.MachineStatus:
+		operation = "Get Status of"
+		break
+	case operations.MachineEnv:
+		operation = "Get Environment for"
+		break
+	case operations.MachineInspect:
+		operation = "Get Descriptor of"
+		break
+	case operations.MachineIPAddress:
+		operation = "Get IP Address of"
+		break
+	}
+	return operation
+}
+
+func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastructureActionCouples []operations.ActivityCouple, NumThreads int, postTaskCallback func(task scheduler.ScheduleTask)) []error {
+	var errorsList []error = make([]error, 0)
+	var maxJobNameLen int = 0
+	var ServerCreationAnswerChannel chan *operations.ServerOperationsJob = make(chan *operations.ServerOperationsJob)
+	var jobsArrayLen int = 0
+	var termElements []term.KeyValueElement = make([]term.KeyValueElement, 0)
+	jobsArrayLen += len(infrastructureActionCouples)
+	
+	pool := scheduler.SchedulerPool{
+		Id: NewUUIDString(),
+		MaxParallel: NumThreads,
+		KeepAlive: true,
+		PostExecute: true,
+		Callback: func(task scheduler.ScheduleTask) {
+			//Any completed task come here ....
+			postTaskCallback(task)
+		},
+	}
+	pool.Init()
+	
+	for i := 0; i < jobsArrayLen; i++ {
+		var name string
+		if infrastructureActionCouples[i].IsCloud {
+			name = fmt.Sprintf("%s Cloud Instance Server %s", ConvertActivityTaskInString(infrastructureActionCouples[i].Task), infrastructureActionCouples[i].CInstance.Name)
+		} else {
+			name = fmt.Sprintf("%s Instance Server %s", ConvertActivityTaskInString(infrastructureActionCouples[i].Task), infrastructureActionCouples[i].Instance.Name)
+		}
+		
+		if len(name) > maxJobNameLen {
+			maxJobNameLen = len(name)
+		}
+		termElem := term.KeyValueElement{
+			Id: NewUUIDString(),
+			Name: name,
+			State: term.StateColorWhite,
+			Value: "waiting...",
+		}
+		termElements = append(termElements, termElem)
+	}
+
+	go pool.Start(func() {
+	})
+	go func(){
+		for i := 0; i < jobsArrayLen; i++ {
+			if ! infrastructureActionCouples[i].IsCloud {
+				pool.Tasks <- scheduler.ScheduleTask{
+					Id: NewUUIDString(),
+					Jobs: []scheduler.Job{
+						{
+							Id: NewUUIDString(),
+							Name: fmt.Sprintf("Process Instance from Project Server Id: %s", infrastructureActionCouples[i].Instance.ServerId),
+							Runnable: operations.RunnableStruct(&operations.ServerOperationsJob{
+								Name: fmt.Sprintf("Process Instance from Project Server Id: %s", infrastructureActionCouples[i].Instance.ServerId),
+								Infra: infrastructureActionCouples[i].Infra,
+								Project:infrastructureActionCouples[i].Project,
+								Activity: infrastructureActionCouples[i],
+								InstanceId: infrastructureActionCouples[i].Instance.Id,
+								OutChan: ServerCreationAnswerChannel,
+								OwnState: termElements[i],
+								SendStartMessage: true,
+							}),
+						},
+					},
+				}
+			} else {
+				pool.Tasks <- scheduler.ScheduleTask{
+					Id: NewUUIDString(),
+					Jobs: []scheduler.Job{
+						{
+							Id: NewUUIDString(),
+							Name: fmt.Sprintf("Process Instance from Project Server Id: %s", infrastructureActionCouples[i].CInstance.ServerId),
+							Runnable: operations.RunnableStruct(&operations.ServerOperationsJob{
+								Name: fmt.Sprintf("Process Instance from Project Server Id: %s", infrastructureActionCouples[i].CInstance.ServerId),
+								Infra: infrastructureActionCouples[i].Infra,
+								Project:infrastructureActionCouples[i].Project,
+								Activity: infrastructureActionCouples[i],
+								InstanceId: infrastructureActionCouples[i].Instance.Id,
+								OutChan: ServerCreationAnswerChannel,
+								OwnState: termElements[i],
+								SendStartMessage: true,
+							}),
+						},
+					},
+				}
+			}
+		}
+	}()
+	var answerCounter int = 0
+	go func(){
+		var resultsSeparator string = " status: "
+		var screenManager term.KeyValueScreenManager
+		if ! utils.NO_COLORS {
+			screenManager = term.KeyValueScreenManager{
+				Elements: termElements,
+				MessageMaxLen: 25,
+				Separator: resultsSeparator,
+				OffsetCols: 0,
+				OffsetRows: 0,
+				TextLen: maxJobNameLen,
+				BoldValue: false,
+			}
+			screenManager.Init()
+			screenManager.Start()
+		}
+		
+		var answerScreenIds []string = make([]string, 0)
+		for answerCounter < jobsArrayLen {
+			serverOpsJob := <- ServerCreationAnswerChannel
+			machineMessage := serverOpsJob.MachineMessage
+			activity := serverOpsJob.Activity
+			
+			if ! serverOpsJob.State {
+				for _,domain := range infrastructure.Domains {
+					for _,network := range domain.Networks {
+						if activity.IsCloud {
+							for _,instance := range network.CInstances {
+								if instance.Id == activity.CInstance.Id {
+									instance.InspectJSON = machineMessage.InspectJSON
+									instance.IPAddress = machineMessage.IPAddress
+									break
+								}
+							}
+						} else {
+							for _,instance := range network.Instances {
+								if instance.Id == activity.Instance.Id {
+									instance.InspectJSON = machineMessage.InspectJSON
+									instance.IPAddress = machineMessage.IPAddress
+									break
+								}
+							}
+						}
+					}
+				}
+				
+			}
+			
+			if utils.NO_COLORS {
+				if serverOpsJob.State {
+					continue
+				}
+				message := "success!!"
+				if machineMessage.Error != nil {
+					errorsList = append(errorsList, machineMessage.Error)
+					message = "failed!!"
+				}
+				operation := ConvertActivityTaskInString(activity.Task)
+				if activity.IsCloud {
+					operation += " Cloud Instance Server "
+					fmt.Println(fmt.Sprintf("%s%s%s", utils.StrPad(operation+activity.CInstance.Name,maxJobNameLen), resultsSeparator, message))
+				} else {
+					operation += " Instance Server "
+					fmt.Println(fmt.Sprintf("%s%s%s", utils.StrPad(operation+activity.Instance.Name,maxJobNameLen), resultsSeparator, message))
+				}
+				if machineMessage.Error != nil {
+					fmt.Println(fmt.Sprintf(operation + "s interrupted, pending %d instance(s) will not be processed!!", (jobsArrayLen - answerCounter - 1)))
+					pool.Stop()
+				}
+			} else {
+				//Interactive ...
+				keyTerm := serverOpsJob.OwnState
+				if serverOpsJob.State {
+					keyTerm.State = term.StateColorYellow
+					keyTerm.Value = "processing..."
+				} else {
+					answerScreenIds = append(answerScreenIds, keyTerm.Id)
+					if machineMessage.Error != nil {
+						keyTerm.State = term.StateColorRed
+						keyTerm.Value = term.ScreenBold("failed!!")
+					} else {
+						keyTerm.State = term.StateColorGreen
+						keyTerm.Value = term.ScreenBold("success!!")
+					}
+				}
+				screenManager.CommChannel <- keyTerm
+				if machineMessage.Error != nil {
+					errorsList = append(errorsList, machineMessage.Error)
+					answerCounter++
+					for _,signal := range screenManager.Elements {
+						found := false
+						for _,done := range answerScreenIds {
+							if signal.Id == done {
+								found = true
+								break
+							}
+						}
+						if ! found {
+							signal.State = term.StateColorRed
+							signal.Value = "interrupted!!"
+							screenManager.CommChannel <- signal
+						}
+					}
+					pool.Stop()
+					println(answerCounter)
+				}
+			}
+			if ! serverOpsJob.State {
+				answerCounter++
+			}
+		}
+		pool.Stop()
+	}()
+	pool.WG.Wait()
+	time.Sleep(2*time.Second)
+	utils.PrintlnImportant(fmt.Sprintf("Task executed:  %d", answerCounter))
+	return errorsList
 }

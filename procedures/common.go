@@ -2,28 +2,29 @@ package procedures
 
 import (
 	"fmt"
-	"log"
 	"vmkube/model"
 	"os/exec"
 	"io"
 	"strings"
 )
 
-func DownloadISO(machineType string, version string) (string, bool) {
+func DownloadISO(machineType string, version string) (string, string, bool) {
 	machineAction, error := model.GetMachineAction(machineType)
+	var log string = ""
 	if error == nil {
 		if ! machineAction.Check(version) {
-			fmt.Printf("Machine %s Version %s not present, downloading from internet...\n",strings.ToUpper(machineType),version)
+			log += fmt.Sprintf("Machine %s Version %s not present, downloading from internet...\n",strings.ToUpper(machineType),version)
 			downloaded := machineAction.Download(version)
-			fmt.Printf("Machine %s Version %s dowanloaded: %t\n",strings.ToUpper(machineType),version,downloaded)
-			return machineAction.Path(version), downloaded
+			log += fmt.Sprintf("Machine %s Version %s dowanloaded: %t\n",strings.ToUpper(machineType),version,downloaded)
+			return log, machineAction.Path(version), downloaded
 		} else {
-			fmt.Printf("Machine %s Version %s already dowanloaded...\n",strings.ToUpper(machineType),version)
-			return machineAction.Path(version), true
+			log += fmt.Sprintf("Machine %s Version %s already dowanloaded...\n",strings.ToUpper(machineType),version)
+			return log, machineAction.Path(version), true
 		}
 	} else {
-		log.Fatal(fmt.Sprintf("Machine %s v.%s not found!! - error: \n", strings.ToUpper(machineType),version), error)
-		return  "", false
+		log += fmt.Sprintf("Machine %s v.%s not found!! - error: %v\n", strings.ToUpper(machineType),version, error)
+		panic(log)
+		return  "", "", false
 	}
 }
 

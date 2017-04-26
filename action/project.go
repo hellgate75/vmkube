@@ -12,7 +12,6 @@ import (
 	"runtime"
 	"vmkube/scheduler"
 	"vmkube/operations"
-	"vmkube/term"
 )
 
 type ProjectActions interface {
@@ -1180,6 +1179,11 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 		fmt.Printf("Modified : %d-%02d-%02d %02d:%02d:%02d\n",
 			project.Modified.Year(), project.Modified.Month(), project.Modified.Day(),
 			project.Modified.Hour(), project.Modified.Minute(), project.Modified.Second())
+		if descriptor.InfraId != "" {
+			fmt.Printf("Infrastructure: %s (Id: %s)\n", descriptor.InfraName, descriptor.InfraId)
+		} else {
+			fmt.Println("Infrastructure: No Infrastructure\n")
+		}
 		fmt.Printf("Errors: %s\nLast Message: %s\n", errors, project.LastMessage)
 		fmt.Printf("Domains: %d\n", len(project.Domains))
 		for _, domain := range project.Domains {
@@ -1382,24 +1386,19 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		utils.PrintlnWarning(fmt.Sprintf("Number of threads in order to available processors : %d", NumThreads))
 	}
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
-	pool := scheduler.SchedulerPool{
-		Id: NewUUIDString(),
-		MaxParallel: NumThreads,
-		KeepAlive: true,
-		PostExecute: true,
-		Callback: func(task scheduler.ScheduleTask) {
-			//Any completed task come here ....
-		},
-	}
-	pool.Init()
-	var ServerCreationAnswerChannel chan *operations.ServerOperationsJob = make(chan *operations.ServerOperationsJob)
-	var jobsArrayLen int = 0
+	
+	
 	creationCouples, err := make([]operations.ActivityCouple, 0), errors.New("Unknown Error")
 	if ! existsInfrastructure {
 		creationCouples, err = operations.GetTaskActivities(project, Infrastructure, operations.CreateMachine)
 	} else {
 		creationCouples, err = operations.GetPostBuildTaskActivities(Infrastructure, operations.CreateMachine)
 	}
+	var errorsList []error = make([]error, 0)
+	errorsList = ExecuteInfrastructureActions(Infrastructure, creationCouples, NumThreads,func(task scheduler.ScheduleTask){})
+
+	err = UpdateIndexWithInfrastructure(Infrastructure)
+	
 	if err != nil {
 		response := Response{
 			Status: false,
@@ -1407,203 +1406,6 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		}
 		return response, errors.New("Unable to execute task")
 	}
-	jobsArrayLen += len(creationCouples)
-	go pool.Start(func() {
-	})
-	var maxJobNameLen int = 0
-	var termElements []term.KeyValueElement = make([]term.KeyValueElement, 0)
-	for i := 0; i < jobsArrayLen; i++ {
-		if ! creationCouples[i].IsCloud {
-			name := fmt.Sprintf("Create Instance Server %s", creationCouples[i].Instance.Name)
-			if existsInfrastructure {
-				name = "Re" + name
-			}
-			if len(name) > maxJobNameLen {
-				maxJobNameLen = len(name)
-			}
-			termElem := term.KeyValueElement{
-				Id: NewUUIDString(),
-				Name: name,
-				State: term.StateColorWhite,
-				Value: "waiting...",
-			}
-			termElements = append(termElements, termElem)
-		} else {
-			name := fmt.Sprintf("Create Cloud Instance Server %s", creationCouples[i].CInstance.Name)
-			if existsInfrastructure {
-				name = "Re" + name
-			}
-			if len(name) > maxJobNameLen {
-				maxJobNameLen = len(name)
-			}
-			termElem := term.KeyValueElement{
-				Id: NewUUIDString(),
-				Name: name,
-				State: term.StateColorWhite,
-				Value: "waiting...",
-			}
-			termElements = append(termElements, termElem)
-		}
-	}
-	var errorsList []error = make([]error, 0)
-	go func(){
-		for i := 0; i < jobsArrayLen; i++ {
-			if ! creationCouples[i].IsCloud {
-				pool.Tasks <- scheduler.ScheduleTask{
-					Id: NewUUIDString(),
-					Jobs: []scheduler.Job{
-						{
-							Id: NewUUIDString(),
-							Name: fmt.Sprintf("Create Instance from Project Server Id: %s", creationCouples[i].Instance.ServerId),
-							Runnable: operations.RunnableStruct(&operations.ServerOperationsJob{
-								Name: fmt.Sprintf("Create Instance from Project Server Id: %s", creationCouples[i].Instance.ServerId),
-								Infra: creationCouples[i].Infra,
-								Project:creationCouples[i].Project,
-								Activity: creationCouples[i],
-								InstanceId: creationCouples[i].Instance.Id,
-								OutChan: ServerCreationAnswerChannel,
-								OwnState: termElements[i],
-								SendStartMessage: true,
-							}),
-						},
-					},
-				}
-			} else {
-				pool.Tasks <- scheduler.ScheduleTask{
-					Id: NewUUIDString(),
-					Jobs: []scheduler.Job{
-						{
-							Id: NewUUIDString(),
-							Name: fmt.Sprintf("Create Instance from Project Server Id: %s", creationCouples[i].CInstance.ServerId),
-							Runnable: operations.RunnableStruct(&operations.ServerOperationsJob{
-								Name: fmt.Sprintf("Create Instance from Project Server Id: %s", creationCouples[i].CInstance.ServerId),
-								Infra: creationCouples[i].Infra,
-								Project:creationCouples[i].Project,
-								Activity: creationCouples[i],
-								InstanceId: creationCouples[i].Instance.Id,
-								OutChan: ServerCreationAnswerChannel,
-								OwnState: termElements[i],
-								SendStartMessage: true,
-							}),
-						},
-					},
-				}
-			}
-		}
-	}()
-	go func(){
-		var resultsSeparator string = " status: "
-		var screenManager term.KeyValueScreenManager
-		if ! utils.NO_COLORS {
-			screenManager = term.KeyValueScreenManager{
-				Elements: termElements,
-				MessageMaxLen: 25,
-				Separator: resultsSeparator,
-				OffsetCols: 0,
-				OffsetRows: 0,
-				TextLen: maxJobNameLen,
-				BoldValue: false,
-			}
-			screenManager.Init()
-			screenManager.Start()
-		}
-		
-		var answerCounter int = 0
-		var answerScreenIds []string = make([]string, 0)
-		for answerCounter < jobsArrayLen {
-			serverOpsJob := <- ServerCreationAnswerChannel
-			machineMessage := serverOpsJob.MachineMessage
-			activity := serverOpsJob.Activity
-			
-			if ! serverOpsJob.State {
-				for _,domain := range Infrastructure.Domains {
-					for _,network := range domain.Networks {
-						if activity.IsCloud {
-							for _,instance := range network.CInstances {
-								if instance.Id == activity.CInstance.Id {
-									instance.InspectJSON = machineMessage.InspectJSON
-									instance.IPAddress = machineMessage.IPAddress
-									break
-								}
-							}
-						} else {
-							for _,instance := range network.Instances {
-								if instance.Id == activity.Instance.Id {
-									instance.InspectJSON = machineMessage.InspectJSON
-									instance.IPAddress = machineMessage.IPAddress
-									break
-								}
-							}
-						}
-					}
-				}
-				
-			}
-
-			if utils.NO_COLORS {
-				if serverOpsJob.State {
-					continue
-				}
-				message := "success!!"
-				if machineMessage.Error != nil {
-					errorsList = append(errorsList, machineMessage.Error)
-					message = "failed!!"
-				}
-				if activity.IsCloud {
-					fmt.Println(fmt.Sprintf("%s%s%s", utils.StrPad("Create Cloud Instance Server "+activity.CInstance.Name,maxJobNameLen), resultsSeparator, message))
-				} else {
-					fmt.Println(fmt.Sprintf("%s%s%s", utils.StrPad("Create Instance Server "+activity.Instance.Name,maxJobNameLen), resultsSeparator, message))
-				}
-				if machineMessage.Error != nil {
-					fmt.Println(fmt.Sprintf("Server creation interrupted, pending %d server(s) will not be processed!!", (jobsArrayLen - answerCounter - 1)))
-					pool.Stop()
-				}
-			} else {
-				//Interactive ...
-				keyTerm := serverOpsJob.OwnState
-				if serverOpsJob.State {
-					keyTerm.State = term.StateColorYellow
-					keyTerm.Value = "processing..."
-				} else {
-					answerScreenIds = append(answerScreenIds, keyTerm.Id)
-					if machineMessage.Error != nil {
-						keyTerm.State = term.StateColorRed
-						keyTerm.Value = term.ScreenBold("failed!!")
-					} else {
-						keyTerm.State = term.StateColorGreen
-						keyTerm.Value = term.ScreenBold("success!!")
-					}
-				}
-				screenManager.CommChannel <- keyTerm
-				if machineMessage.Error != nil {
-					errorsList = append(errorsList, machineMessage.Error)
-					for _,signal := range screenManager.Elements {
-						found := false
-						for _,done := range answerScreenIds {
-							if signal.Id == done {
-								found = true
-								break
-							}
-						}
-						if ! found {
-							signal.State = term.StateColorRed
-							signal.Value = "interrupted!!"
-							screenManager.CommChannel <- signal
-						}
-					}
-					pool.Stop()
-					println(answerCounter)
-				}
-			}
-			if ! serverOpsJob.State {
-				answerCounter++
-			}
-		}
-		pool.Stop()
-	}()
-	pool.WG.Wait()
-	time.Sleep(2*time.Second)
-	utils.PrintlnImportant(fmt.Sprintf("Task executed:  %d", jobsArrayLen))
 	
 	reOpt := ""
 	if existsInfrastructure {
