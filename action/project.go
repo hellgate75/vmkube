@@ -115,7 +115,8 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	
 	if err == nil {
 		if ! AllowProjectDeletion {
-			AllowProjectDeletion = utils.RequestConfirmation("Do you want proceed with deletion process for Project named '" + descriptor.Name + "'?")
+			
+			AllowProjectDeletion = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with deletion process for Project named '%s'?", descriptor.Name))
 			if ! AllowProjectDeletion {
 				response := Response{
 					Status: false,
@@ -125,7 +126,8 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			}
 		}
 		if AllowProjectDeletion && ! AllowProjectBackup {
-			AllowProjectBackup = utils.RequestConfirmation("Do you want backup Project named'" + descriptor.Name + "'?")
+			
+			AllowProjectBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Project named '%s'?", descriptor.Name))
 		}
 	}
 	
@@ -139,7 +141,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	
 	if descriptor.InfraId != "" && existsInfrastructure && OverrideInfra {
 		if ! AllowInfraDeletion {
-			AllowInfraDeletion = utils.RequestConfirmation("Do you want proceed with deletion process for Infrastructure named '" + descriptor.InfraName + "'?")
+			AllowInfraDeletion = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with deletion process for Infrastructure named '%s'?", descriptor.InfraName))
 			if ! AllowInfraDeletion {
 				response := Response{
 					Status: false,
@@ -149,7 +151,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			}
 		}
 		if AllowInfraDeletion && ! AllowInfraBackup {
-			AllowInfraBackup = utils.RequestConfirmation("Do you want backup Infrastructure named'" + descriptor.InfraName + "'?")
+			AllowInfraBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Infrastructure named '%s'?",descriptor.InfraName))
 		}
 	}
 	
@@ -645,7 +647,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 	
 	AllowProjectOverwrite := Force
 	if existsProject && ! AllowProjectOverwrite {
-		AllowProjectOverwrite = utils.RequestConfirmation("Do you want proceed with deletion process for Infrastructure named '" + descriptor.InfraName + "'?")
+		AllowProjectOverwrite = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with deletion process for Infrastructure named '%s'?", descriptor.InfraName))
 		if ! AllowProjectOverwrite {
 			response := Response{
 				Status: false,
@@ -662,7 +664,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 	
 	if descriptor.InfraId != "" && OverrideInfra {
 		if ! AllowInfraDeletion {
-			AllowInfraDeletion = utils.RequestConfirmation("Do you want proceed with deletion process for Infrastructure named '" + descriptor.InfraName + "'?")
+			AllowInfraDeletion = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with deletion process for Infrastructure named '%s'?", descriptor.InfraName))
 			if ! AllowInfraDeletion {
 				response := Response{
 					Status: false,
@@ -672,7 +674,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			}
 		}
 		if AllowInfraDeletion && ! AllowInfraBackup {
-			AllowInfraBackup = utils.RequestConfirmation("Do you want backup Infrastructure named'" + descriptor.InfraName + "'?")
+			AllowInfraBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Infrastructure named '%s'?",descriptor.InfraName))
 		}
 	}
 	
@@ -925,9 +927,9 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 	if err == nil {
 		if ! AllowProjectDeletion {
 			if descriptor.InfraId == "" {
-				AllowProjectDeletion = utils.RequestConfirmation("Do you want delete Project named '" + descriptor.Name + "'?")
+				AllowProjectDeletion = utils.RequestConfirmation(fmt.Sprintf("Do you want delete Project named '%s'?", descriptor.Name))
 			} else {
-				AllowProjectDeletion = utils.RequestConfirmation("Do you want delete Project named '" + descriptor.Name + " and Infrastructure named'" + descriptor.InfraName + "'?")
+				AllowProjectDeletion = utils.RequestConfirmation(fmt.Sprintf("Do you want delete Project named '%s' and Infrastructure named '%s'?", descriptor.Name, descriptor.InfraName))
 			}
 			if ! AllowProjectDeletion {
 				response := Response{
@@ -960,6 +962,38 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 		if err != nil {
 			return resp, err
 		}
+	}
+	
+	actionIndex, err := LoadProjectActionIndex(descriptor.Id)
+
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	
+	actionIndexMeta := IFaceProjectActionIndex{
+		ProjectId: actionIndex.ProjectId,
+		Id: actionIndex.Id,
+	}
+	
+	actionIndexMeta.WaitForUnlock()
+	
+	actionInfo := ProjectActionIndexInfo{
+		Format: "",
+		Index: actionIndex,
+	}
+	
+	err = actionInfo.Delete()
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
 	}
 	
 	projectMeta := model.Project{
@@ -1310,7 +1344,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		} else if ! ForceReuild {
-			ForceReuild = utils.RequestConfirmation("Do you want proceed with override process for existing Infrastructure named '" + descriptor.InfraName + "'?")
+			ForceReuild = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with override process for existing Infrastructure named '%s'?",descriptor.InfraName))
 			if ! ForceReuild {
 				response := Response{
 					Status: false,
@@ -1321,7 +1355,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		}
 		
 		if ! AllowInfraBackup {
-			AllowInfraBackup = utils.RequestConfirmation("Do you want backup Infrastructure named'" + descriptor.InfraName + "'?")
+			AllowInfraBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Infrastructure named '%s'?",descriptor.InfraName))
 		}
 		
 	}
@@ -1602,8 +1636,12 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	
 	utils.PrintlnWarning(fmt.Sprintf("Saving new Project '%s' Infrastrcucture '%s' descriptors", Name, InfraName))
 	
+	vmio.LockInfrastructureById(descriptor.Id, descriptor.InfraId)
+	
 	err = vmio.SaveInfrastructure(Infrastructure)
 	
+	vmio.UnlockInfrastructureById(descriptor.Id, descriptor.InfraId)
+
 	if err != nil {
 		response := Response{
 			Status: false,
@@ -1827,7 +1865,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			AllowProjectBackup := Force
 			if err == nil {
 				if ! AllowProjectDeletion {
-					AllowProjectDeletion = utils.RequestConfirmation("Do you want proceed with deletion process for Project named '" + descriptor.Name + "'?")
+					AllowProjectDeletion = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with deletion process for Project named '%s'?", descriptor.Name))
 					if ! AllowProjectDeletion {
 						response := Response{
 							Status: false,
@@ -1837,7 +1875,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 					}
 				}
 				if AllowProjectDeletion && ! AllowProjectBackup {
-					AllowProjectBackup = utils.RequestConfirmation("Do you want backup Project named'" + descriptor.Name + "'?")
+					AllowProjectBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Project named '%s'?", descriptor.Name))
 				}
 			}
 			
@@ -1866,26 +1904,13 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 		}
 	}
 	
-	//AllowProjectOverwrite := Force
-	//if existsProject && ! AllowProjectOverwrite {
-	//	AllowProjectOverwrite = utils.RequestConfirmation("Do you want proceed with deletion process for Infrastructure named '"+descriptor.InfraName+"'?")
-	//	if ! AllowProjectOverwrite {
-	//		response := Response{
-	//			Status: false,
-	//			Message: "User task interruption",
-	//		}
-	//		return response, errors.New("Unable to execute task")
-	//	}
-	//
-	//}
-	
 	AllowInfraDeletion := OverrideInfra && Force
 	AllowInfraBackup := OverrideInfra && Force
 	InfraBackup := ""
 	
 	if descriptor.InfraId != "" && OverrideInfra {
 		if ! AllowInfraDeletion {
-			AllowInfraDeletion = utils.RequestConfirmation("Do you want proceed with deletion process for Infrastructure named '" + descriptor.InfraName + "'?")
+			AllowInfraDeletion = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with deletion process for Infrastructure named '%s'?", descriptor.InfraName))
 			if ! AllowInfraDeletion {
 				response := Response{
 					Status: false,
@@ -1895,7 +1920,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			}
 		}
 		if AllowInfraDeletion && ! AllowInfraBackup {
-			AllowInfraBackup = utils.RequestConfirmation("Do you want backup Infrastructure named'" + descriptor.InfraName + "'?")
+			AllowInfraBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Infrastructure named '%s'?",descriptor.InfraName))
 		}
 	}
 	

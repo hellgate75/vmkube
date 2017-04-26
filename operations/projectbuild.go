@@ -5,6 +5,7 @@ import (
 	"vmkube/model"
 	"vmkube/procedures"
 	"errors"
+	"os/exec"
 )
 
 
@@ -24,9 +25,11 @@ type ServerOperationsJob struct {
 	Infra            model.Infrastructure
 	InstanceId       string
 	Activity         ActivityCouple
-	CommandPipe      chan procedures.MachineMessage
 	MachineMessage   procedures.MachineMessage
 	SendStartMessage bool
+	currentCommand   *exec.Cmd
+	commandPipe      chan procedures.MachineMessage
+	commandChannel chan *exec.Cmd
 }
 
 func (job *ServerOperationsJob) Start() {
@@ -35,46 +38,52 @@ func (job *ServerOperationsJob) Start() {
 		if job.SendStartMessage {
 			job.OutChan <- job
 		}
-		job.CommandPipe = make(chan procedures.MachineMessage)
+		job.commandPipe = make(chan procedures.MachineMessage)
 		var message procedures.MachineMessage
 		machineAdapter := procedures.GetCurrentServerMachine(job.Project, job.Infra, job.Activity.Server, job.Activity.CServer, job.Activity.Instance, job.Activity.CInstance, job.Activity.Instance.Id, job.Activity.IsCloud, job.Activity.NewInfra)
+		job.commandChannel = make(chan *exec.Cmd)
 		switch job.Activity.Task {
 		case CreateMachine:
 			if job.Activity.IsCloud {
-				go machineAdapter.CreateCloudServer(job.CommandPipe)
+				go machineAdapter.CreateCloudServer(job.commandPipe, job.commandChannel)
 			} else {
-				go machineAdapter.CreateServer(job.CommandPipe)
+				go machineAdapter.CreateServer(job.commandPipe, job.commandChannel)
 			}
 			break
 			case DestroyMachine:
-				go machineAdapter.RemoveServer(job.CommandPipe)
+				go machineAdapter.RemoveServer(job.commandPipe, job.commandChannel)
 				break
 			case StopMachine:
-				go machineAdapter.StopServer(job.CommandPipe)
+				go machineAdapter.StopServer(job.commandPipe, job.commandChannel)
 				break
 			case StartMachine:
-				go machineAdapter.StartServer(job.CommandPipe)
+				go machineAdapter.StartServer(job.commandPipe, job.commandChannel)
 				break
 			case RestartMachine:
-				go machineAdapter.RestartServer(job.CommandPipe)
+				go machineAdapter.RestartServer(job.commandPipe, job.commandChannel)
 				break
 			case MachineStatus:
-				go machineAdapter.ServerStatus(job.CommandPipe)
+				go machineAdapter.ServerStatus(job.commandPipe, job.commandChannel)
 				break
 			case MachineEnv:
-				go machineAdapter.ServerEnv(job.CommandPipe)
+				go machineAdapter.ServerEnv(job.commandPipe, job.commandChannel)
 				break
 			case MachineInspect:
-				go machineAdapter.ServerInspect(job.CommandPipe)
+				go machineAdapter.ServerInspect(job.commandPipe, job.commandChannel)
 				break
 			case MachineIPAddress:
 				break
-				go machineAdapter.ServerIPAddress(job.CommandPipe)
+				go machineAdapter.ServerIPAddress(job.commandPipe, job.commandChannel)
 			default:
 				panic("No matching ActivityTask for Job")
 		}
-		message = <- job.CommandPipe
-		close(job.CommandPipe)
+		go func(){
+			for job.State {
+				job.currentCommand = <- job.commandChannel
+			}
+		}()
+		message = <- job.commandPipe
+		close(job.commandPipe)
 		job.MachineMessage = message
 		job.State = false
 		job.OutChan <- job
@@ -82,7 +91,11 @@ func (job *ServerOperationsJob) Start() {
 }
 
 func (job *ServerOperationsJob) Stop() {
-	close(job.CommandPipe)
+	close(job.commandChannel)
+	close(job.commandPipe)
+	if job.currentCommand.Process.Pid > 0 {
+		job.currentCommand.Process.Kill()
+	}
 	job.State = false
 }
 

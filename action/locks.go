@@ -4,6 +4,7 @@ import (
 	"vmkube/model"
 	"sync"
 	"time"
+	"strconv"
 )
 
 type IFaceProjectActionIndex ProjectActionIndex
@@ -12,6 +13,51 @@ type IFaceRollBackIndex RollBackIndex
 
 
 type IFaceRollBackSegment RollBackSegment
+
+type IFaceLogStorage model.LogStorage
+
+func (iFace *IFaceLogStorage) WaitForUnlock() {
+	waitGroup := sync.WaitGroup{}
+	waitGroup.Add(1)
+	go func(){
+		index := model.LogStorage{
+			ProjectId: iFace.ProjectId,
+			InfraId: iFace.InfraId,
+			ElementId: iFace.ElementId,
+		}
+		for{
+			if IsLogLocked(index) {
+				time.Sleep(500)
+			} else {
+				waitGroup.Done()
+				break
+			}
+		}
+	}()
+	waitGroup.Wait()
+}
+
+func (iFace *IFaceLogStorage) WaitForLogFileUnlock(logIndex int) {
+	waitGroup := sync.WaitGroup{}
+	waitGroup.Add(1)
+	go func(){
+		index := model.LogStorage{
+			ProjectId: iFace.ProjectId,
+			InfraId: iFace.InfraId,
+			ElementId: iFace.ElementId,
+		}
+		for{
+			if IsLogFileLocked(index,logIndex) {
+				time.Sleep(500)
+			} else {
+				waitGroup.Done()
+				break
+			}
+		}
+	}()
+	waitGroup.Wait()
+}
+
 
 func (iFace *IFaceProjectActionIndex) WaitForUnlock() {
 	waitGroup := sync.WaitGroup{}
@@ -60,9 +106,10 @@ func (iFace *IFaceRollBackSegment) WaitForUnlock() {
 		index := RollBackSegment{
 			Id: iFace.Id,
 			ProjectId: iFace.ProjectId,
+			Index: iFace.Index,
 		}
 		for{
-			if UnlockRollBackSegment(index) {
+			if IsRollBackSegmentLocked(index) {
 				time.Sleep(500)
 			} else {
 				waitGroup.Done()
@@ -97,13 +144,48 @@ func IsRollBackIndexLocked(index RollBackIndex) bool {
 	return model.HasLock(index.ProjectId, index.Id)
 }
 func LockRollBackSegment(index RollBackSegment) bool {
-	return model.WriteLock(index.ProjectId, index.Id)
+	return model.WriteLock(index.ProjectId, index.Index.Index.Value)
 }
 
 func UnlockRollBackSegment(index RollBackSegment) bool {
-	return model.RemoveLock(index.ProjectId, index.Id)
+	return model.RemoveLock(index.ProjectId, index.Index.Index.Value)
+}
+
+func LockRollBackSegmentById(projectId string, index RollBackSegmentIndex) bool {
+	return model.WriteLock(projectId, index.Index.Value)
+}
+
+func UnlockRollBackSegmentById(projectId string, index RollBackSegmentIndex) bool {
+	return model.RemoveLock(projectId, index.Index.Value)
+}
+
+func IsRollBackSegmentLockedById(projectId string, index RollBackSegmentIndex) bool {
+	return model.HasLock(projectId, index.Index.Value)
 }
 
 func IsRollBackSegmentLocked(index RollBackSegment) bool {
-	return model.HasLock(index.ProjectId, index.Id)
+	return model.HasLock(index.ProjectId, index.Index.Index.Value)
+}
+
+func IsLogLocked(index model.LogStorage) bool {
+	return model.HasLock(index.ProjectId, index.ElementId)
+}
+func LockLog(index model.LogStorage) bool {
+	return model.WriteLock(index.ProjectId, index.ElementId)
+}
+
+func UnlockLog(index model.LogStorage) bool {
+	return model.RemoveLock(index.ProjectId, index.ElementId)
+}
+
+
+func IsLogFileLocked(index model.LogStorage, logIndex int) bool {
+	return model.HasLock(index.ProjectId, index.ElementId + "-" + strconv.Itoa(logIndex))
+}
+func LockLogFile(index model.LogStorage, logIndex int) bool {
+	return model.WriteLock(index.ProjectId, index.ElementId + "-" + strconv.Itoa(logIndex))
+}
+
+func UnlockLogFile(index model.LogStorage, logIndex int) bool {
+	return model.RemoveLock(index.ProjectId, index.ElementId + "-" + strconv.Itoa(logIndex))
 }

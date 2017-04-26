@@ -1,5 +1,9 @@
 package action
 
+import (
+	"vmkube/model"
+)
+
 func SaveProjectActionIndex(index ProjectActionIndex) error {
 	info := ProjectActionIndexInfo{
 		Format: "",
@@ -108,3 +112,69 @@ func DeleteRollbackSegment(projectId string, rollbackIndex RollBackSegmentIndex)
 	return err
 }
 
+
+func SaveInfrastructureLogs(log model.LogStorage) error {
+	info := InfrastructureLogsInfo{
+		Format: "",
+		Logs: log,
+	}
+	return info.SaveLogFile()
+}
+
+func LoadInfrastructureLogs(projectId string, infraId string, elementId string) (model.LogStorage, error) {
+	logs := model.LogStorage{
+		InfraId: infraId,
+		ProjectId: projectId,
+		ElementId: elementId,
+		LogLines: []string{},
+	}
+	info := InfrastructureLogsInfo{
+		Format: "",
+		Logs: logs,
+	}
+	err := info.Read()
+	return info.Logs, err
+}
+
+func DeleteInfrastructureLogs(log model.LogStorage) error {
+	info := InfrastructureLogsInfo{
+		Format: "",
+		Logs: log,
+	}
+	return info.Delete()
+}
+
+func DeleteInfrastructureLogsById(projectId string, infraId string, elementId string) error {
+	logs := model.LogStorage{
+		InfraId: infraId,
+		ProjectId: projectId,
+		ElementId: elementId,
+		LogLines: []string{},
+	}
+	info := InfrastructureLogsInfo{
+		Format: "",
+		Logs: logs,
+	}
+	return info.Delete()
+}
+
+func LoadInfrastructureLogFiles(log model.LogStorage) error {
+	info := InfrastructureLogsInfo{
+		Format: "",
+		Logs: log,
+	}
+	return info.ReadLogFiles()
+}
+
+func DeleteInfrastructureLogFiles(projectId string, infraId string, elementId string) error {
+	info := InfrastructureLogsInfo{
+		Format: "",
+		Logs: model.LogStorage{
+			InfraId: infraId,
+			ProjectId: projectId,
+			ElementId: elementId,
+			LogLines: []string{},
+		},
+	}
+	return info.ReadLogFiles()
+}

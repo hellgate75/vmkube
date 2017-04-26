@@ -143,7 +143,9 @@ Describe Server options, contains
 
   * IPAddress   (string)     Network IP Address
 
-  * InspectJSON (string)      Inspection Data JSON
+  * InspectJSON (string)     Inspection Data JSON
+
+  * Logs        (LogStorage) Log information data
 */
 type Instance struct {
 	Id          string      `json:"Id" xml:"Id"`
@@ -155,7 +157,7 @@ type Instance struct {
 	Cpus          int       `json:"Cpus" xml:"Cpus"`
 	Disks       []Disk      `json:"Disks" xml:"Disks"`
 	Swarm     SwarmOpt      `json:"Swarm" xml:"Swarm"`
-	Engine    EngineOpt      `json:"Engine" xml:"Engine"`
+	Engine    EngineOpt     `json:"Engine" xml:"Engine"`
 	OSType      string      `json:"OSType" xml:"OSType"`
 	OSVersion   string      `json:"OSVersion" xml:"OSVersion"`
 	NoShare       bool      `json:"NoShare" xml:"NoShare"`
@@ -163,6 +165,7 @@ type Instance struct {
 	Hostname    string      `json:"Hostname" xml:"Hostname"`
 	IPAddress   string      `json:"IPAddress" xml:"IPAddress"`
 	InspectJSON string      `json:"IPAddress" xml:"IPAddress"`
+	Logs     		LogStorage  `json:"Logs" xml:"Logs"`
 }
 
 /*
@@ -185,19 +188,22 @@ Describe Cloud Server options, contains
   * IPAddress   (string)      Cloud IP Address
 
   * InspectJSON (string)      Inspection Data JSON
+
+  * Logs        (LogStorage)  Log information data
  
 	Refers to : https://docs.docker.com/machine/drivers/
 */
 type CloudInstance struct {
-	Id        string      `json:"Id" xml:"Id"`
-	ServerId  string      `json:"ServerId" xml:"ServerId"`
-	Name      string      `json:"Name" xml:"Name"`
-	Driver    string      `json:"Driver" xml:"Driver"`
-	Hostname  string      `json:"Hostname" xml:"Hostname"`
-	Roles   	[]string    `json:"Roles" xml:"Roles"`
-	Options   [][]string  `json:"Options" xml:"Options"`
-	IPAddress   string    `json:"IPAddress" xml:"IPAddress"`
-	InspectJSON string    `json:"IPAddress" xml:"IPAddress"`
+	Id          string      `json:"Id" xml:"Id"`
+	ServerId    string      `json:"ServerId" xml:"ServerId"`
+	Name        string      `json:"Name" xml:"Name"`
+	Driver      string      `json:"Driver" xml:"Driver"`
+	Hostname    string      `json:"Hostname" xml:"Hostname"`
+	Roles   	  []string    `json:"Roles" xml:"Roles"`
+	Options     [][]string  `json:"Options" xml:"Options"`
+	IPAddress   string      `json:"IPAddress" xml:"IPAddress"`
+	InspectJSON string      `json:"IPAddress" xml:"IPAddress"`
+	Logs     		LogStorage  `json:"Logs" xml:"Logs"`
 }
 
 /*
@@ -295,6 +301,26 @@ func ToInstanceEnvironment(env ProjectEnvironment) EnvironmentType {
 	}
 }
 
+
+/*
+Describe Log Storage, contains
+
+  * ProjectId   (string)    Infrastructure Unique Identifier
+
+  * ProjectId   (string)    Project Unique Identifier
+  
+  * ElementId   (string)    Infrastructure Element Unique Identifier
+  
+  * LogLines    ([]string)  Log information data
+*/
+type LogStorage struct {
+	InfraId     string            `json:"Id" xml:"Id" mandatory:"yes" descr:"Infrastructure Unique Identifier" type:"text"`
+	ProjectId   string            `json:"ProjectId" xml:"ProjectId" mandatory:"yes" descr:"Project Unique Identifier"`
+	ElementId   string            `json:"ElementId" xml:"ElementId" mandatory:"yes" descr:"Infrastructure Element Unique Identifier"`
+	LogLines    []string          `json:"LogLines" xml:"LogLines,omitempty" mandatory:"no" descr:"Log information data"`
+}
+
+
 /*
 Describe Server Installation options, contains
 	
@@ -320,7 +346,7 @@ Describe Server Installation options, contains
 
   * LastMessage   (string)     			Last Error Message
 
-  * LogsPath  		(string)     			Path to Log file
+  * Logs  		    (LogStorage)     			Installation Log File Descriptor
 */
 type Installation struct {
 	Id          	string            `json:"Id" xml:"Id"`
@@ -334,7 +360,7 @@ type Installation struct {
 	Success     	bool       				`json:"Success" xml:"Success"`
 	Errors      	bool       				`json:"Errors" xml:"Errors"`
 	LastMessage 	string     				`json:"LastMessage" xml:"LastMessage"`
-	LogsPath 			string     				`json:"LogsPath" xml:"LogsPath"`
+	Logs     			LogStorage     		`json:"Logs" xml:"Logs"`
 }
 
 /*

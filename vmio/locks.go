@@ -117,14 +117,14 @@ func IsInfrastructureLocked(infrastructure model.Infrastructure) bool {
 	return model.HasLock(infrastructure.ProjectId, infrastructure.Id)
 }
 
-func LockInfrastructureById(projectId string, uid string) bool {
-	return model.WriteLock(projectId, uid)
+func LockInfrastructureById(projectId string, infraId string) bool {
+	return model.WriteLock(projectId, infraId)
 }
 
-func UnlockInfrastructureById(projectId string, uid string) bool {
-	return model.RemoveLock(projectId, uid)
+func UnlockInfrastructureById(projectId string, infraId string) bool {
+	return model.RemoveLock(projectId, infraId)
 }
 
-func IsInfrastructureLockedById(projectId string, uid string) bool {
-	return model.HasLock(projectId, uid)
+func IsInfrastructureLockedById(projectId string, infraId string) bool {
+	return model.HasLock(projectId, infraId)
 }

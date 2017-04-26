@@ -5,6 +5,7 @@ import (
 	"errors"
 	"vmkube/utils"
 	"vmkube/vmio"
+	"vmkube/model"
 )
 
 type InfrastructureActions interface {
@@ -62,11 +63,147 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 }
 
 func (request *CmdRequest) DeleteInfra() (Response, error) {
-	response := Response{
-		Status: false,
-		Message: "Not Implemented",
+	Name := ""
+	Force := false
+	for _,option := range request.Arguments.Options {
+		if "name" == CorrectInput(option[0]) {
+			Name = option[1]
+		} else if "force" == CorrectInput(option[0]) {
+			Force = GetBoolean(option[1])
+		}
 	}
-	return  response, errors.New("Unable to execute task")
+	if Name == "" {
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		return Response{
+			Message: "Infrastrcuture Name not provided",
+			Status: false,},errors.New("Unable to execute task")
+	}
+	if ! Force {
+		AllowInfraDeletion := utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with deletion process for Infrastructure named '%s'?", Name))
+		if ! AllowInfraDeletion {
+			response := Response{
+				Status: false,
+				Message: "User task interruption",
+			}
+			return response, errors.New("Unable to execute task")
+		}
+	}
+	descriptor, err := vmio.GetInfrastructureProjectDescriptor(Name)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	iFaceInfra := vmio.IFaceInfra{
+		Id: descriptor.InfraId,
+		ProjectId: descriptor.Id,
+	}
+	iFaceInfra.WaitForUnlock()
+
+	infrastructure, err := vmio.LoadInfrastructure(descriptor.Id)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	for _,domain := range infrastructure.Domains {
+		for _,network := range domain.Networks {
+			for _,instance := range network.Instances {
+				err = DeleteInfrastructureLogs(instance.Logs)
+				if err != nil {
+					response := Response{
+						Status: false,
+						Message: err.Error(),
+					}
+					return  response, errors.New("Unable to execute task")
+				}
+			}
+			for _,instance := range network.CInstances {
+				err = DeleteInfrastructureLogs(instance.Logs)
+				if err != nil {
+					response := Response{
+						Status: false,
+						Message: err.Error(),
+					}
+					return  response, errors.New("Unable to execute task")
+				}
+			}
+			for _,installation := range network.Installations {
+				err = DeleteInfrastructureLogs(installation.Logs)
+				if err != nil {
+					response := Response{
+						Status: false,
+						Message: err.Error(),
+					}
+					return  response, errors.New("Unable to execute task")
+				}
+			}
+		}
+	}
+	
+	iFaceRollbackIndex := IFaceRollBackIndex{
+		Id: descriptor.InfraId,
+		ProjectId: descriptor.Id,
+	}
+	iFaceRollbackIndex.WaitForUnlock()
+	
+	indexInfo := ProjectRollbackIndexInfo{
+		Format: "",
+		Index: RollBackIndex{
+			Id: descriptor.InfraId,
+			ProjectId: descriptor.Id,
+			IndexList: []RollBackSegmentIndex{},
+		},
+	}
+	LockRollBackIndex(indexInfo.Index)
+	err = indexInfo.Read()
+	UnlockRollBackIndex(indexInfo.Index)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	iFaceRollbackIndex.WaitForUnlock()
+	LockRollBackIndex(indexInfo.Index)
+	err = indexInfo.Delete()
+	UnlockRollBackIndex(indexInfo.Index)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	vmio.LockInfrastructureById(descriptor.Id, descriptor.InfraId)
+	var info vmio.InfrastructureInfo =  vmio.InfrastructureInfo{
+		Format: "",
+		Infra: model.Infrastructure{
+			ProjectId: descriptor.Id,
+			Id: descriptor.InfraId,
+		},
+	}
+	err = info.Delete()
+	vmio.UnlockInfrastructureById(descriptor.Id, descriptor.InfraId)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	response := Response{
+		Status: true,
+		Message: "Success",
+	}
+	return  response, nil
 }
 
 func (request *CmdRequest) BackupInfra() (Response, error) {

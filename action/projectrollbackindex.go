@@ -50,6 +50,21 @@ func (info *ProjectRollbackIndexInfo) Delete() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
 	model.MakeFolderIfNotExists(baseFolder)
 	fileName := baseFolder + string(os.PathSeparator) + "." + utils.IdToFileFormat(info.Index.ProjectId)  + ".rollbacksegmentindex"
+	
+	for _,segment := range info.Index.IndexList {
+		iFaceRollBackSegment := IFaceRollBackSegment{
+			ProjectId: info.Index.ProjectId,
+			Id: "",
+			Index: segment,
+		}
+		iFaceRollBackSegment.WaitForUnlock()
+		LockRollBackSegmentById(info.Index.ProjectId, segment)
+		err := DeleteRollbackSegment(info.Index.ProjectId, segment)
+		UnlockRollBackSegmentById(info.Index.ProjectId, segment)
+		if err != nil {
+			return err
+		}
+	}
 	_,err := os.Stat(fileName)
 	if err == nil {
 		return model.DeleteIfExists(fileName)

@@ -105,8 +105,9 @@ func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error
 					Size: server.DiskSize,
 					Type: 0,
 				})
+				instanceId := NewUUIDString()
 				instance := model.Instance{
-					Id: NewUUIDString(),
+					Id: instanceId,
 					Name: server.Name,
 					Options: server.Options,
 					Cpus: server.Cpus,
@@ -122,6 +123,12 @@ func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error
 					OSVersion: server.OSVersion,
 					Roles: server.Roles,
 					ServerId: server.Id,
+					Logs: model.LogStorage{
+						ProjectId: project.Id,
+						InfraId: infrastructure.Id,
+						ElementId: instanceId,
+						LogLines: []string{},
+					},
 				}
 				if _,ok := serverConvertionMap[server.Id]; ok {
 					return infrastructure, errors.New("Duplicate Server Id in Project : " + server.Id)
@@ -130,8 +137,9 @@ func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error
 				newNetwork.Instances = append(newNetwork.Instances, instance)
 			}
 			for _,server := range network.CServers {
+				instanceId := NewUUIDString()
 				instance := model.CloudInstance{
-					Id: NewUUIDString(),
+					Id: instanceId,
 					Name: server.Name,
 					Driver: server.Driver,
 					Hostname: server.Hostname,
@@ -139,6 +147,12 @@ func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error
 					Options: server.Options,
 					Roles: server.Roles,
 					ServerId: server.Id,
+					Logs: model.LogStorage{
+						ProjectId: project.Id,
+						InfraId: infrastructure.Id,
+						ElementId: instanceId,
+						LogLines: []string{},
+					},
 				}
 				if _,ok := serverConvertionMap[server.Id]; ok {
 					return infrastructure, errors.New("Duplicate Server Id in Project : " + server.Id)
@@ -151,8 +165,9 @@ func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error
 					return infrastructure, errors.New("Invalid server reference in plan : " + plan.ServerId)
 				}
 				instanceId, _  := serverConvertionMap[plan.ServerId]
+				installationId := NewUUIDString()
 				installation := model.Installation{
-					Id: NewUUIDString(),
+					Id: installationId,
 					Environment: model.ToInstanceEnvironment(plan.Environment),
 					Role: model.ToInstanceRole(plan.Role),
 					Type: model.ToInstanceInstallation(plan.Type),
@@ -162,7 +177,12 @@ func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error
 					Success: false,
 					LastExecution: time.Now(),
 					LastMessage: "",
-					LogsPath: "",
+					Logs: model.LogStorage{
+						ProjectId: project.Id,
+						InfraId: infrastructure.Id,
+						ElementId: installationId,
+						LogLines: []string{},
+					},
 					Plan: plan,
 				}
 				newNetwork.Installations = append(newNetwork.Installations, installation)

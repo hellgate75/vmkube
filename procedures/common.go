@@ -28,16 +28,16 @@ func DownloadISO(machineType string, version string) (string, bool) {
 }
 
 type MachineActions interface {
-	CreateCloudServer(commandPipe chan MachineMessage)
-	CreateServer(commandPipe chan MachineMessage)
-	RemoveServer(commandPipe chan MachineMessage)
-	StopServer(commandPipe chan MachineMessage)
-	StartServer(commandPipe chan MachineMessage)
-	RestartServer(commandPipe chan MachineMessage)
-	ServerStatus(commandPipe chan MachineMessage)
-	ServerEnv(commandPipe chan MachineMessage)
-	ServerInspect(commandPipe chan MachineMessage)
-	ServerIPAddress(commandPipe chan MachineMessage)
+	CreateCloudServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	CreateServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	RemoveServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	StopServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	StartServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	RestartServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	ServerStatus(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	ServerEnv(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	ServerInspect(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	ServerIPAddress(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
 }
 
 type DockerMachine struct {
@@ -85,9 +85,9 @@ type MachineMessage struct {
 	ErrReader   io.Reader
 }
 
-func executeSyncCommand(command []string) ([]byte, error) {
+func executeSyncCommand(command []string) *exec.Cmd {
 	cmd := exec.Command(command[0], command[1:]...)
-	return cmd.CombinedOutput()
+	return cmd
 }
 
 func GetCurrentServerMachine( Project     model.Project,

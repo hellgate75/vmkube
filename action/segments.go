@@ -22,9 +22,11 @@ type SegmentIndexNature interface {
 /*
 Describe Action Storage, contains
 
-  * Id          (string)                  Indexes Unique Identifier
+  * Id          (string)    Indexes Unique Identifier
 
-  * Projects    ([]ProjectsDescriptor)    Projects indexed in VMKube
+  * Action      (Action)    Specific Action
+
+  * Date        (time.Time) Action Store/Update Date
 */
 type ActionStorage struct {
 	Id          string            `json:"Id" xml:"Id" mandatory:"yes" descr:"Rollback Descriptor Unique Identifier" type:"text"`
@@ -46,7 +48,6 @@ type RollBackSegment struct {
 	Index     RollBackSegmentIndex 	          `json:"Index" xml:"Index" mandatory:"yes" descr:"Rollback Segment Index" type:"object RollBackSegmentIndex list"`
 	Size              int 	                  `json:"Size" xml:"Size" mandatory:"yes" descr:"Rollback Segment Size in Action Storage Elements" type:"object RollBackSegmentIndex list"`
 }
-
 
 func (element *RollBackSegment) Load(file string) error {
 	if !model. ExistsFile(file) {
