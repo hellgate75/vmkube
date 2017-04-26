@@ -1345,7 +1345,9 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	NumThreads := Threads
 	if runtime.NumCPU() - 1 < Threads && !Overclock {
 		NumThreads = runtime.NumCPU() - 1
+		utils.PrintlnWarning(fmt.Sprintf("Number of threads in order to available processors : %d", NumThreads))
 	}
+	utils.PrintlnImportant(fmt.Sprintf("Number of threads used by scheduler processors : %d", NumThreads))
 	pool := scheduler.SchedulerPool{
 		Id: NewUUIDString(),
 		MaxParallel: NumThreads,
@@ -1356,7 +1358,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		},
 	}
 	pool.Init()
-	var ServerCreationAnswerChannel chan operations.ServerOperationsJob = make(chan operations.ServerOperationsJob)
+	var ServerCreationAnswerChannel chan *operations.ServerOperationsJob = make(chan *operations.ServerOperationsJob)
 	var jobsArrayLen int = 0
 	creationCouples, err := make([]operations.ActivityCouple, 0), errors.New("Unknown Error")
 	if ! existsInfrastructure {
@@ -1410,7 +1412,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		}
 	}
 	var errorsList []error = make([]error, 0)
-	go func(ServerCreationAnswerChannel chan operations.ServerOperationsJob, jobsArrayLen int, termElements []term.KeyValueElement){
+	go func(){
 		for i := 0; i < jobsArrayLen; i++ {
 			if ! creationCouples[i].IsCloud {
 				pool.Tasks <- scheduler.ScheduleTask{
@@ -1419,7 +1421,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 						{
 							Id: NewUUIDString(),
 							Name: fmt.Sprintf("Create Instance from Project Server Id: %s", creationCouples[i].Instance.ServerId),
-							Struct: operations.ServerOperationsJob{
+							Runnable: operations.RunnableStruct(&operations.ServerOperationsJob{
 								Name: fmt.Sprintf("Create Instance from Project Server Id: %s", creationCouples[i].Instance.ServerId),
 								Infra: creationCouples[i].Infra,
 								Project:creationCouples[i].Project,
@@ -1428,7 +1430,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 								OutChan: ServerCreationAnswerChannel,
 								OwnState: termElements[i],
 								SendStartMessage: true,
-							},
+							}),
 						},
 					},
 				}
@@ -1439,7 +1441,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 						{
 							Id: NewUUIDString(),
 							Name: fmt.Sprintf("Create Instance from Project Server Id: %s", creationCouples[i].CInstance.ServerId),
-							Struct: operations.ServerOperationsJob{
+							Runnable: operations.RunnableStruct(&operations.ServerOperationsJob{
 								Name: fmt.Sprintf("Create Instance from Project Server Id: %s", creationCouples[i].CInstance.ServerId),
 								Infra: creationCouples[i].Infra,
 								Project:creationCouples[i].Project,
@@ -1448,14 +1450,14 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 								OutChan: ServerCreationAnswerChannel,
 								OwnState: termElements[i],
 								SendStartMessage: true,
-							},
+							}),
 						},
 					},
 				}
 			}
 		}
-	}(ServerCreationAnswerChannel,jobsArrayLen,termElements)
-	go func(ServerCreationAnswerChannel chan operations.ServerOperationsJob, termElements []term.KeyValueElement){
+	}()
+	go func(){
 		var resultsSeparator string = " status: "
 		var screenManager term.KeyValueScreenManager
 		if ! utils.NO_COLORS {
@@ -1473,6 +1475,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		}
 		
 		var answerCounter int = 0
+		var answerScreenIds []string = make([]string, 0)
 		for answerCounter < jobsArrayLen {
 			serverOpsJob := <- ServerCreationAnswerChannel
 			machineMessage := serverOpsJob.MachineMessage
@@ -1517,6 +1520,9 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 				} else {
 					fmt.Println(fmt.Sprintf("%s%s%s", utils.StrPad("Create Instance Server "+activity.Instance.Name,maxJobNameLen), resultsSeparator, message))
 				}
+				if machineMessage.Error != nil {
+					pool.Stop()
+				}
 			} else {
 				//Interactive ...
 				keyTerm := serverOpsJob.OwnState
@@ -1524,6 +1530,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 					keyTerm.State = term.StateColorYellow
 					keyTerm.Value = "processing..."
 				} else {
+					answerScreenIds = append(answerScreenIds, keyTerm.Id)
 					if machineMessage.Error != nil {
 						keyTerm.State = term.StateColorRed
 						keyTerm.Value = term.ScreenBold("failed!!")
@@ -1535,6 +1542,22 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 				screenManager.CommChannel <- keyTerm
 				if machineMessage.Error != nil {
 					errorsList = append(errorsList, machineMessage.Error)
+					for _,signal := range screenManager.Elements {
+						found := false
+						for _,done := range answerScreenIds {
+							if signal.Id == done {
+								found = true
+								break
+							}
+						}
+						if ! found {
+							signal.State = term.StateColorRed
+							signal.Value = "interrupted!!"
+							screenManager.CommChannel <- signal
+						}
+					}
+					pool.Stop()
+					println(answerCounter)
 				}
 			}
 			if ! serverOpsJob.State {
@@ -1542,7 +1565,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			}
 		}
 		pool.Stop()
-	}(ServerCreationAnswerChannel,termElements)
+	}()
 	pool.WG.Wait()
 	time.Sleep(2*time.Second)
 	utils.PrintlnImportant(fmt.Sprintf("Task executed:  %d", jobsArrayLen))
@@ -1563,6 +1586,10 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			}
 		}
 		request.Arguments.Options = append(request.Arguments.Options, []string{"force","true"})
+		utils.PrintlnWarning(fmt.Sprintf("Forcing delete of partial Project '%s' Infrastructure '%s' ...", Name, InfraName))
+		if existsInfrastructure {
+			utils.PrintlnWarning("Rolback not available, please check if you have any backup in the screen logs ...")
+		}
 		request.DeleteInfra()
 		_, messages := vmio.StripErrorMessages("Errors occured during Infrastructure creation : ", errorsList)
 		response := Response{

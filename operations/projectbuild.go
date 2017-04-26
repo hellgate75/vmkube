@@ -7,10 +7,18 @@ import (
 	"errors"
 )
 
+
+type RunnableStruct interface {
+	Start()
+	Stop()
+	Status() bool
+}
+
+
 type ServerOperationsJob struct {
 	Name             string
 	State            bool
-	OutChan          chan ServerOperationsJob
+	OutChan          chan *ServerOperationsJob
 	OwnState         term.KeyValueElement
 	Project          model.Project
 	Infra            model.Infrastructure
@@ -21,7 +29,7 @@ type ServerOperationsJob struct {
 	SendStartMessage bool
 }
 
-func (job ServerOperationsJob) Start() {
+func (job *ServerOperationsJob) Start() {
 	if !job.State {
 		job.State = true
 		if job.SendStartMessage {
@@ -73,12 +81,12 @@ func (job ServerOperationsJob) Start() {
 	}
 }
 
-func (job ServerOperationsJob) Stop() {
+func (job *ServerOperationsJob) Stop() {
 	close(job.CommandPipe)
 	job.State = false
 }
 
-func (job ServerOperationsJob) Status() bool {
+func (job *ServerOperationsJob) Status() bool {
 	return job.State
 }
 

@@ -5,10 +5,10 @@ import (
 	"runtime"
 	"time"
 	"sync"
-	"reflect"
 	//"log"
 	//"strconv"
 	//"fmt"
+	"vmkube/operations"
 )
 
 type ScheduleTask struct {
@@ -18,30 +18,20 @@ type ScheduleTask struct {
 }
 
 type Job struct {
-	Id      string
-	Name    string
-	Struct  interface{}
+	Id       string
+	Name     string
+	Runnable operations.RunnableStruct
 }
 
 func (job *Job) Run() {
-	//log.Println("Job ["+job.Id+"->"+job.Name+"] - Calling Start on interface implementation ...")
-	valueType := reflect.ValueOf(job.Struct)
-	method := valueType.MethodByName("Start")
-	method.Call(nil)
+	job.Runnable.Start()
 }
 
 func (job *Job) IsRunning() bool {
-	//log.Println("Job ["+job.Id+"->"+job.Name+"] - Calling Status on interface implementation ...")
-	valueType := reflect.ValueOf(job.Struct)
-	method := valueType.MethodByName("Status")
-	ret := method.Call(nil)
-	return ret[0].Bool()
+	return job.Runnable.Status()
 }
 func (job *Job) Abort() {
-	//log.Println("Job ["+job.Id+"->"+job.Name+"] - Calling Stop on interface implementation ...")
-	valueType := reflect.ValueOf(job.Struct)
-	method := valueType.MethodByName("Stop")
-	method.Call(nil)
+	job.Runnable.Stop()
 }
 
 type JobProcess interface {
@@ -53,7 +43,7 @@ type JobProcess interface {
 func (task *ScheduleTask) Execute() {
 	task.Active = true
 	for _,job := range task.Jobs {
-		job.Run()
+		go job.Run()
 		if ! task.Active {
 			break
 		}
@@ -61,6 +51,16 @@ func (task *ScheduleTask) Execute() {
 }
 
 func (task *ScheduleTask) IsRunning() bool {
+	if task.Active {
+		running := false
+		for _,job := range task.Jobs {
+			if job.IsRunning() {
+				running = true
+			}
+		}
+		task.Active = running
+		return task.Active
+	}
 	for _,job := range task.Jobs {
 		if job.IsRunning() {
 			return true
@@ -75,21 +75,26 @@ func (task *ScheduleTask) Abort() {
 	}
 }
 
+type SchedulerState struct {
+	Active        bool
+	Pool          []ScheduleTask
+}
 
 type SchedulerPool struct {
 	Id            string
 	Tasks         chan ScheduleTask
 	MaxParallel   int
-	Active        bool
-	Pool          []ScheduleTask
 	WG            sync.WaitGroup
 	KeepAlive     bool
 	PostExecute   bool
 	Callback      func(task ScheduleTask)
+	State         SchedulerState
 }
 
 func (pool *SchedulerPool) RegisterWaitGroup(wg sync.WaitGroup) {
 	pool.WG = wg
+	pool.State.Active = false
+	pool.State.Pool = []ScheduleTask {}
 }
 
 func (pool *SchedulerPool) Init() {
@@ -100,21 +105,23 @@ func (pool *SchedulerPool) Init() {
 }
 
 func (pool *SchedulerPool) Start(callback func()) {
-	if ! pool.Active {
+	if ! pool.State.Active {
+		pool.State.Active = true
 		//start jobs
-		go func(pool *SchedulerPool) {
+		go func() {
+			var mutex sync.Mutex
 			var threads = pool.MaxParallel
 			if threads == 0 {
 				threads = runtime.NumCPU() - 1
 			}
 			//log.Println("Max Parallel Processes = " + strconv.Itoa(threads))
-			runtime.GOMAXPROCS(threads + 1)
-			pool.Active = true
-			pool.Pool = make([]ScheduleTask, 0)
+			if runtime.NumCPU() < threads + 1 {
+				runtime.GOMAXPROCS(threads + 1)
+			}
+			//pool.State.Pool = make([]ScheduleTask, 0)
 			
-
-			for pool.Active {
-				if threads > len(pool.Pool) {
+			for pool.State.Active {
+				if threads > len(pool.State.Pool) {
 					//log.Println("Waiting for New Task ...")
 					Task := <- pool.Tasks
 					if Task.Id != "" {
@@ -124,8 +131,11 @@ func (pool *SchedulerPool) Start(callback func()) {
 						} else {
 							pool.WG.Add(1)
 							//log.Println("Pool Append Task Id : " + pool.Id)
-							pool.Pool = append(pool.Pool, Task)
-							go Task.Execute()
+							mutex.Lock()
+							pool.State.Pool = append(pool.State.Pool, Task)
+							go pool.State.Pool[len(pool.State.Pool)-1].Execute()
+							mutex.Unlock()
+							//go Task.Execute()
 						}
 					} else {
 						time.Sleep(1000*time.Millisecond)
@@ -136,19 +146,19 @@ func (pool *SchedulerPool) Start(callback func()) {
 					i := 0
 					//log.Println(fmt.Sprintf("Pool full - Removing completed task from : %s in pool ...", len(pool.Pool)))
 					count := 0
-					for i < len(pool.Pool) {
-						if ! pool.Pool[i].IsRunning() {
+					for i < len(pool.State.Pool) {
+						if ! pool.State.Pool[i].IsRunning() {
 							count ++
 							if pool.PostExecute {
-								pool.Callback(pool.Pool[i])
+								pool.Callback(pool.State.Pool[i])
 							}
-							if i > 0 && i < len(pool.Pool) - 1 {
-								pool.Pool = pool.Pool[:i]
-								pool.Pool = append(pool.Pool, pool.Pool[i+1:]...)
+							if i > 0 && i < len(pool.State.Pool) - 1 {
+								pool.State.Pool = pool.State.Pool[:i]
+								pool.State.Pool = append(pool.State.Pool, pool.State.Pool[i+1:]...)
 							} else if i == 0 {
-								pool.Pool = pool.Pool[i+1:]
+								pool.State.Pool = pool.State.Pool[i+1:]
 							}  else {
-								pool.Pool = pool.Pool[:i]
+								pool.State.Pool = pool.State.Pool[:i]
 							}
 							pool.WG.Done()
 						} else {
@@ -158,7 +168,7 @@ func (pool *SchedulerPool) Start(callback func()) {
 					//log.Println(fmt.Sprintf("Pool clean - Removed %d completed tasks!!", count))
 				}
 			}
-			for _,task := range pool.Pool {
+			for _,task := range pool.State.Pool {
 				if task.IsRunning() {
 					task.Abort()
 					for task.IsRunning() {
@@ -175,15 +185,15 @@ func (pool *SchedulerPool) Start(callback func()) {
 				pool.WG.Done()
 			}
 			
-		}(pool)
+		}()
 	}
 }
 
 func (pool *SchedulerPool) IsRunning() bool {
-	if pool.Active {
+	if pool.State.Active {
 		return true
 	}
-	for _,task := range pool.Pool {
+	for _,task := range pool.State.Pool {
 		if task.IsRunning() {
 			for task.IsRunning() {
 				return true
@@ -194,17 +204,11 @@ func (pool *SchedulerPool) IsRunning() bool {
 }
 
 func (pool *SchedulerPool) Stop() {
-	pool.Active = false
+	pool.State.Active = false
 	pool.Tasks <- ScheduleTask{
 		Id: "<close>",
 		Jobs: []Job{},
 	}
 	close(pool.Tasks)
 	
-}
-
-type RunnableStruct interface {
-	Start()
-	Stop()
-	Status() bool
 }

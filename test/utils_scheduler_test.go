@@ -57,7 +57,7 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 			{
 				Id: action.NewUUIDString(),
 				Name: "TestJob1",
-				Struct: TestJob{
+				Runnable: TestJob{
 					Name: "Job 1",
 					Count: 10,
 					OutChan: chan1,
@@ -66,7 +66,7 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 			{
 				Id: action.NewUUIDString(),
 				Name: "TestJob1",
-				Struct: TestJob{
+				Runnable: TestJob{
 					Name: "Job 2",
 					Count: 5,
 					OutChan: chan1,
@@ -80,7 +80,7 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 			{
 				Id: action.NewUUIDString(),
 				Name: "TestJob1",
-				Struct: TestJob{
+				Runnable: TestJob{
 					Name: "Job 3",
 					Count: 5,
 					OutChan: chan2,
@@ -89,7 +89,7 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 			{
 				Id: action.NewUUIDString(),
 				Name: "TestJob1",
-				Struct: TestJob{
+				Runnable: TestJob{
 					Name: "Job 4",
 					Count: 10,
 					OutChan: chan2,
@@ -103,7 +103,7 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 			{
 				Id: action.NewUUIDString(),
 				Name: "TestJob1",
-				Struct: TestJob{
+				Runnable: TestJob{
 					Name: "Job 5",
 					Count: 5,
 					OutChan: chan3,
@@ -112,7 +112,7 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 			{
 				Id: action.NewUUIDString(),
 				Name: "TestJob1",
-				Struct: TestJob{
+				Runnable: TestJob{
 					Name: "Job 6",
 					Count: 5,
 					OutChan: chan3,
