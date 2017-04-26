@@ -1347,7 +1347,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		NumThreads = runtime.NumCPU() - 1
 		utils.PrintlnWarning(fmt.Sprintf("Number of threads in order to available processors : %d", NumThreads))
 	}
-	utils.PrintlnImportant(fmt.Sprintf("Number of threads used by scheduler processors : %d", NumThreads))
+	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
 	pool := scheduler.SchedulerPool{
 		Id: NewUUIDString(),
 		MaxParallel: NumThreads,
@@ -1521,6 +1521,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 					fmt.Println(fmt.Sprintf("%s%s%s", utils.StrPad("Create Instance Server "+activity.Instance.Name,maxJobNameLen), resultsSeparator, message))
 				}
 				if machineMessage.Error != nil {
+					fmt.Println(fmt.Sprintf("Server creation interrupted, pending %d server(s) will not be processed!!", (jobsArrayLen - answerCounter - 1)))
 					pool.Stop()
 				}
 			} else {
