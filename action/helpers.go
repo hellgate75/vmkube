@@ -371,7 +371,7 @@ func InitHelpers() {
 		HelperOption{
 			Option: "no-colors",
 			Type: "<boolean>",
-			Description: "Prevent to drive an interactive output, useful for piping results to a file (default: false)",
+			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
 			Mandatory: false,
 		},
 	)
@@ -405,7 +405,7 @@ func InitHelpers() {
 		HelperOption{
 			Option: "no-colors",
 			Type: "<boolean>",
-			Description: "Prevent to drive an interactive output, useful for piping results to a file (default: false)",
+			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
 			Mandatory: false,
 		},
 	)
@@ -439,7 +439,7 @@ func InitHelpers() {
 		HelperOption{
 			Option: "no-colors",
 			Type: "<boolean>",
-			Description: "Prevent to drive an interactive output, useful for piping results to a file (default: false)",
+			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
 			Mandatory: false,
 		},
 	)
@@ -473,7 +473,7 @@ func InitHelpers() {
 		HelperOption{
 			Option: "no-colors",
 			Type: "<boolean>",
-			Description: "Prevent to drive an interactive output, useful for piping results to a file (default: false)",
+			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
 			Mandatory: false,
 		},
 	)
@@ -491,6 +491,12 @@ func InitHelpers() {
 			Type: "<text>",
 			Description: "Full Backup file path, used to define the infrastructure (extension will be changed to .vmkube)",
 			Mandatory: true,
+		},
+		HelperOption{
+			Option: "no-colors",
+			Type: "<boolean>",
+			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
+			Mandatory: false,
 		},
 	)
 	
@@ -526,6 +532,21 @@ func InitHelpers() {
 			Description: "Define to force a project creation, if it doesn't exist, using the recovered infrastructure",
 			Mandatory: false,
 		},
+		HelperOption{
+			Option: "no-colors",
+			Type: "<boolean>",
+			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
+			Mandatory: false,
+		},
+	)
+	
+	ListAllInfras.Options = append(ListAllInfras.Options,
+		HelperOption{
+			Option: "no-colors",
+			Type: "<boolean>",
+			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
+			Mandatory: false,
+		},
 	)
 	
 	//Status Infrastructure
@@ -535,6 +556,12 @@ func InitHelpers() {
 			Type: "<text>",
 			Description: "Infrastructure name",
 			Mandatory: true,
+		},
+		HelperOption{
+			Option: "no-colors",
+			Type: "<boolean>",
+			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
+			Mandatory: false,
 		},
 	)
 
@@ -635,7 +662,7 @@ func InitHelpers() {
 		HelperOption{
 			Option: "no-colors",
 			Type: "<boolean>",
-			Description: "Prevent to drive an interactive output, useful for piping results to a file (default: false)",
+			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
 			Mandatory: false,
 		},
 	)

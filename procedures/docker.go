@@ -419,7 +419,6 @@ func (machine *DockerMachine)  StopServer(commandPipe chan MachineMessage, comma
 	command = append( command,  "docker-machine")
 	command = append( command,  "stop")
 	command = append( command,  name + "-" + id)
-	fmt.Printf("Running Stop command :  '%s'\n", strings.Join(command, " "))
 	cmd := executeSyncCommand(command)
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
@@ -460,7 +459,6 @@ func (machine *DockerMachine)  StartServer(commandPipe chan MachineMessage, comm
 	command = append( command,  "docker-machine")
 	command = append( command,  "start")
 	command = append( command,  name + "-" + id)
-	fmt.Printf("Running Start command :  '%s'\n", strings.Join(command, " "))
 	cmd := executeSyncCommand(command)
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
@@ -501,7 +499,6 @@ func (machine *DockerMachine)  RestartServer(commandPipe chan MachineMessage, co
 	command = append( command,  "docker-machine")
 	command = append( command,  "restart")
 	command = append( command,  name + "-" + id)
-	fmt.Printf("Running Restart command :  '%s'\n", strings.Join(command, " "))
 	cmd := executeSyncCommand(command)
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
@@ -542,7 +539,6 @@ func (machine *DockerMachine)  ServerStatus(commandPipe chan MachineMessage, com
 	command = append( command,  "docker-machine")
 	command = append( command,  "status")
 	command = append( command,  name + "-" + id)
-	fmt.Printf("Running Status command :  '%s'\n", strings.Join(command, " "))
 	cmd := executeSyncCommand(command)
 	commandChannel <- cmd
 	bytesArray, err := cmd.CombinedOutput()
@@ -581,7 +577,6 @@ func (machine *DockerMachine)  ServerEnv(commandPipe chan MachineMessage, comman
 	command = append( command,  "docker-machine")
 	command = append( command,  "env")
 	command = append( command,  name + "-" + id)
-	fmt.Printf("Running Environment command :  '%s'\n", strings.Join(command, " "))
 	cmd := executeSyncCommand(command)
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
@@ -622,7 +617,6 @@ func (machine *DockerMachine)  ServerInspect(commandPipe chan MachineMessage, co
 	command = append( command,  "docker-machine")
 	command = append( command,  "inspect")
 	command = append( command,  name + "-" + id)
-	fmt.Printf("Running Inspect command :  '%s'\n", strings.Join(command, " "))
 	cmd := executeSyncCommand(command)
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
@@ -663,7 +657,6 @@ func (machine *DockerMachine)  ServerIPAddress(commandPipe chan MachineMessage, 
 	command = append( command,  "docker-machine")
 	command = append( command,  "ip")
 	command = append( command,  name + "-" + id)
-	fmt.Printf("Running IP Address command :  '%s'\n", strings.Join(command, " "))
 	cmd := executeSyncCommand(command)
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()

@@ -220,7 +220,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 					options  := make([][]string, 0)
 					passed := true
 					for index, option := range optsArgs {
-						if index % 2 == 0 && len(optsArgs) >= index + 1 {
+						if index % 2 == 0 && len(optsArgs) > index + 1 {
 							key, value, error := utils.OptionsParse(optsArgs[index], optsArgs[index+1])
 							if error != nil {
 								passed = false

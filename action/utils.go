@@ -463,7 +463,7 @@ func ConvertActivityTaskInString(task operations.ActivityTask) string {
 		operation = "Start"
 		break
 	case operations.StopMachine:
-		operation = "Start"
+		operation = "Stop"
 		break
 	case operations.RestartMachine:
 		operation = "Restart"

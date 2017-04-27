@@ -582,6 +582,12 @@ func (request *CmdRequest) RestartInfra() (Response, error) {
 }
 
 func (request *CmdRequest) ListInfras() (Response, error) {
+	utils.NO_COLORS = false
+	for _,option := range request.Arguments.Options {
+		if "no-colors" == CorrectInput(option[0]) {
+			utils.NO_COLORS = GetBoolean(option[1])
+		}
+	}
 	indexes, error := vmio.LoadIndex()
 	if error != nil {
 		response := Response{
@@ -612,9 +618,12 @@ func (request *CmdRequest) ListInfras() (Response, error) {
 
 func (request *CmdRequest) StatusInfra() (Response, error) {
 	Name := ""
+	utils.NO_COLORS = false
 	for _,option := range request.Arguments.Options {
 		if "infra-name" == CorrectInput(option[0]) {
 			Name = option[1]
+		} else if "no-colors" == CorrectInput(option[0]) {
+			utils.NO_COLORS = GetBoolean(option[1])
 		}
 	}
 	if Name == "" {
