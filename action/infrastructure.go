@@ -8,6 +8,7 @@ import (
 	"vmkube/model"
 	"vmkube/operations"
 	"vmkube/scheduler"
+	"runtime"
 )
 
 type InfrastructureActions interface {
@@ -67,11 +68,20 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 func (request *CmdRequest) DeleteInfra() (Response, error) {
 	Name := ""
 	Force := false
+	Threads := 1
+	Overclock := false
+	utils.NO_COLORS = false
 	for _,option := range request.Arguments.Options {
 		if "infra-name" == CorrectInput(option[0]) {
 			Name = option[1]
 		} else if "force" == CorrectInput(option[0]) {
 			Force = GetBoolean(option[1])
+		} else if "overclock" == CorrectInput(option[0]) {
+			Overclock = GetBoolean(option[1])
+		} else if "no-colors" == CorrectInput(option[0]) {
+			utils.NO_COLORS = GetBoolean(option[1])
+		} else if "threads" == CorrectInput(option[0]) {
+			Threads = GetInteger(option[1], Threads)
 		}
 	}
 	if Name == "" {
@@ -113,6 +123,14 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		return  response, errors.New("Unable to execute task")
 	}
 	
+	utils.PrintlnImportant("Now Proceding with machines destroy ...!!")
+	NumThreads := Threads
+	if runtime.NumCPU() - 1 < Threads && !Overclock {
+		NumThreads = runtime.NumCPU() - 1
+		utils.PrintlnWarning(fmt.Sprintf("Number of threads in order to available processors : %d", NumThreads))
+	}
+	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
+	
 	deleteActivities, err := operations.GetPostBuildTaskActivities(infrastructure, operations.DestroyMachine)
 	
 	if err != nil {
@@ -122,12 +140,11 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
-	NumThreads := 2
 	errorsList := ExecuteInfrastructureActions(infrastructure, deleteActivities, NumThreads,func(task scheduler.ScheduleTask) {
 	})
 	if len(errorsList) > 0 {
-		utils.PrintlnError(fmt.Sprintf("Unable to complete Delete process : Errors deleting Infrastructure : %s!!",  Name))
-		_, message := vmio.StripErrorMessages(fmt.Sprintf("Error building infrastructure : %s", Name), errorsList)
+		utils.PrintlnError(fmt.Sprintf("Unable to complete Destroy machines process : Errors deleting Infrastructure : %s!!",  Name))
+		_, message := vmio.StripErrorMessages(fmt.Sprintf("Error deleting infrastructure : %s", Name), errorsList)
 		response := Response{
 			Status: false,
 			Message: message,
@@ -172,25 +189,20 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		}
 	}
 	
-	utils.PrintlnWarning("Removing Rollback Segments ...")
-
-	iFaceRollbackIndex := IFaceRollBackIndex{
-		Id: descriptor.InfraId,
-		ProjectId: descriptor.Id,
-	}
-	iFaceRollbackIndex.WaitForUnlock()
+	utils.PrintlnWarning("Removing Rollback Index and Segments ...")
 	
-	indexInfo := ProjectRollbackIndexInfo{
+	
+	rollbackIndexInfo := ProjectRollbackIndexInfo{
 		Format: "",
 		Index: RollBackIndex{
-			Id: descriptor.InfraId,
+			Id: "",
 			ProjectId: descriptor.Id,
 			IndexList: []RollBackSegmentIndex{},
 		},
 	}
-	LockRollBackIndex(indexInfo.Index)
-	err = indexInfo.Read()
-	UnlockRollBackIndex(indexInfo.Index)
+	
+	err = rollbackIndexInfo.Read()
+	
 	if err != nil {
 		response := Response{
 			Status: false,
@@ -199,13 +211,19 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		return  response, errors.New("Unable to execute task")
 	}
 	
-	utils.PrintlnWarning("Removing Rollback Indexes ...")
-
-	//iFaceRollbackIndex.WaitForUnlock()
+	iFaceRollbackIndex := IFaceRollBackIndex{
+		Id: rollbackIndexInfo.Index.Id,
+		ProjectId: descriptor.Id,
+	}
 	
-	LockRollBackIndex(indexInfo.Index)
-	err = indexInfo.Delete()
-	UnlockRollBackIndex(indexInfo.Index)
+	iFaceRollbackIndex.WaitForUnlock()
+	
+	LockRollBackIndex(rollbackIndexInfo.Index)
+
+	err = rollbackIndexInfo.Delete()
+
+	UnlockRollBackIndex(rollbackIndexInfo.Index)
+
 	if err != nil {
 		response := Response{
 			Status: false,
@@ -276,27 +294,291 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 }
 
 func (request *CmdRequest) StartInfra() (Response, error) {
-	response := Response{
-		Status: false,
-		Message: "Not Implemented",
+	Name := ""
+	Force := false
+	Threads := 1
+	Overclock := false
+	utils.NO_COLORS = false
+	for _,option := range request.Arguments.Options {
+		if "infra-name" == CorrectInput(option[0]) {
+			Name = option[1]
+		} else if "force" == CorrectInput(option[0]) {
+			Force = GetBoolean(option[1])
+		} else if "overclock" == CorrectInput(option[0]) {
+			Overclock = GetBoolean(option[1])
+		} else if "no-colors" == CorrectInput(option[0]) {
+			utils.NO_COLORS = GetBoolean(option[1])
+		} else if "threads" == CorrectInput(option[0]) {
+			Threads = GetInteger(option[1], Threads)
+		}
 	}
-	return  response, errors.New("Unable to execute task")
+	if Name == "" {
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		return Response{
+			Message: "Infrastrcuture Name not provided",
+			Status: false,},errors.New("Unable to execute task")
+	}
+	if ! Force {
+		AllowInfraStart := utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with start machines process for Infrastructure named '%s'?", Name))
+		if ! AllowInfraStart {
+			response := Response{
+				Status: false,
+				Message: "User task interruption",
+			}
+			return response, errors.New("Unable to execute task")
+		}
+	}
+	descriptor, err := vmio.GetInfrastructureProjectDescriptor(Name)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	iFaceInfra := vmio.IFaceInfra{
+		Id: descriptor.InfraId,
+		ProjectId: descriptor.Id,
+	}
+	iFaceInfra.WaitForUnlock()
+	
+	infrastructure, err := vmio.LoadInfrastructure(descriptor.Id)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	utils.PrintlnImportant("Now Proceding with machines start ...!!")
+	NumThreads := Threads
+	if runtime.NumCPU() - 1 < Threads && !Overclock {
+		NumThreads = runtime.NumCPU() - 1
+		utils.PrintlnWarning(fmt.Sprintf("Number of threads in order to available processors : %d", NumThreads))
+	}
+	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
+	
+	startMachineActivities, err := operations.GetPostBuildTaskActivities(infrastructure, operations.StartMachine)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	errorsList := ExecuteInfrastructureActions(infrastructure, startMachineActivities, NumThreads,func(task scheduler.ScheduleTask) {
+	})
+	if len(errorsList) > 0 {
+		utils.PrintlnError(fmt.Sprintf("Unable to complete start machines process : Errors starting Infrastructure : %s!!",  Name))
+		_, message := vmio.StripErrorMessages(fmt.Sprintf("Error starting infrastructure : %s", Name), errorsList)
+		response := Response{
+			Status: false,
+			Message: message,
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	
+	utils.PrintlnSuccess(fmt.Sprintf("Start Infrastricture named : %s completed successfully!!", Name))
+	
+	response := Response{
+		Status: true,
+		Message: "Success",
+	}
+	return  response, nil
 }
 
 func (request *CmdRequest) StopInfra() (Response, error) {
-	response := Response{
-		Status: false,
-		Message: "Not Implemented",
+	Name := ""
+	Force := false
+	Threads := 1
+	Overclock := false
+	utils.NO_COLORS = false
+	for _,option := range request.Arguments.Options {
+		if "infra-name" == CorrectInput(option[0]) {
+			Name = option[1]
+		} else if "force" == CorrectInput(option[0]) {
+			Force = GetBoolean(option[1])
+		} else if "overclock" == CorrectInput(option[0]) {
+			Overclock = GetBoolean(option[1])
+		} else if "no-colors" == CorrectInput(option[0]) {
+			utils.NO_COLORS = GetBoolean(option[1])
+		} else if "threads" == CorrectInput(option[0]) {
+			Threads = GetInteger(option[1], Threads)
+		}
 	}
-	return  response, errors.New("Unable to execute task")
+	if Name == "" {
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		return Response{
+			Message: "Infrastrcuture Name not provided",
+			Status: false,},errors.New("Unable to execute task")
+	}
+	if ! Force {
+		AllowInfraStop := utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with stop machines process for Infrastructure named '%s'?", Name))
+		if ! AllowInfraStop {
+			response := Response{
+				Status: false,
+				Message: "User task interruption",
+			}
+			return response, errors.New("Unable to execute task")
+		}
+	}
+	descriptor, err := vmio.GetInfrastructureProjectDescriptor(Name)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	iFaceInfra := vmio.IFaceInfra{
+		Id: descriptor.InfraId,
+		ProjectId: descriptor.Id,
+	}
+	iFaceInfra.WaitForUnlock()
+	
+	infrastructure, err := vmio.LoadInfrastructure(descriptor.Id)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	utils.PrintlnImportant("Now Proceding with machines stop ...!!")
+	NumThreads := Threads
+	if runtime.NumCPU() - 1 < Threads && !Overclock {
+		NumThreads = runtime.NumCPU() - 1
+		utils.PrintlnWarning(fmt.Sprintf("Number of threads in order to available processors : %d", NumThreads))
+	}
+	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
+	
+	stopMachineActivities, err := operations.GetPostBuildTaskActivities(infrastructure, operations.StopMachine)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	errorsList := ExecuteInfrastructureActions(infrastructure, stopMachineActivities, NumThreads,func(task scheduler.ScheduleTask) {
+	})
+	if len(errorsList) > 0 {
+		utils.PrintlnError(fmt.Sprintf("Unable to complete stop machines process : Errors stopping Infrastructure : %s!!",  Name))
+		_, message := vmio.StripErrorMessages(fmt.Sprintf("Error stopping infrastructure : %s", Name), errorsList)
+		response := Response{
+			Status: false,
+			Message: message,
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	
+	utils.PrintlnSuccess(fmt.Sprintf("Stop Infrastricture named : %s completed successfully!!", Name))
+	
+	response := Response{
+		Status: true,
+		Message: "Success",
+	}
+	return  response, nil
 }
 
 func (request *CmdRequest) RestartInfra() (Response, error) {
-	response := Response{
-		Status: false,
-		Message: "Not Implemented",
+	Name := ""
+	Force := false
+	Threads := 1
+	Overclock := false
+	utils.NO_COLORS = false
+	for _,option := range request.Arguments.Options {
+		if "infra-name" == CorrectInput(option[0]) {
+			Name = option[1]
+		} else if "force" == CorrectInput(option[0]) {
+			Force = GetBoolean(option[1])
+		} else if "overclock" == CorrectInput(option[0]) {
+			Overclock = GetBoolean(option[1])
+		} else if "no-colors" == CorrectInput(option[0]) {
+			utils.NO_COLORS = GetBoolean(option[1])
+		} else if "threads" == CorrectInput(option[0]) {
+			Threads = GetInteger(option[1], Threads)
+		}
 	}
-	return  response, errors.New("Unable to execute task")
+	if Name == "" {
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		return Response{
+			Message: "Infrastrcuture Name not provided",
+			Status: false,},errors.New("Unable to execute task")
+	}
+	if ! Force {
+		AllowInfraStop := utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with restart machines process for Infrastructure named '%s'?", Name))
+		if ! AllowInfraStop {
+			response := Response{
+				Status: false,
+				Message: "User task interruption",
+			}
+			return response, errors.New("Unable to execute task")
+		}
+	}
+	descriptor, err := vmio.GetInfrastructureProjectDescriptor(Name)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	iFaceInfra := vmio.IFaceInfra{
+		Id: descriptor.InfraId,
+		ProjectId: descriptor.Id,
+	}
+	iFaceInfra.WaitForUnlock()
+	
+	infrastructure, err := vmio.LoadInfrastructure(descriptor.Id)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	utils.PrintlnImportant("Now Proceding with machines restart ...!!")
+	NumThreads := Threads
+	if runtime.NumCPU() - 1 < Threads && !Overclock {
+		NumThreads = runtime.NumCPU() - 1
+		utils.PrintlnWarning(fmt.Sprintf("Number of threads in order to available processors : %d", NumThreads))
+	}
+	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
+	
+	restartMachineActivities, err := operations.GetPostBuildTaskActivities(infrastructure, operations.RestartMachine)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	errorsList := ExecuteInfrastructureActions(infrastructure, restartMachineActivities, NumThreads,func(task scheduler.ScheduleTask) {
+	})
+	if len(errorsList) > 0 {
+		utils.PrintlnError(fmt.Sprintf("Unable to complete restart machines process : Errors restarting Infrastructure : %s!!",  Name))
+		_, message := vmio.StripErrorMessages(fmt.Sprintf("Error restarting infrastructure : %s", Name), errorsList)
+		response := Response{
+			Status: false,
+			Message: message,
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	
+	utils.PrintlnSuccess(fmt.Sprintf("Restart Infrastricture named : %s completed successfully!!", Name))
+	
+	response := Response{
+		Status: true,
+		Message: "Success",
+	}
+	return  response, nil
 }
 
 func (request *CmdRequest) ListInfras() (Response, error) {

@@ -350,6 +350,30 @@ func InitHelpers() {
 			Description: "Infrastructure name",
 			Mandatory: true,
 		},
+		HelperOption{
+			Option: "force",
+			Type: "<boolean>",
+			Description: "Flag defining to force the command, no confirmation will be prompted",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "threads",
+			Type: "<integer>",
+			Description: "Number of parallel threads used in Infrastructure command (default: 1)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "overclock",
+			Type: "<boolean>",
+			Description: "Ignore the capping form the maximum available processors (default: false)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "no-colors",
+			Type: "<boolean>",
+			Description: "Prevent to drive an interactive output, useful for piping results to a file (default: false)",
+			Mandatory: false,
+		},
 	)
 
 	//Stop Infrastructure
@@ -360,6 +384,30 @@ func InitHelpers() {
 			Description: "Infrastructure name",
 			Mandatory: true,
 		},
+		HelperOption{
+			Option: "force",
+			Type: "<boolean>",
+			Description: "Flag defining to force the command, no confirmation will be prompted",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "threads",
+			Type: "<integer>",
+			Description: "Number of parallel threads used in Infrastructure command (default: 1)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "overclock",
+			Type: "<boolean>",
+			Description: "Ignore the capping form the maximum available processors (default: false)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "no-colors",
+			Type: "<boolean>",
+			Description: "Prevent to drive an interactive output, useful for piping results to a file (default: false)",
+			Mandatory: false,
+		},
 	)
 
 	//Restart Infrastructure
@@ -369,6 +417,30 @@ func InitHelpers() {
 			Type: "<text>",
 			Description: "Infrastructure name",
 			Mandatory: true,
+		},
+		HelperOption{
+			Option: "force",
+			Type: "<boolean>",
+			Description: "Flag defining to force the command, no confirmation will be prompted",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "threads",
+			Type: "<integer>",
+			Description: "Number of parallel threads used in Infrastructure command (default: 1)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "overclock",
+			Type: "<boolean>",
+			Description: "Ignore the capping form the maximum available processors (default: false)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "no-colors",
+			Type: "<boolean>",
+			Description: "Prevent to drive an interactive output, useful for piping results to a file (default: false)",
+			Mandatory: false,
 		},
 	)
 
@@ -383,7 +455,25 @@ func InitHelpers() {
 		HelperOption{
 			Option: "force",
 			Type: "<boolean>",
-			Description: "Flag defining to force destroy, no confirmation will be prompted",
+			Description: "Flag defining to force delete, no confirmation will be prompted",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "threads",
+			Type: "<integer>",
+			Description: "Number of parallel threads used in Infrastructure delete (default: 1)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "overclock",
+			Type: "<boolean>",
+			Description: "Ignore the capping form the maximum available processors (default: false)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "no-colors",
+			Type: "<boolean>",
+			Description: "Prevent to drive an interactive output, useful for piping results to a file (default: false)",
 			Mandatory: false,
 		},
 	)
@@ -533,7 +623,7 @@ func InitHelpers() {
 		HelperOption{
 			Option: "threads",
 			Type: "<integer>",
-			Description: "Number of parallel threads used in Infrastructure build (default: 2)",
+			Description: "Number of parallel threads used in Infrastructure build (default: 1)",
 			Mandatory: false,
 		},
 		HelperOption{

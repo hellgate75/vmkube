@@ -1270,7 +1270,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	InfraName := ""
 	Force := false
 	Rebuild := false
-	Threads := 2
+	Threads := 1
 	Overclock := false
 	utils.NO_COLORS = false
 	for _, option := range request.Arguments.Options {
@@ -1457,32 +1457,6 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			Message: message,
 		}
 		return response, errors.New("Unable to execute task")
-		
-		//Remove previous Name
-		//if existsInfrastructure {
-		//	for i:= 0 ; i < len(request.Arguments.Options); i++ {
-		//		if CorrectInput(request.Arguments.Options[i][0]) == "force" {
-		//			request.Arguments.Options[i][1] = "true"
-		//		}
-		//	}
-		//	request.Arguments.Options = append(request.Arguments.Options, []string{"force","true"})
-		//	utils.PrintlnWarning(fmt.Sprintf("Forcing delete of partial Project '%s' Infrastructure '%s' ...", Name, InfraName))
-		//	if existsInfrastructure {
-		//		utils.PrintlnWarning("Rolback not available, please check if you have any backup in the screen logs ...")
-		//	}
-		//	request.Arguments.Options = append(request.Arguments.Options, []string{"infra-name", InfraName})
-		//	request.Type = DestroyInfrastructure
-		//	request.TypeStr = "delete-infra"
-		//	request.SubType = NoSubCommand
-		//	request.SubTypeStr = ""
-		//	request.DeleteInfra()
-		//	_, messages := vmio.StripErrorMessages("Errors occured during Infrastructure creation : ", errorsList)
-		//	response := Response{
-		//		Status: false,
-		//		Message: messages,
-		//	}
-		//	return response, errors.New("Unable to execute task")
-		//}
 	}
 	
 	utils.PrintlnWarning(fmt.Sprintf("Waiting for Instance recovery information in Project '%s' Infrastrcucture '%s'", Name, InfraName))
