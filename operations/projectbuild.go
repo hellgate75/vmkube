@@ -6,6 +6,7 @@ import (
 	"vmkube/procedures"
 	"errors"
 	"os/exec"
+	"fmt"
 )
 
 
@@ -35,7 +36,7 @@ type ServerOperationsJob struct {
 }
 
 func (job *ServerOperationsJob) Response() interface{} {
-	return []string{job.MachineMessage.InstanceId, job.MachineMessage.InspectJSON, job.MachineMessage.IPAddress}
+	return fmt.Sprintf("%s:%s:%s",job.MachineMessage.InstanceId, job.MachineMessage.InspectJSON, job.MachineMessage.IPAddress)
 }
 
 func (job *ServerOperationsJob) Start() {

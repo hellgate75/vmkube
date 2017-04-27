@@ -1423,8 +1423,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	var errorsList []error = make([]error, 0)
 	var fixInfraValue int = len(creationCouples)
 	errorsList = ExecuteInfrastructureActions(Infrastructure, creationCouples, NumThreads,func(task scheduler.ScheduleTask){
-		response := []string(task.Jobs[0].Runnable.Response())
-		
+		response := strings.Split(fmt.Sprintf("%s",task.Jobs[0].Runnable.Response()),":")
 		json := response[1]
 		ipAddress := response[2]
 		instanceId := response[0]
