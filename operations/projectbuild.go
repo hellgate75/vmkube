@@ -36,7 +36,7 @@ type ServerOperationsJob struct {
 }
 
 func (job *ServerOperationsJob) Response() interface{} {
-	return fmt.Sprintf("%s:%s:%s",job.MachineMessage.InstanceId, job.MachineMessage.InspectJSON, job.MachineMessage.IPAddress)
+	return fmt.Sprintf("%s|%s|%s",job.MachineMessage.InstanceId, job.MachineMessage.InspectJSON, job.MachineMessage.IPAddress)
 }
 
 func (job *ServerOperationsJob) Start() {
@@ -91,7 +91,18 @@ func (job *ServerOperationsJob) Start() {
 			}
 		}()
 		if ! job.control.Interrupt {
-			job.MachineMessage = <- job.commandPipe
+			message := <- job.commandPipe
+			job.MachineMessage.IPAddress = message.IPAddress
+			job.MachineMessage.InspectJSON = message.InspectJSON
+			job.MachineMessage.Complete = message.Complete
+			job.MachineMessage.Error = message.Error
+			job.MachineMessage.Result = message.Result
+			job.MachineMessage.State = message.State
+			if job.Activity.IsCloud {
+				job.MachineMessage.InstanceId = job.Activity.CInstance.Id
+			} else {
+				job.MachineMessage.InstanceId = job.Activity.Instance.Id
+			}
 			job.State = false
 			job.OutChan <- job
 		}
@@ -188,6 +199,7 @@ func filterCloudInstanceByServer(id string, infrastructure model.Infrastructure)
 	}
 	return Instance, errors.New("Instance for Server Id: "+id+" not found")
 }
+
 
 func GetTaskActivities(project model.Project, infrastructure model.Infrastructure, task ActivityTask) ([]ActivityCouple, error) {
 	var taskList []ActivityCouple = make([]ActivityCouple, 0)

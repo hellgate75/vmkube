@@ -6,6 +6,8 @@ import (
 	"vmkube/utils"
 	"vmkube/vmio"
 	"vmkube/model"
+	"vmkube/operations"
+	"vmkube/scheduler"
 )
 
 type InfrastructureActions interface {
@@ -101,7 +103,7 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		ProjectId: descriptor.Id,
 	}
 	iFaceInfra.WaitForUnlock()
-
+	
 	infrastructure, err := vmio.LoadInfrastructure(descriptor.Id)
 	if err != nil {
 		response := Response{
@@ -110,6 +112,30 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
+	
+	deleteActivities, err := operations.GetPostBuildTaskActivities(infrastructure, operations.DestroyMachine)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	NumThreads := 2
+	errorsList := ExecuteInfrastructureActions(infrastructure, deleteActivities, NumThreads,func(task scheduler.ScheduleTask) {
+	})
+	if len(errorsList) > 0 {
+		utils.PrintlnError(fmt.Sprintf("Unable to complete Delete process : Errors deleting Infrastructure : %s!!",  Name))
+		_, message := vmio.StripErrorMessages(fmt.Sprintf("Error building infrastructure : %s", Name), errorsList)
+		response := Response{
+			Status: false,
+			Message: message,
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	
+	utils.PrintlnWarning("Removing Infrastructure logs ...")
 	
 	for _,domain := range infrastructure.Domains {
 		for _,network := range domain.Networks {
@@ -146,6 +172,8 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		}
 	}
 	
+	utils.PrintlnWarning("Removing Rollback Segments ...")
+
 	iFaceRollbackIndex := IFaceRollBackIndex{
 		Id: descriptor.InfraId,
 		ProjectId: descriptor.Id,
@@ -170,7 +198,11 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
-	iFaceRollbackIndex.WaitForUnlock()
+	
+	utils.PrintlnWarning("Removing Rollback Indexes ...")
+
+	//iFaceRollbackIndex.WaitForUnlock()
+	
 	LockRollBackIndex(indexInfo.Index)
 	err = indexInfo.Delete()
 	UnlockRollBackIndex(indexInfo.Index)
@@ -181,6 +213,10 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
+	
+	utils.PrintlnWarning("Removing Infrastructure ...")
+	
+	iFaceInfra.WaitForUnlock()
 	
 	vmio.LockInfrastructureById(descriptor.Id, descriptor.InfraId)
 	var info vmio.InfrastructureInfo =  vmio.InfrastructureInfo{
@@ -199,6 +235,23 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
+	descriptor.InfraId = ""
+	descriptor.InfraName = ""
+	
+	utils.PrintlnWarning("Updating global indexes ...")
+
+	err = UpdateIndexWithProjectsDescriptor(descriptor, true)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	
+	utils.PrintlnSuccess(fmt.Sprintf("Delete of Infrastricture named : %s completed successfully!!", Name))
+	
 	response := Response{
 		Status: true,
 		Message: "Success",

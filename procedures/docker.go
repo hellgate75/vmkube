@@ -379,7 +379,6 @@ func (machine *DockerMachine)  RemoveServer(commandPipe chan MachineMessage, com
 	command = append( command,  "rm")
 	command = append( command,  "-f")
 	command = append( command,  name + "-" + id)
-	fmt.Printf("Running Delete command :  '%s'\n", strings.Join(command, " "))
 	cmd := executeSyncCommand(command)
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()

@@ -292,7 +292,7 @@ func UpdateIndexWithProjectsDescriptor(project model.ProjectsDescriptor, addDesc
 	if addDescriptor {
 		NewIndexes = append(NewIndexes, project)
 		indexes.Projects = NewIndexes
-	} else  if Found {
+	} else if Found {
 		indexes.Projects = NewIndexes
 	}
 	
@@ -691,7 +691,6 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 								keyTerm.State = term.StateColorGreen
 								keyTerm.Value = term.ScreenBold("success!!")
 							}
-							answerCounter++
 						}
 						screenManager.CommChannel <- keyTerm
 						if machineMessage.Error != nil {
@@ -783,6 +782,13 @@ func FixInfrastructureElementValue(Infrastructure model.Infrastructure, instance
 				if Infrastructure.Domains[i].Networks[j].Instances[k].Id == instanceId {
 					Infrastructure.Domains[i].Networks[j].Instances[k].IPAddress = ipAddress
 					Infrastructure.Domains[i].Networks[j].Instances[k].InspectJSON = json
+					return true
+				}
+			}
+			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CInstances); k++ {
+				if Infrastructure.Domains[i].Networks[j].CInstances[k].Id == instanceId {
+					Infrastructure.Domains[i].Networks[j].CInstances[k].IPAddress = ipAddress
+					Infrastructure.Domains[i].Networks[j].CInstances[k].InspectJSON = json
 					return true
 				}
 			}
