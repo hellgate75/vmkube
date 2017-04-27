@@ -54,6 +54,7 @@ func (request *CmdRequest) CheckProject() bool {
 }
 
 func (request *CmdRequest) CreateProject() (Response, error) {
+	utils.NO_COLORS = false
 	Name := ""
 	InputFile := ""
 	InputFormat := "json"
@@ -71,6 +72,8 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			option[1] = "true"
 		} else if "override-infra" == CorrectInput(option[0]) {
 			OverrideInfra = GetBoolean(option[1])
+		} else if "no-colors" == CorrectInput(option[0]) {
+			utils.NO_COLORS = GetBoolean(option[1])
 		}
 	}
 	if Name == "" {
@@ -363,6 +366,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 }
 
 func (request *CmdRequest) AlterProject() (Response, error) {
+	utils.NO_COLORS = false
 	Name := ""
 	File := ""
 	Format := "json"
@@ -410,6 +414,8 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			Sample = GetBoolean(option[1])
 		} else if "sample-format" == CorrectInput(option[0]) {
 			SampleFormat = option[1]
+		} else if "no-colors" == CorrectInput(option[0]) {
+			utils.NO_COLORS = GetBoolean(option[1])
 		}
 		//else {
 		//	PrintCommandHelper(request.TypeStr, request.SubTypeStr)
@@ -878,6 +884,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 }
 
 func (request *CmdRequest) InfoProject() (Response, error) {
+	utils.NO_COLORS = false
 	if request.SubType == List {
 		//List of elements
 		defines := vmio.ListProjectTypeDefines()
@@ -893,6 +900,8 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 				Sample = CorrectInput(option[1])
 			} else if "elem-type" == CorrectInput(option[0]) {
 				TypeVal = option[1]
+			} else if "no-colors" == CorrectInput(option[0]) {
+				utils.NO_COLORS = GetBoolean(option[1])
 			}
 		}
 		if TypeVal == "" {
@@ -981,20 +990,20 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 }
 
 func (request *CmdRequest) DeleteProject() (Response, error) {
+	utils.NO_COLORS = false
 	Name := ""
 	Force := false
 	SkipIndexes := false
 	for _, option := range request.Arguments.Options {
 		if "name" == CorrectInput(option[0]) {
 			Name = option[1]
-		}
-		if "force" == CorrectInput(option[0]) {
+		} else if "force" == CorrectInput(option[0]) {
 			Force = GetBoolean(option[1])
-		}
-		if "skip-indexes" == CorrectInput(option[0]) {
+		} else if "skip-indexes" == CorrectInput(option[0]) {
 			SkipIndexes = GetBoolean(option[1])
+		} else if "no-colors" == CorrectInput(option[0]) {
+			utils.NO_COLORS = GetBoolean(option[1])
 		}
-		
 	}
 	AllowProjectDeletion := Force
 	
@@ -1158,6 +1167,12 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 }
 
 func (request *CmdRequest) ListProjects() (Response, error) {
+	utils.NO_COLORS = false
+	for _, option := range request.Arguments.Options {
+		if "no-colors" == CorrectInput(option[0]) {
+			utils.NO_COLORS = GetBoolean(option[1])
+		}
+	}
 	indexes, error := vmio.LoadIndex()
 	if error != nil {
 		response := Response{
@@ -1191,6 +1206,7 @@ func (request *CmdRequest) ListProjects() (Response, error) {
 }
 
 func (request *CmdRequest) StatusProject() (Response, error) {
+	utils.NO_COLORS = false
 	Name := ""
 	Details := false
 	Format := "json"
@@ -1201,6 +1217,8 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 			Details = GetBoolean(option[1])
 		} else if "format" == CorrectInput(option[0]) {
 			Format = CorrectInput(option[1])
+		} else if "no-colors" == CorrectInput(option[0]) {
+			utils.NO_COLORS = GetBoolean(option[1])
 		}
 	}
 	if Name == "" {
@@ -1622,6 +1640,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 }
 
 func (request *CmdRequest) ImportProject() (Response, error) {
+	utils.NO_COLORS = false
 	Name := ""
 	File := ""
 	Format := "json"
@@ -1654,6 +1673,8 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			if err != nil {
 				ElementType = NoElement
 			}
+		} else if "no-colors" == CorrectInput(option[0]) {
+			utils.NO_COLORS = GetBoolean(option[1])
 		}
 	}
 	if CorrectInput(SampleFormat) == "" {
@@ -2370,6 +2391,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 }
 
 func (request *CmdRequest) ExportProject() (Response, error) {
+	utils.NO_COLORS = false
 	Name := ""
 	File := ""
 	Format := "json"
@@ -2390,6 +2412,8 @@ func (request *CmdRequest) ExportProject() (Response, error) {
 			if err != nil {
 				ElementType = NoElement
 			}
+		} else if "no-colors" == CorrectInput(option[0]) {
+			utils.NO_COLORS = GetBoolean(option[1])
 		}
 	}
 	if strings.TrimSpace(Name) == "" {

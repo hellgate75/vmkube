@@ -585,6 +585,12 @@ func InitHelpers() {
 			Description: "Format used to show details on screen (default: json)",
 			Mandatory: false,
 		},
+		HelperOption{
+			Option: "no-colors",
+			Type: "<boolean>",
+			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
+			Mandatory: false,
+		},
 	)
 	
 	//New Project
@@ -617,6 +623,12 @@ func InitHelpers() {
 			Option: "override-infra",
 			Type: "<boolean>",
 			Description: "Flag defining to force rebuild project and override infrastructure if exists or elsewise fails in case of built project (default: false)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "no-colors",
+			Type: "<boolean>",
+			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
 			Mandatory: false,
 		},
 	)
@@ -807,6 +819,12 @@ func InitHelpers() {
 			Description: "Output format for the required sample input format instead of alter project (default: json, valid if full-export = false)",
 			Mandatory: false,
 		},
+		HelperOption{
+			Option: "no-colors",
+			Type: "<boolean>",
+			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
+			Mandatory: false,
+		},
 	)
 
 	//Delete Project
@@ -821,6 +839,12 @@ func InitHelpers() {
 			Option: "force",
 			Type: "<boolean>",
 			Description: "Flag defining to force delete, no confirmation will be prompte",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "no-colors",
+			Type: "<boolean>",
+			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
 			Mandatory: false,
 		},
 	)
@@ -881,6 +905,12 @@ func InitHelpers() {
 			Description: "Flag used to force import project, overwriting existing and closed one, project goes out of sync in case of built infrastructure (default: false), no confirmation will be prompted",
 			Mandatory: false,
 		},
+		HelperOption{
+			Option: "no-colors",
+			Type: "<boolean>",
+			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
+			Mandatory: false,
+		},
 	)
 	
 	//Export Project
@@ -913,6 +943,12 @@ func InitHelpers() {
 			Option: "elem-type",
 			Type: "<text>",
 			Description: "Type of entity top level in the export (allowed: Machine, Cloud-Machine, Network, Domain,... valid if full-export = false)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "no-colors",
+			Type: "<boolean>",
+			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
 			Mandatory: false,
 		},
 	)

@@ -9,6 +9,7 @@ import (
 	"vmkube/operations"
 	"vmkube/scheduler"
 	"runtime"
+	"strings"
 )
 
 type InfrastructureActions interface {
@@ -294,7 +295,7 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		return response, errors.New("Unable to execute task")
 	}
 	
-	utils.PrintlnSuccess(fmt.Sprintf("Delete of Infrastricture named : %s completed successfully!!", Name))
+	utils.PrintlnSuccess(fmt.Sprintf("Delete of Infrastructure named : %s completed successfully!!", Name))
 	
 	response := Response{
 		Status: true,
@@ -304,11 +305,75 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 }
 
 func (request *CmdRequest) BackupInfra() (Response, error) {
-	response := Response{
-		Status: false,
-		Message: "Not Implemented",
+	Name := ""
+	File := ""
+	utils.NO_COLORS = false
+	for _,option := range request.Arguments.Options {
+		if "infra-name" == CorrectInput(option[0]) {
+			Name = option[1]
+		} else if "no-colors" == CorrectInput(option[0]) {
+			utils.NO_COLORS = GetBoolean(option[1])
+		} else if "file" == CorrectInput(option[0]) {
+			File = option[1]
+		}
 	}
-	return  response, errors.New("Unable to execute task")
+	if Name == "" {
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		return Response{
+			Message: "Infrastrcuture Name field not provided",
+			Status: false,},errors.New("Unable to execute task")
+	}
+	if File == "" {
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		return Response{
+			Message: "File Path field not provided",
+			Status: false,},errors.New("Unable to execute task")
+	}
+	descriptor, err := vmio.GetInfrastructureProjectDescriptor(Name)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	iFaceInfra := vmio.IFaceInfra{
+		Id: descriptor.InfraId,
+		ProjectId: descriptor.Id,
+	}
+	iFaceInfra.WaitForUnlock()
+	
+	infrastructure, err := vmio.LoadInfrastructure(descriptor.Id)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	if ! strings.HasSuffix(strings.ToLower(File), ".vmkube") {
+		utils.PrintlnWarning("File extension changed, cause it was not standard...")
+		File += ".vmkube"
+	}
+	
+	err = infrastructure.Save(File)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	utils.PrintlnSuccess(fmt.Sprintf("Backup Infrastructure named : %s completed successfully!!", Name))
+	
+	response := Response{
+		Status: true,
+		Message: "Success",
+	}
+	return  response, nil
 }
 
 func (request *CmdRequest) RecoverInfra() (Response, error) {
@@ -406,7 +471,7 @@ func (request *CmdRequest) StartInfra() (Response, error) {
 		return response, errors.New("Unable to execute task")
 	}
 	
-	utils.PrintlnSuccess(fmt.Sprintf("Start Infrastricture named : %s completed successfully!!", Name))
+	utils.PrintlnSuccess(fmt.Sprintf("Start Infrastructure named : %s completed successfully!!", Name))
 	
 	response := Response{
 		Status: true,
@@ -502,7 +567,7 @@ func (request *CmdRequest) StopInfra() (Response, error) {
 		return response, errors.New("Unable to execute task")
 	}
 	
-	utils.PrintlnSuccess(fmt.Sprintf("Stop Infrastricture named : %s completed successfully!!", Name))
+	utils.PrintlnSuccess(fmt.Sprintf("Stop Infrastructure named : %s completed successfully!!", Name))
 	
 	response := Response{
 		Status: true,
@@ -598,7 +663,7 @@ func (request *CmdRequest) RestartInfra() (Response, error) {
 		return response, errors.New("Unable to execute task")
 	}
 	
-	utils.PrintlnSuccess(fmt.Sprintf("Restart Infrastricture named : %s completed successfully!!", Name))
+	utils.PrintlnSuccess(fmt.Sprintf("Restart Infrastructure named : %s completed successfully!!", Name))
 	
 	response := Response{
 		Status: true,
