@@ -1481,13 +1481,10 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			return response, err
 		}
 	}
-	
+	var actionIndex ProjectActionIndex
 	creationCouples, err := make([]operations.ActivityCouple, 0), errors.New("Unknown Error")
 	if ! existsInfrastructure {
 		creationCouples, err = operations.GetTaskActivities(project, Infrastructure, operations.CreateMachine)
-	} else {
-		creationCouples, err = operations.GetPostBuildTaskActivities(Infrastructure, operations.CreateMachine)
-		actionIndex, err := LoadProjectActionIndex(descriptor.Id)
 		if err != nil {
 			response := Response{
 				Status: false,
@@ -1495,7 +1492,40 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
+	} else {
+		creationCouples, err = operations.GetPostBuildTaskActivities(Infrastructure, operations.CreateMachine)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		actionIndex, err = LoadProjectActionIndex(descriptor.Id)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		// If no changes in the action logs nothing to do
+		if len(actionIndex.Actions) == 0 {
+			response := Response{
+				Status: false,
+				Message: fmt.Sprintf("No changes for Project '%s' Infrastructure '%s'!!",descriptor.Name,descriptor.InfraName),
+			}
+			return response, errors.New("Unable to execute task")
+		}
 		creationCouples = FilterCreationBasedOnProjectActions(actionIndex, creationCouples)
+		// If no effective DDL into action logs nothing to do
+		if len(creationCouples) == 0 {
+			response := Response{
+				Status: false,
+				Message: fmt.Sprintf("No effective changes for Project '%s' Infrastructure '%s' to justify a build!!",descriptor.Name,descriptor.InfraName),
+			}
+			return response, errors.New("Unable to execute task")
+		}
 	}
 	
 	utils.PrintlnImportant("Now Proceding with machine creation ...!!")
@@ -1551,7 +1581,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		time.Sleep(1*time.Second)
 	}
 	
-	utils.PrintlnWarning(fmt.Sprintf("Saving new Project '%s' Infrastrcucture '%s' descriptors", Name, InfraName))
+	utils.PrintlnWarning(fmt.Sprintf("Saving new Project '%s' Infrastrcucture '%s' descriptors...", Name, InfraName))
 	
 	vmio.LockInfrastructureById(descriptor.Id, descriptor.InfraId)
 	
@@ -1565,6 +1595,18 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			Message: err.Error(),
 		}
 		return response, errors.New("Unable to execute task")
+	}
+	if existsInfrastructure {
+		utils.PrintlnWarning(fmt.Sprintf("Migrating Project '%s' Infrastrcucture '%s' action logs to Rollback Segments...", Name, InfraName))
+		err = MigrateProjectActionsToRollbackSegments(actionIndex)
+
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
 	}
 	
 	utils.PrintlnSuccess(fmt.Sprintf("Project '%s' Infrastrcucture '%s' %sBuild successful!!", Name, InfraName, reOpt))

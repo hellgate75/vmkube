@@ -844,6 +844,13 @@ func FilterCreationBasedOnProjectActions(actions ProjectActionIndex, activities 
 	return outActivities
 }
 
+func MigrateProjectActionsToRollbackSegments(actions ProjectActionIndex) error {
+	if actions.ProjectId != "" {
+		return AddRollBackChangeActions(actions.ProjectId,actions.Actions...)
+	}
+	return errors.New("Invalid log descriptors for Project Id : " + actions.ProjectId)
+}
+
 func CopyStructure(origin interface{}, target interface{}) bool {
 	valueOfOrigin := reflect.ValueOf(origin)
 	if valueOfOrigin.Kind() == reflect.Struct {
