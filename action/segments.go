@@ -242,9 +242,11 @@ func (element *RollBackIndex) PostImport() error {
 
 type ActionDescriptor struct {
 	Id          string            `json:"Id" xml:"Id" mandatory:"yes" descr:"Action Unique Identifier" type:"text"`
+	RelatedId   string            `json:"RelatedId" xml:"RelatedId" mandatory:"yes" descr:"Action Unique Identifier" type:"text"`
 	Request     CmdRequestType  	`json:"Request" xml:"Request" mandatory:"yes" descr:"Request Code" type:"int"`
 	SubRequest  CmdSubRequestType `json:"SubRequest" xml:"SubRequest" mandatory:"yes" descr:"Sub-Request Code" type:"int"`
 	ElementType CmdElementType  	`json:"ElementType" xml:"ElementType" mandatory:"yes" descr:"Elemrnt Type Code" type:"int"`
+	ElementId   string            `json:"ElementId" xml:"ElementId" mandatory:"yes" descr:"Element Unique Identifier" type:"text"`
 	ElementName string            `json:"ElementName" xml:"ElementName" mandatory:"yes" descr:"Element Name" type:"text"`
 	JSONImage   string            `json:"JSONImage" xml:"JSONImage" mandatory:"yes" descr:"Element JSON image" type:"text"`
 	FullProject bool  						`json:"FullProject" xml:"FullProject" mandatory:"yes" descr:"Describe if action infear on all project" type:"boolean"`

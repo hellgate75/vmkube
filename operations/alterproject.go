@@ -86,41 +86,42 @@ func lookupForDuplicates(project model.Project, code CmdElementTypeDesc, name st
 	}
 	return count, indexes
 }
-func AddElementToProject(project model.Project, typeElem int, name string, anchorTypeElem int, anchorName string, anchorId string, file string, format string) error {
+
+func AddElementToProject(project model.Project, typeElem int, name string, anchorTypeElem int, anchorName string, anchorId string, file string, format string) (string, error) {
 	var ElementCode CmdElementTypeDesc = ElementTypeCodes[typeElem]
 	var AnchorElementCode CmdElementTypeDesc = ElementTypeCodes[anchorTypeElem]
 	
 	if ElementCode == ProjectDesc {
-		return errors.New("Uable to Add Entire Project in a project!!")
+		return "", errors.New("Uable to Add Entire Project in a project!!")
 	}
 	
 	num, _ := lookupForDuplicates(project, ElementCode, name, "")
 	if num > 1 {
-		return errors.New(fmt.Sprintf("Element Type '%s' Name '%s' has multiple occurances : %d!!", ElementTypeDescriptors[typeElem], name, num))
+		return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' has multiple occurances : %d!!", ElementTypeDescriptors[typeElem], name, num))
 	}
 	if num > 0 {
-		return errors.New(fmt.Sprintf("Element Type '%s' Name %s already existing!!", ElementTypeDescriptors[typeElem], name))
+		return "", errors.New(fmt.Sprintf("Element Type '%s' Name %s already existing!!", ElementTypeDescriptors[typeElem], name))
 	}
 	var anchorIndexSet []int = make([]int, 0)
 	
 	if AnchorElementCode == ProjectDesc {
 		if utils.CorrectInput(anchorName) != utils.CorrectInput(project.Name) && anchorId != project.Id {
-			return errors.New(fmt.Sprintf("Project Name : '%s' or Id '%s' doesn't math with selected project!!", anchorName, anchorId))
+			return "", errors.New(fmt.Sprintf("Project Name : '%s' or Id '%s' doesn't math with selected project!!", anchorName, anchorId))
 		}
 	} else {
 		num2, indexList := lookupForDuplicates(project, AnchorElementCode, anchorName, anchorId)
 		
 		if num2 > 1 {
-			return errors.New(fmt.Sprintf("Anchor Element Type '%s' Name '%s' (Id %s) has multiple occurances : %d!!", ElementTypeDescriptors[anchorTypeElem], anchorName, anchorId, num2))
+			return "", errors.New(fmt.Sprintf("Anchor Element Type '%s' Name '%s' (Id %s) has multiple occurances : %d!!", ElementTypeDescriptors[anchorTypeElem], anchorName, anchorId, num2))
 		}
 		if num2 == 0 {
-			return errors.New(fmt.Sprintf("Anchor Element Type '%s' Name '%s' (Id %s) has not occurances!!", ElementTypeDescriptors[anchorTypeElem], anchorName, anchorId))
+			return "", errors.New(fmt.Sprintf("Anchor Element Type '%s' Name '%s' (Id %s) has not occurances!!", ElementTypeDescriptors[anchorTypeElem], anchorName, anchorId))
 		}
 		
 		anchorIndexSet = indexList[0]
 	}
 	if int(ElementCode) >= int(AnchorElementCode) {
-		return errors.New(fmt.Sprintf("Incompatible Anchor Type '%s' for Type '%s'!!", ElementTypeDescriptors[anchorTypeElem], ElementTypeDescriptors[typeElem]))
+		return "", errors.New(fmt.Sprintf("Incompatible Anchor Type '%s' for Type '%s'!!", ElementTypeDescriptors[anchorTypeElem], ElementTypeDescriptors[typeElem]))
 	}
 	
 	switch ElementCode {
@@ -128,7 +129,7 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 		var domain model.ProjectDomain
 		err := domain.Import(file, format)
 		if err != nil {
-			return err
+			return "", err
 		}
 		domain.Name = name
 		errorsList :=  domain.Validate()
@@ -136,14 +137,14 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 			project.Domains = append(project.Domains, domain)
 		} else {
 			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Domain from file '%s' format '%s', stack trace : ", file, format), errorsList)
-			return errors.New(desc)
+			return "", errors.New(desc)
 		}
-		return nil
+		return domain.Id+"|"+domain.Name, nil
 	case NetworkDesc:
 		var network model.ProjectNetwork
 		err := network.Import(file, format)
 		if err != nil {
-			return err
+			return "", err
 		}
 		network.Name = name
 		errorsList :=  network.Validate()
@@ -151,14 +152,14 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 			project.Domains[anchorIndexSet[0]].Networks = append(project.Domains[anchorIndexSet[0]].Networks, network)
 		} else {
 			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Network from file '%s' format '%s', stack trace : ", file, format), errorsList)
-			return errors.New(desc)
+			return "", errors.New(desc)
 		}
-		return nil
+		return network.Id+"|"+network.Name, nil
 	case ServerDesc:
 		var server model.ProjectServer
 		err := server.Import(file, format)
 		if err != nil {
-			return err
+			return "", err
 		}
 		server.Name = name
 		errorsList :=  server.Validate()
@@ -166,14 +167,14 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 			project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].Servers = append(project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].Servers, server)
 		} else {
 			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Server from file '%s' format '%s', stack trace : ", file, format), errorsList)
-			return errors.New(desc)
+			return "", errors.New(desc)
 		}
-		return nil
+		return server.Id+"|"+server.Name, nil
 	case CServerDesc:
 		var server model.ProjectCloudServer
 		err := server.Import(file, format)
 		if err != nil {
-			return err
+			return "", err
 		}
 		server.Name = name
 		errorsList :=  server.Validate()
@@ -181,15 +182,15 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 			project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].CServers = append(project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].CServers, server)
 		} else {
 			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Server from file '%s' format '%s', stack trace : ", file, format), errorsList)
-			return errors.New(desc)
+			return "", errors.New(desc)
 		}
-		return nil
+		return server.Id+"|"+server.Name, nil
 	default:
 		//Plan
 		var plan model.InstallationPlan
 		err := plan.Import(file, format)
 		if err != nil {
-			return err
+			return "", err
 		}
 		errorsList :=  plan.Validate()
 		SubElementCode := ServerDesc
@@ -212,35 +213,35 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 				}
 				fmt.Printf("Plan Server Id auto-discovery : %s\n", plan.ServerId)
 			} else if numOcc > 1 {
-				return errors.New(fmt.Sprintf("Server Cloud: '%s' Id/Name : '%s' multiple occurrences : %d found in project", cloud, plan.ServerId, numOcc))
+				return "", errors.New(fmt.Sprintf("Server Cloud: '%s' Id/Name : '%s' multiple occurrences : %d found in project", cloud, plan.ServerId, numOcc))
 			} else {
-				return errors.New(fmt.Sprintf("Server Cloud: '%s' Id/Name : '%s' not found in project", cloud, plan.ServerId))
+				return "", errors.New(fmt.Sprintf("Server Cloud: '%s' Id/Name : '%s' not found in project", cloud, plan.ServerId))
 			}
 		}
 		if len(errorsList) == 0 {
 			project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].Installations = append(project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].Installations, plan)
 		} else {
 			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Installation Plane from file '%s' format '%s', stack trace : ", file, format), errorsList)
-			return errors.New(desc)
+			return "", errors.New(desc)
 		}
-		return nil
+		return plan.Id+":"+plan.ServerId+"|"+fmt.Sprintf("Plan for server id : %s", plan.ServerId), nil
 	}
-	return errors.New("Request Not Implemented!!")
+	return "", errors.New("Request Not Implemented!!")
 }
 
-func AlterElementInProject(project model.Project, typeElem int, name string, id string, file string, format string) error {
+func AlterElementInProject(project model.Project, typeElem int, name string, id string, file string, format string) (string, error) {
 	var ElementCode CmdElementTypeDesc = ElementTypeCodes[typeElem]
 	
 	if ElementCode == ProjectDesc {
-		return errors.New("Uable to Modify Entire Project in a project!!")
+		return "", errors.New("Uable to Modify Entire Project in a project!!")
 	}
 
 	num, indexList := lookupForDuplicates(project, ElementCode, name, id)
 	if num > 1 {
-		return errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) has multiple occurances : %d!!", ElementTypeDescriptors[typeElem], name, id, num))
+		return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) has multiple occurances : %d!!", ElementTypeDescriptors[typeElem], name, id, num))
 	}
 	if num == 0 {
-		return errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) has not occurances!!", ElementTypeDescriptors[typeElem], name, id))
+		return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) has not occurances!!", ElementTypeDescriptors[typeElem], name, id))
 	}
 	
 	targetIndexSet := indexList[0]
@@ -248,108 +249,113 @@ func AlterElementInProject(project model.Project, typeElem int, name string, id 
 	switch ElementCode {
 	case DomainDesc:
 		if len(targetIndexSet) < 1 {
-			return errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
+			return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 		}
 		var domain model.ProjectDomain
 		err := domain.Import(file, format)
 		if err != nil {
-			return err
+			return "", err
 		}
 		errorsList :=  domain.Validate()
 		if len(errorsList) == 0 {
 			project.Domains[targetIndexSet[0]] = domain
 		} else {
 			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Server from file '%s' format '%s', stack trace : ", file, format), errorsList)
-			return errors.New(desc)
+			return "", errors.New(desc)
 		}
-		return nil
+		return project.Domains[targetIndexSet[0]].Id+"|"+project.Domains[targetIndexSet[0]].Name, nil
 	case NetworkDesc:
 		if len(targetIndexSet) < 2 {
-			return errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
+			return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 		}
 		var network model.ProjectNetwork
 		err := network.Import(file, format)
 		if err != nil {
-			return err
+			return "", err
 		}
 		errorsList :=  network.Validate()
 		if len(errorsList) == 0 {
 			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]] = network
 		} else {
 			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Server from file '%s' format '%s', stack trace : ", file, format), errorsList)
-			return errors.New(desc)
+			return "", errors.New(desc)
 		}
-		return nil
+		return project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Id+"|"+
+			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Name, nil
 	case ServerDesc:
 		if len(targetIndexSet) < 3 {
-			return errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
+			return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 		}
 		var server model.ProjectServer
 		err := server.Import(file, format)
 		if err != nil {
-			return err
+			return "", err
 		}
 		errorsList :=  server.Validate()
 		if len(errorsList) == 0 {
 			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Servers[targetIndexSet[2]] = server
 		} else {
 			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Server from file '%s' format '%s', stack trace : ", file, format), errorsList)
-			return errors.New(desc)
+			return "", errors.New(desc)
 		}
-		return nil
+		return project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Servers[targetIndexSet[2]].Id+"|"+
+			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Servers[targetIndexSet[2]].Name, nil
 	case CServerDesc:
 		if len(targetIndexSet) < 3 {
-			return errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
+			return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 		}
 		var server model.ProjectCloudServer
 		err := server.Import(file, format)
 		if err != nil {
-			return err
+			return "",  err
 		}
 		errorsList :=  server.Validate()
 		if len(errorsList) == 0 {
 			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].CServers[targetIndexSet[2]] = server
 		} else {
 			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Server from file '%s' format '%s', stack trace : ", file, format), errorsList)
-			return errors.New(desc)
+			return "", errors.New(desc)
 		}
-		return nil
+		return project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].CServers[targetIndexSet[2]].Id+"|"+
+			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].CServers[targetIndexSet[2]].Name, nil
 	default:
 		//Plan
 		if len(targetIndexSet) < 3 {
-			return errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
+			return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 		}
 		var plan model.InstallationPlan
 		err := plan.Import(file, format)
 		if err != nil {
-			return err
+			return "", err
 		}
 		errorsList :=  plan.Validate()
 		if len(errorsList) == 0 {
 			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]] = plan
 		} else {
 			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Server from file '%s' format '%s', stack trace : ", file, format), errorsList)
-			return errors.New(desc)
+			return "", errors.New(desc)
 		}
-		return nil
+		return project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]].Id+":"+
+			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]].ServerId+"|"+
+			fmt.Sprintf("Plan for server id : %s", project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]].ServerId), nil
 	}
-	return errors.New("Request Not Implemented!!")
+	return "", errors.New("Request Not Implemented!!")
 }
 
 
-func DeleteElementInProject(project model.Project, typeElem int, name string, id string) error {
+func DeleteElementInProject(project model.Project, typeElem int, name string, id string) (string, error) {
 	var ElementCode CmdElementTypeDesc = ElementTypeCodes[typeElem]
 	
 	if ElementCode == ProjectDesc {
-		return errors.New("Uable to Delete Entire Project in a project!!")
+		return "", errors.New("Uable to Delete Entire Project in a project!!")
 	}
 
 	num, indexList := lookupForDuplicates(project, ElementCode, name, id)
 	if num > 1 {
-		return errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) has multiple occurances : %d!!", ElementTypeDescriptors[typeElem], name, id, num))
+		return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) has multiple occurances : %d!!", ElementTypeDescriptors[typeElem], name, id, num))
 	}
 	if num == 0 {
-		return errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) has not occurances!!", ElementTypeDescriptors[typeElem], name, id))
+		return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) has not occurances!!", ElementTypeDescriptors[typeElem], name, id))
 	}
 	
 	targetIndexSet := indexList[0]
@@ -357,47 +363,57 @@ func DeleteElementInProject(project model.Project, typeElem int, name string, id
 	switch ElementCode {
 		case DomainDesc:
 			if len(targetIndexSet) < 1 {
-				return errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
+				return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 			}
+			Id := project.Domains[targetIndexSet[0]].Id+"|"+project.Domains[targetIndexSet[0]].Name
 			dSet := project.Domains[(targetIndexSet[0]+1):]
 			project.Domains = project.Domains[:targetIndexSet[0]]
 			project.Domains = append(project.Domains, dSet...)
-			return nil
+			return Id, nil
 		case NetworkDesc:
 			if len(targetIndexSet) < 2 {
-				return errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
+				return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 			}
+			Id := project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Id+"|"+
+				project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Name
 			nSet := project.Domains[targetIndexSet[0]].Networks[(targetIndexSet[1]+1):]
 			project.Domains[targetIndexSet[0]].Networks = project.Domains[targetIndexSet[0]].Networks[:targetIndexSet[1]]
 			project.Domains[targetIndexSet[0]].Networks = append(project.Domains[targetIndexSet[0]].Networks, nSet...)
-			return nil
+			return Id, nil
 		case ServerDesc:
 			if len(targetIndexSet) < 3 {
-				return errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
+				return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 			}
+			Id := project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Servers[targetIndexSet[2]].Id+"|"+
+				project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Servers[targetIndexSet[2]].Name
 			sSet := project.Domains[targetIndexSet[0]].Networks[1].Servers[(targetIndexSet[2]+1):]
 			project.Domains[targetIndexSet[0]].Networks[1].Servers = project.Domains[targetIndexSet[0]].Networks[1].Servers[:targetIndexSet[2]]
 			project.Domains[targetIndexSet[0]].Networks[1].Servers = append(project.Domains[targetIndexSet[0]].Networks[1].Servers, sSet...)
-			return nil
+			return Id, nil
 		case CServerDesc:
 			if len(targetIndexSet) < 3 {
-				return errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
+				return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 			}
+			Id := project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].CServers[targetIndexSet[2]].Id+"|"+
+				project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].CServers[targetIndexSet[2]].Name
 			csSet := project.Domains[targetIndexSet[0]].Networks[1].CServers[(targetIndexSet[2]+1):]
 			project.Domains[targetIndexSet[0]].Networks[1].CServers = project.Domains[targetIndexSet[0]].Networks[1].CServers[:targetIndexSet[2]]
 			project.Domains[targetIndexSet[0]].Networks[1].CServers = append(project.Domains[targetIndexSet[0]].Networks[1].CServers, csSet...)
-			return nil
+			return Id, nil
 		default:
 			//Plan
 			if len(targetIndexSet) < 3 {
-				return errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
+				return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 			}
+			Id := project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]].Id+":"+
+				project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]].ServerId+"|"+
+				fmt.Sprintf("Plan for server id : %s", project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]].ServerId)
 			pSet := project.Domains[targetIndexSet[0]].Networks[1].Installations[(targetIndexSet[2]+1):]
 			project.Domains[targetIndexSet[0]].Networks[1].Installations = project.Domains[targetIndexSet[0]].Networks[1].Installations[:targetIndexSet[2]]
 			project.Domains[targetIndexSet[0]].Networks[1].Installations = append(project.Domains[targetIndexSet[0]].Networks[1].Installations, pSet...)
-			return nil
+			return Id, nil
 	}
-	return errors.New("Request Not Implemented!!")
+	return "", errors.New("Request Not Implemented!!")
 }
 
 func OpenProject(project model.Project) (model.Project, error) {

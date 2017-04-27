@@ -659,16 +659,6 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 								} else {
 									pending --
 								}
-								//workers := pool.NumberOfWorkers()
-								//pending = workers
-								//if pool.IsRunning() {
-								//  pool.Pause()
-								//	pool.Interrupt()
-								//	pool.Stop()
-								//}
-								//if workers == 0 {
-								//	close(ServerCreationAnswerChannel)
-								//}
 							} else {
 								pending--
 								if pending == 0 {
@@ -720,13 +710,6 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 							} else if ! serverOpsJob.State {
 								pending --
 							}
-							//workers := pool.NumberOfWorkers()
-							//pending = workers
-							//pool.Interrupt()
-							//pool.Stop()
-							//if workers == 0 {
-							//	close(ServerCreationAnswerChannel)
-							//}
 						} else {
 							if ! serverOpsJob.State {
 								pending--
@@ -795,6 +778,70 @@ func FixInfrastructureElementValue(Infrastructure model.Infrastructure, instance
 		}
 	}
 	return false
+}
+
+func DefineDestroyActivityFromCreateOne(activity operations.ActivityCouple) operations.ActivityCouple {
+	return operations.ActivityCouple{
+		CInstance: activity.CInstance,
+		CServer: activity.CServer,
+		Infra: activity.Infra,
+		Instance: activity.Instance,
+		IsCloud: activity.IsCloud,
+		IsInstance: activity.IsInstance,
+		NewInfra: activity.NewInfra,
+		Plans: activity.Plans,
+		Project: activity.Project,
+		Server: activity.Server,
+		Task: operations.DestroyMachine,
+	}
+}
+
+func DefineRebuildOfWholeInfrastructure(activities []operations.ActivityCouple) []operations.ActivityCouple {
+	var outActivities []operations.ActivityCouple = make([]operations.ActivityCouple, 0)
+	for _,activity := range activities {
+		outActivities = append(outActivities, DefineDestroyActivityFromCreateOne(activity))
+		outActivities = append(outActivities, activity)
+	}
+	return outActivities
+}
+
+func FindActivityById(activities []operations.ActivityCouple, id string) (operations.ActivityCouple, error) {
+	for _, activity := range activities {
+		if activity.IsCloud {
+			if activity.CInstance.ServerId == id {
+				return activity, nil
+			}
+		} else {
+			if activity.CInstance.ServerId == id {
+				return activity, nil
+			}
+		}
+	}
+	return operations.ActivityCouple{}, errors.New("Activity Not Found")
+}
+
+func FilterCreationBasedOnProjectActions(actions ProjectActionIndex, activities []operations.ActivityCouple) []operations.ActivityCouple {
+	var outActivities []operations.ActivityCouple = make([]operations.ActivityCouple, 0)
+	for _,action := range actions.Actions {
+		if action.FullProject {
+			return DefineRebuildOfWholeInfrastructure(activities)
+		} else {
+			var activity operations.ActivityCouple
+			var err error
+			if action.RelatedId == "" {
+				activity, err = FindActivityById(activities, action.ElementId)
+			} else {
+				activity, err = FindActivityById(activities, action.RelatedId)
+			}
+			if err != nil {
+				outActivities = append(outActivities, DefineDestroyActivityFromCreateOne(activity))
+				if ! action.DropAction {
+					outActivities = append(outActivities, activity)
+				}
+			}
+		}
+	}
+	return outActivities
 }
 
 func CopyStructure(origin interface{}, target interface{}) bool {

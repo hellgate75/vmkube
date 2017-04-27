@@ -339,6 +339,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			Date: time.Now(),
 			DropAction: true,
 			ElementType: SProject,
+			ElementId: descriptor.Id,
 			ElementName: descriptor.Name,
 			FullProject: true,
 			JSONImage: ProjectJSON,
@@ -571,8 +572,17 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			return response, errors.New("Unable to execute task")
 		default:
 			// Any but Project Type
-			err = operations.AddElementToProject(project, int(ElementType), ElementName, int(AnchorElementType), AnchorElementName, AnchorElementId, File, Format)
-			
+			Id, err := operations.AddElementToProject(project, int(ElementType), ElementName, int(AnchorElementType), AnchorElementName, AnchorElementId, File, Format)
+			ElemRealName := ""
+			Names := strings.Split(Id, ":")
+			Id = Names[0]
+			ElemRealName = Names[1]
+			SubId := ""
+			Ids := strings.Split(Id, ":")
+			if len(Ids) > 1 {
+				Id = Ids[0]
+				SubId = Ids[1]
+			}
 			if err != nil {
 				response := Response{
 					Status: false,
@@ -580,6 +590,24 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 				}
 				return response, errors.New("Unable to execute task")
 			}
+			
+			
+			if existsInfrastructure {
+				AddProjectChangeActions(descriptor.Id, ActionDescriptor{
+					Id: NewUUIDString(),
+					Date: time.Now(),
+					DropAction: false,
+					ElementType: ElementType,
+					ElementId: Id,
+					ElementName: ElemRealName,
+					RelatedId: SubId,
+					FullProject: false,
+					JSONImage: ProjectJSON,
+					Request: request.Type,
+					SubRequest: request.SubType,
+				})
+			}
+			
 		}
 		break
 	case Alter:
@@ -592,7 +620,17 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			return response, errors.New("Unable to execute task")
 		default:
 			// Any but Project Type
-			err = operations.AlterElementInProject(project, int(ElementType), ElementName, ElementId, File, Format)
+			Id, err := operations.AlterElementInProject(project, int(ElementType), ElementName, ElementId, File, Format)
+			ElemRealName := ""
+			Names := strings.Split(Id, ":")
+			Id = Names[0]
+			ElemRealName = Names[1]
+			SubId := ""
+			Ids := strings.Split(Id, ":")
+			if len(Ids) > 1 {
+				Id = Ids[0]
+				SubId = Ids[1]
+			}
 			
 			if err != nil {
 				response := Response{
@@ -600,6 +638,22 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 					Message: err.Error(),
 				}
 				return response, errors.New("Unable to execute task")
+			}
+			
+			if existsInfrastructure {
+				AddProjectChangeActions(descriptor.Id, ActionDescriptor{
+					Id: NewUUIDString(),
+					Date: time.Now(),
+					DropAction: false,
+					ElementType: ElementType,
+					ElementId: Id,
+					ElementName: ElemRealName,
+					RelatedId: SubId,
+					FullProject: false,
+					JSONImage: ProjectJSON,
+					Request: request.Type,
+					SubRequest: request.SubType,
+				})
 			}
 		}
 		break
@@ -613,8 +667,18 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			return response, errors.New("Unable to execute task")
 		default:
 			// Any but Project Type
-			err = operations.DeleteElementInProject(project, int(ElementType), ElementName, ElementId)
-			
+			Id, err := operations.DeleteElementInProject(project, int(ElementType), ElementName, ElementId)
+			ElemRealName := ""
+			Names := strings.Split(Id, ":")
+			Id = Names[0]
+			ElemRealName = Names[1]
+			SubId := ""
+			Ids := strings.Split(Id, ":")
+			if len(Ids) > 1 {
+				Id = Ids[0]
+				SubId = Ids[1]
+			}
+
 			if err != nil {
 				response := Response{
 					Status: false,
@@ -622,6 +686,23 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 				}
 				return response, errors.New("Unable to execute task")
 			}
+
+			if existsInfrastructure {
+				AddProjectChangeActions(descriptor.Id, ActionDescriptor{
+					Id: NewUUIDString(),
+					Date: time.Now(),
+					DropAction: true,
+					ElementType: ElementType,
+					ElementId: Id,
+					ElementName: ElemRealName,
+					RelatedId: SubId,
+					FullProject: false,
+					JSONImage: ProjectJSON,
+					Request: request.Type,
+					SubRequest: request.SubType,
+				})
+			}
+			
 		}
 		break
 	case Open:
@@ -739,20 +820,6 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 	if existsInfrastructure {
 		request.Arguments.Options = append(request.Arguments.Options, []string{"rebuild", "true"})
 		request.BuildProject()
-	}
-	
-	if existsProject && existsInfrastructure {
-		AddProjectChangeActions(descriptor.Id, ActionDescriptor{
-			Id: NewUUIDString(),
-			Date: time.Now(),
-			DropAction: true,
-			ElementType: SProject,
-			ElementName: descriptor.Name,
-			FullProject: true,
-			JSONImage: ProjectJSON,
-			Request: request.Type,
-			SubRequest: request.SubType,
-		})
 	}
 	
 	if existsProject {
@@ -1251,7 +1318,7 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 					if change.FullProject {
 						isFull = "yes"
 					}
-					fmt.Printf("Change: Id: %s - Request: %s - Sub-Request: %s - Element Type: %s - Element Name : %s - Full-Impact : %s\n", change.Id, CmdRequestDescriptors[change.Request], CmdSubRequestDescriptors[change.SubRequest], CmdElementTypeDescriptors[change.ElementType], change.ElementName, isFull)
+					fmt.Printf("Change: Id: %s - Request: %s - Sub-Request: %s - Element Type: %s - Element Name : %s (Id: %s) - Full-Impact : %s\n", change.Id, CmdRequestDescriptors[change.Request], CmdSubRequestDescriptors[change.SubRequest], CmdElementTypeDescriptors[change.ElementType], change.ElementName, change.ElementId, isFull)
 					fmt.Printf("JSON : %s\n", change.JSONImage)
 				}
 			} else {
@@ -1300,7 +1367,8 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 		return Response{
 			Message: "Infrastructure Name not provided",
-			Status: false, }, errors.New("Unable to execute task")
+			Status: false,
+		}, errors.New("Unable to execute task")
 	}
 	descriptor, err := vmio.GetProjectDescriptor(Name)
 	if err != nil {
@@ -1310,7 +1378,16 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		}
 		return response, errors.New("Unable to execute task")
 	}
-	existsInfrastructure := (descriptor.InfraId != "")
+	infraDescriptor, err := vmio.GetInfrastructureProjectDescriptor(InfraName)
+	if err == nil {
+		if infraDescriptor.Id != descriptor.Id {
+			return Response{
+				Message: fmt.Sprintf("Infrastructure Name already used in Project named %s", infraDescriptor.Name),
+				Status: false,
+			}, errors.New("Unable to execute task")
+		}
+	}
+	existsInfrastructure := descriptor.InfraId != ""
 	ForceRebuild := Force && existsInfrastructure
 	AllowInfraBackup := Force && existsInfrastructure
 	InfraBackup := ""
@@ -1405,6 +1482,22 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		}
 	}
 	
+	creationCouples, err := make([]operations.ActivityCouple, 0), errors.New("Unknown Error")
+	if ! existsInfrastructure {
+		creationCouples, err = operations.GetTaskActivities(project, Infrastructure, operations.CreateMachine)
+	} else {
+		creationCouples, err = operations.GetPostBuildTaskActivities(Infrastructure, operations.CreateMachine)
+		actionIndex, err := LoadProjectActionIndex(descriptor.Id)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		creationCouples = FilterCreationBasedOnProjectActions(actionIndex, creationCouples)
+	}
+	
 	utils.PrintlnImportant("Now Proceding with machine creation ...!!")
 	NumThreads := Threads
 	if runtime.NumCPU() - 1 < Threads && !Overclock {
@@ -1413,13 +1506,6 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	}
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
 	
-	
-	creationCouples, err := make([]operations.ActivityCouple, 0), errors.New("Unknown Error")
-	if ! existsInfrastructure {
-		creationCouples, err = operations.GetTaskActivities(project, Infrastructure, operations.CreateMachine)
-	} else {
-		creationCouples, err = operations.GetPostBuildTaskActivities(Infrastructure, operations.CreateMachine)
-	}
 	var errorsList []error = make([]error, 0)
 	var fixInfraValue int = len(creationCouples)
 	errorsList = ExecuteInfrastructureActions(Infrastructure, creationCouples, NumThreads,func(task scheduler.ScheduleTask){
@@ -1682,8 +1768,8 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 	
 	project, err = vmio.LoadProject(descriptor.Id)
 	
-	existsProject := false
-	existsInfrastructure := descriptor.InfraId != ""
+	existsProject := descriptor.Id != ""
+	existsInfrastructure := existsProject && descriptor.InfraId != ""
 	
 	var ProjectJSON string = ""
 	
@@ -1813,6 +1899,21 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 				Message: err.Error(),
 			}
 			UpdateIndexWithProjectsDescriptor(descriptor, false)
+
+			if existsInfrastructure {
+				AddProjectChangeActions(descriptor.Id, ActionDescriptor{
+					Id: NewUUIDString(),
+					Date: time.Now(),
+					DropAction: false,
+					ElementType: SProject,
+					ElementId: descriptor.Id,
+					ElementName: descriptor.Name,
+					FullProject: true,
+					JSONImage: ProjectJSON,
+					Request: request.Type,
+					SubRequest: request.SubType,
+				})
+			}
 			return response, errors.New("Unable to execute task")
 		}
 		utils.PrintlnSuccess(fmt.Sprintf("Successfully imported Project '%s' from file '%s' in format '%s'", Name, File, Format))
@@ -1849,6 +1950,20 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 					return response, errors.New("Unable to execute task")
 				}
 				project.Domains = append(project.Domains, domain)
+				if existsInfrastructure {
+					AddProjectChangeActions(descriptor.Id, ActionDescriptor{
+						Id: NewUUIDString(),
+						Date: time.Now(),
+						DropAction: false,
+						ElementType: SDomain,
+						ElementId: domain.Id,
+						ElementName: domain.Name,
+						FullProject: false,
+						JSONImage: ProjectJSON,
+						Request: request.Type,
+						SubRequest: request.SubType,
+					})
+				}
 			}
 			if len(domains.Domains) > 0 {
 				project.LastMessage = fmt.Sprintf("Domains (no. %d) imported from file %s, format %s", len(domains.Domains), File, Format)
@@ -1894,6 +2009,20 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 								return response, errors.New("Unable to execute task")
 							}
 							project.Domains[i].Networks = append(project.Domains[i].Networks, network)
+							if existsInfrastructure {
+								AddProjectChangeActions(descriptor.Id, ActionDescriptor{
+									Id: NewUUIDString(),
+									Date: time.Now(),
+									DropAction: false,
+									ElementType: SNetwork,
+									ElementId: network.Id,
+									ElementName: network.Name,
+									FullProject: false,
+									JSONImage: ProjectJSON,
+									Request: request.Type,
+									SubRequest: request.SubType,
+								})
+							}
 						}
 					}
 				}
@@ -1953,6 +2082,20 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 										return response, errors.New("Unable to execute task")
 									}
 									project.Domains[i].Networks[j].Servers = append(project.Domains[i].Networks[j].Servers, server)
+									if existsInfrastructure {
+										AddProjectChangeActions(descriptor.Id, ActionDescriptor{
+											Id: NewUUIDString(),
+											Date: time.Now(),
+											DropAction: false,
+											ElementType: LServer,
+											ElementId: server.Id,
+											ElementName: server.Name,
+											FullProject: false,
+											JSONImage: ProjectJSON,
+											Request: request.Type,
+											SubRequest: request.SubType,
+										})
+									}
 								}
 							}
 						}
@@ -2014,6 +2157,20 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 										return response, errors.New("Unable to execute task")
 									}
 									project.Domains[i].Networks[j].CServers = append(project.Domains[i].Networks[j].CServers, server)
+									if existsInfrastructure {
+										AddProjectChangeActions(descriptor.Id, ActionDescriptor{
+											Id: NewUUIDString(),
+											Date: time.Now(),
+											DropAction: false,
+											ElementType: CLServer,
+											ElementId: server.Id,
+											ElementName: server.Name,
+											FullProject: false,
+											JSONImage: ProjectJSON,
+											Request: request.Type,
+											SubRequest: request.SubType,
+										})
+									}
 								}
 							}
 						}
@@ -2105,6 +2262,21 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 										return response, errors.New("Unable to execute task")
 									}
 									project.Domains[i].Networks[j].Installations = append(project.Domains[i].Networks[j].Installations, plan)
+									if existsInfrastructure {
+										AddProjectChangeActions(descriptor.Id, ActionDescriptor{
+											Id: NewUUIDString(),
+											Date: time.Now(),
+											DropAction: false,
+											ElementType: SPlan,
+											ElementId: plan.Id,
+											ElementName: fmt.Sprintf("Plan for server id : %s", plan.ServerId),
+											RelatedId: plan.ServerId,
+											FullProject: false,
+											JSONImage: ProjectJSON,
+											Request: request.Type,
+											SubRequest: request.SubType,
+										})
+									}
 								}
 							}
 						}
@@ -2137,19 +2309,6 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 	if ProjectBackup != "" {
 		utils.PrintlnWarning(fmt.Sprintf("Removing Project backup file : %s", ProjectBackup))
 		err = model.DeleteIfExists(ProjectBackup)
-	}
-	if existsProject && existsInfrastructure {
-		AddProjectChangeActions(descriptor.Id, ActionDescriptor{
-			Id: NewUUIDString(),
-			Date: time.Now(),
-			DropAction: true,
-			ElementType: SProject,
-			ElementName: descriptor.Name,
-			FullProject: true,
-			JSONImage: ProjectJSON,
-			Request: request.Type,
-			SubRequest: request.SubType,
-		})
 	}
 	
 	if existsInfrastructure && OverrideInfra {
