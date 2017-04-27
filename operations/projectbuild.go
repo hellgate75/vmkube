@@ -18,10 +18,10 @@ type RunnableStruct interface {
 }
 
 
-type ServerOperationsJob struct {
+type MachineOperationsJob struct {
 	Name             string
 	State            bool
-	OutChan          chan *ServerOperationsJob
+	OutChan          chan *MachineOperationsJob
 	OwnState         term.KeyValueElement
 	Project          model.Project
 	Infra            model.Infrastructure
@@ -32,56 +32,56 @@ type ServerOperationsJob struct {
 	commandPipe      chan procedures.MachineMessage
 	commandChannel   chan *exec.Cmd
 	threadSafeCmd    bool
-	control          procedures.ControlStructure
+	control          procedures.MachineControlStructure
 }
 
-func (job *ServerOperationsJob) Response() interface{} {
+func (job *MachineOperationsJob) Response() interface{} {
 	return fmt.Sprintf("%s|%s|%s",job.MachineMessage.InstanceId, job.MachineMessage.InspectJSON, job.MachineMessage.IPAddress)
 }
 
-func (job *ServerOperationsJob) Start() {
+func (job *MachineOperationsJob) Start() {
 	if !job.State {
 		job.State = true
 		if job.SendStartMessage && ! job.control.Interrupt {
 			job.OutChan <- job
 		}
 		job.commandPipe = make(chan procedures.MachineMessage)
-		machineAdapter := procedures.GetCurrentServerMachine(job.Project, job.Infra, job.Activity.Server, job.Activity.CServer, job.Activity.Instance, job.Activity.CInstance, job.Activity.Instance.Id, job.Activity.IsCloud, job.Activity.NewInfra)
+		machineAdapter := procedures.GetCurrentMachineExecutor(job.Project, job.Infra, job.Activity.Machine, job.Activity.CMachine, job.Activity.Instance, job.Activity.CInstance, job.Activity.Instance.Id, job.Activity.IsCloud, job.Activity.NewInfra)
 		job.threadSafeCmd = machineAdapter.IsThreadSafeCommand()
 		machineAdapter.SetControlStructure(&job.control)
 		job.commandChannel = make(chan *exec.Cmd)
 		switch job.Activity.Task {
 		case CreateMachine:
 			if job.Activity.IsCloud {
-				go machineAdapter.CreateCloudServer(job.commandPipe, job.commandChannel)
+				go machineAdapter.CreateCloudMachine(job.commandPipe, job.commandChannel)
 			} else {
-				go machineAdapter.CreateServer(job.commandPipe, job.commandChannel)
+				go machineAdapter.CreateMachine(job.commandPipe, job.commandChannel)
 			}
 			break
 			case DestroyMachine:
-				go machineAdapter.RemoveServer(job.commandPipe, job.commandChannel)
+				go machineAdapter.RemoveMachine(job.commandPipe, job.commandChannel)
 				break
 			case StopMachine:
-				go machineAdapter.StopServer(job.commandPipe, job.commandChannel)
+				go machineAdapter.StopMachine(job.commandPipe, job.commandChannel)
 				break
 			case StartMachine:
-				go machineAdapter.StartServer(job.commandPipe, job.commandChannel)
+				go machineAdapter.StartMachine(job.commandPipe, job.commandChannel)
 				break
 			case RestartMachine:
-				go machineAdapter.RestartServer(job.commandPipe, job.commandChannel)
+				go machineAdapter.RestartMachine(job.commandPipe, job.commandChannel)
 				break
 			case MachineStatus:
-				go machineAdapter.ServerStatus(job.commandPipe, job.commandChannel)
+				go machineAdapter.MachineStatus(job.commandPipe, job.commandChannel)
 				break
 			case MachineEnv:
-				go machineAdapter.ServerEnv(job.commandPipe, job.commandChannel)
+				go machineAdapter.MachineEnv(job.commandPipe, job.commandChannel)
 				break
 			case MachineInspect:
-				go machineAdapter.ServerInspect(job.commandPipe, job.commandChannel)
+				go machineAdapter.MachineInspect(job.commandPipe, job.commandChannel)
 				break
 			case MachineIPAddress:
 				break
-				go machineAdapter.ServerIPAddress(job.commandPipe, job.commandChannel)
+				go machineAdapter.MachineIPAddress(job.commandPipe, job.commandChannel)
 			default:
 				panic("No matching ActivityTask for Job")
 		}
@@ -110,7 +110,7 @@ func (job *ServerOperationsJob) Start() {
 	}
 }
 
-func (job *ServerOperationsJob) Stop() {
+func (job *MachineOperationsJob) Stop() {
 	if job.threadSafeCmd {
 		job.control.Interrupt = true
 		if job.control.CurrentCommand.Process.Pid > 0 {
@@ -129,7 +129,7 @@ func (job *ServerOperationsJob) Stop() {
 	job.State = false
 }
 
-func (job *ServerOperationsJob) Status() bool {
+func (job *MachineOperationsJob) Status() bool {
 	return job.State
 }
 
@@ -153,8 +153,8 @@ type ActivityCouple struct {
 	Infra       model.Infrastructure
 	IsCloud     bool
 	IsInstance  bool
-	Server      model.ProjectServer
-	CServer     model.ProjectCloudServer
+	Machine      model.LocalMachine
+	CMachine     model.CloudMachine
 	Instance    model.Instance
 	CInstance   model.CloudInstance
 	Plans       []model.InstallationPlan
@@ -162,42 +162,42 @@ type ActivityCouple struct {
 	NewInfra    bool
 }
 
-func filterPlansByServer(id string, isCloud bool, network model.ProjectNetwork) []model.InstallationPlan {
+func filterPlansByMachine(id string, isCloud bool, network model.MachineNetwork) []model.InstallationPlan {
 	var selectedPlans []model.InstallationPlan = make([]model.InstallationPlan, 0)
 	for _,plan := range network.Installations {
-		if plan.IsCloud == isCloud && plan.ServerId == id {
+		if plan.IsCloud == isCloud && plan.MachineId == id {
 			selectedPlans = append(selectedPlans, plan)
 		}
 	}
 	return selectedPlans
 }
 
-func filterInstanceByServer(id string, infrastructure model.Infrastructure) (model.Instance, error) {
+func filterInstanceByMachine(id string, infrastructure model.Infrastructure) (model.Instance, error) {
 	var Instance model.Instance
 	for _,domain := range infrastructure.Domains {
 		for _,network := range domain.Networks {
-			for _,server := range network.Instances {
-				if server.ServerId == id {
-					return server, nil
+			for _,machine := range network.LocalInstances {
+				if machine.MachineId == id {
+					return machine, nil
 				}
 			}
 		}
 	}
-	return Instance, errors.New("Instance for Server Id: "+id+" not found")
+	return Instance, errors.New("Instance for Machine Id: "+id+" not found")
 }
 
-func filterCloudInstanceByServer(id string, infrastructure model.Infrastructure) (model.CloudInstance, error) {
+func filterCloudInstanceByMachine(id string, infrastructure model.Infrastructure) (model.CloudInstance, error) {
 	var Instance model.CloudInstance
 	for _,domain := range infrastructure.Domains {
 		for _,network := range domain.Networks {
-			for _,server := range network.CInstances {
-				if server.ServerId == id {
-					return server, nil
+			for _,machine := range network.CloudInstances {
+				if machine.MachineId == id {
+					return machine, nil
 				}
 			}
 		}
 	}
-	return Instance, errors.New("Instance for Server Id: "+id+" not found")
+	return Instance, errors.New("Instance for Machine Id: "+id+" not found")
 }
 
 
@@ -205,33 +205,33 @@ func GetTaskActivities(project model.Project, infrastructure model.Infrastructur
 	var taskList []ActivityCouple = make([]ActivityCouple, 0)
 	for _,domain := range project.Domains {
 		for _,network := range domain.Networks {
-			for _,server := range network.Servers {
-				instance, err := filterInstanceByServer(server.Id, infrastructure)
+			for _,machine := range network.LocalMachines {
+				instance, err := filterInstanceByMachine(machine.Id, infrastructure)
 				if err != nil {
 					return taskList, err
 				}
 				taskList = append(taskList, ActivityCouple{
 					IsCloud: false,
-					Server: server,
+					Machine: machine,
 					Instance: instance,
 					Task: task,
-					Plans: filterPlansByServer(server.Id, false, network),
+					Plans: filterPlansByMachine(machine.Id, false, network),
 					NewInfra: true,
 					Project: project,
 					Infra: infrastructure,
 				})
 			}
-			for _,server := range network.CServers {
-				instance, err := filterCloudInstanceByServer(server.Id, infrastructure)
+			for _,machine := range network.CloudMachines {
+				instance, err := filterCloudInstanceByMachine(machine.Id, infrastructure)
 				if err != nil {
 					return taskList, err
 				}
 				taskList = append(taskList, ActivityCouple{
 					IsCloud: true,
-					CServer: server,
+					CMachine: machine,
 					CInstance: instance,
 					Task: task,
-					Plans: filterPlansByServer(server.Id, true, network),
+					Plans: filterPlansByMachine(machine.Id, true, network),
 					NewInfra: true,
 					Project: project,
 					Infra: infrastructure,
@@ -246,20 +246,20 @@ func GetPostBuildTaskActivities(infrastructure model.Infrastructure, task Activi
 	var taskList []ActivityCouple = make([]ActivityCouple, 0)
 	for _,domain := range infrastructure.Domains {
 		for _,network := range domain.Networks {
-			for _,server := range network.Instances {
+			for _,machine := range network.LocalInstances {
 				taskList = append(taskList, ActivityCouple{
 					IsCloud: false,
-					Instance: server,
+					Instance: machine,
 					Task: task,
 					Plans: []model.InstallationPlan{},
 					Infra: infrastructure,
 					NewInfra: false,
 				})
 			}
-			for _,server := range network.CInstances {
+			for _,machine := range network.CloudInstances {
 				taskList = append(taskList, ActivityCouple{
 					IsCloud: true,
-					CInstance: server,
+					CInstance: machine,
 					Task: task,
 					Plans: []model.InstallationPlan{},
 					Infra: infrastructure,

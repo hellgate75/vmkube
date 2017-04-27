@@ -8,8 +8,8 @@ type ProjectItem int
 
 const(
 	None ProjectItem = iota;
-	ServerElement ProjectItem = iota + 1;
-	CloudServerElement ProjectItem = iota + 1;
+	MachineElement ProjectItem = iota + 1;
+	CloudMachineElement ProjectItem = iota + 1;
 	PlanElement ProjectItem = iota + 1;
 	NetworkElement ProjectItem = iota + 1;
 	DomainElement ProjectItem = iota + 1;
@@ -33,11 +33,11 @@ type TypeDefine struct {
 
 type DefineList []TypeDefine
 
-var ServerSample model.ProjectServer = model.ProjectServer{
+var MachineSample model.LocalMachine = model.LocalMachine{
 	Id: "",
-	Name: "MyServer",
+	Name: "MyMachine",
 	Driver: "virtualbox",
-	Hostname: "myserver",
+	Hostname: "mymachine",
 	Cpus: 2,
 	Memory: 1024,
 	DiskSize: 80,
@@ -47,19 +47,19 @@ var ServerSample model.ProjectServer = model.ProjectServer{
 	},
 	OSType: "rancheros",
 	OSVersion: "0.9.0",
-	Roles: []string{"server","master","rancher-host","rancher-server"},
+	Roles: []string{"machine","master","rancher-host","rancher-machine"},
 	Engine: model.ProjectEngineOpt{
 		Environment: []string{"MY=ENV-VAR=MY-VALUE"},
 	},
 	Swarm: model.ProjectSwarmOpt{},
 }
 
-var CloudServerSample model.ProjectCloudServer = model.ProjectCloudServer{
+var CloudMachineSample model.CloudMachine = model.CloudMachine{
 	Id: "",
-	Name: "MyCloudServer",
+	Name: "MyCloudMachine",
 	Driver: "virtualbox",
-	Hostname: "myserver",
-	Roles: []string{"server","master","rancher-host","rancher-server"},
+	Hostname: "mymachine",
+	Roles: []string{"machine","master","rancher-host","rancher-machine"},
 	Options: [][]string{
 		[]string{"my-provider-option", "my-provider-option-value"},
 	},
@@ -69,43 +69,43 @@ var InstallationPlanSample model.InstallationPlan = model.InstallationPlan{
 	Id: "",
 	Environment: model.KubernetesEnv,
 	IsCloud: false,
-	ServerId: "MyServer",
+	MachineId: "MyMachine",
 	MainCommandRef: "https://github.com/myrepo/something/mycommand.git",
 	MainCommandSet: model.AnsibleCmdSet,
 	ProvisionCommandRef: "https://site.to.my.commands/something/mycommand.tgz",
 	ProvisionCommandSet: model.HelmCmdSet,
 	Role: model.MasterRole,
-	Type: model.HostRole,
+	Type: model.HostDeployment,
 }
 
 var InstallationPlanSample2 model.InstallationPlan = model.InstallationPlan{
 	Id: "",
 	Environment: model.CattleEnv,
 	IsCloud: true,
-	ServerId: "MyCloudServer",
+	MachineId: "MyCloudMachine",
 	MainCommandRef: "https://github.com/myrepo/something/mycommand.git",
 	MainCommandSet: model.AnsibleCmdSet,
 	ProvisionCommandRef: "https://site.to.my.commands/something/mycommand.tgz",
 	ProvisionCommandSet: model.VirtKubeCmdSet,
 	Role: model.StandAloneRole,
-	Type: model.ServerRole,
+	Type: model.MachineDeployment,
 }
 
-var NetworkSample model.ProjectNetwork = model.ProjectNetwork{
+var NetworkSample model.MachineNetwork = model.MachineNetwork{
 	Id: "",
 	Name: "MyNetwork",
-	CServers: []model.ProjectCloudServer{CloudServerSample},
-	Servers: []model.ProjectServer{ServerSample},
+	CloudMachines: []model.CloudMachine{CloudMachineSample},
+	LocalMachines: []model.LocalMachine{MachineSample},
 	Installations: []model.InstallationPlan{InstallationPlanSample, InstallationPlanSample2},
 	Options: [][]string{
 		[]string{"my-network-option", "my-network-option-value"},
 	},
 }
 
-var DomainSample model.ProjectDomain = model.ProjectDomain {
+var DomainSample model.MachineDomain = model.MachineDomain{
 	Id: "",
 	Name: "MyDomain",
-	Networks: []model.ProjectNetwork{NetworkSample},
+	Networks: []model.MachineNetwork{NetworkSample},
 	Options: [][]string{
 		[]string{"my-domain-option", "my-domain-option-value"},
 	},
@@ -114,24 +114,24 @@ var DomainSample model.ProjectDomain = model.ProjectDomain {
 var ProjectSample model.ProjectImport = model.ProjectImport {
 	Id: "",
 	Name: "MyProject",
-	Domains: []model.ProjectDomain{DomainSample},
+	Domains: []model.MachineDomain{DomainSample},
 }
 
 func ListProjectTypeDefines() DefineList {
 	defineList := make(DefineList, 0)
 	defineList = append(defineList, TypeDefine{
-		Name: "Server",
-		Description: "Server Element describes Instance configuration for local scope",
-		Type: ServerElement,
+		Name: "Machine",
+		Description: "Machine Element describes Instance configuration for local scope",
+		Type: MachineElement,
 		Fields: []TypeDefineField{},
-		Sample: ServerSample,
+		Sample: MachineSample,
 	})
 	defineList = append(defineList, TypeDefine{
-		Name: "Cloud-Server",
-		Description: "Server Element describes Instance configuration for remote/cloud scope",
-		Type: CloudServerElement,
+		Name: "Cloud-Machine",
+		Description: "Machine Element describes Instance configuration for remote/cloud scope",
+		Type: CloudMachineElement,
 		Fields: []TypeDefineField{},
-		Sample: CloudServerSample,
+		Sample: CloudMachineSample,
 	})
 	defineList = append(defineList, TypeDefine{
 		Name: "Plan",
@@ -142,7 +142,7 @@ func ListProjectTypeDefines() DefineList {
 	})
 	defineList = append(defineList, TypeDefine{
 		Name: "Network",
-		Description: "Describe Network Inrastracture, composed by Server/Cloud Server Configurations and Plans",
+		Description: "Describe Network Inrastracture, composed by Machine/Cloud Machine Configurations and Plans",
 		Type: NetworkElement,
 		Fields: []TypeDefineField{},
 		Sample: NetworkSample,

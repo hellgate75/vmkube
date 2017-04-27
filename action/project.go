@@ -110,6 +110,8 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			return response, errors.New("Unable to execute task")
 		}
 		ProjectJSON = string(utils.GetJSONFromObj(oldProject, true))
+	} else {
+		descriptor.Open = true
 	}
 	
 	if err == nil {
@@ -190,18 +192,18 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		project.Modified = time.Now()
 		project.Open = true
 		project.LastMessage = "Empty Project Creation"
-		project.Domains = append(project.Domains, model.ProjectDomain{
+		project.Domains = append(project.Domains, model.MachineDomain{
 			Id: NewUUIDString(),
 			Name: "Default Domain",
 			Options: [][]string{},
-			Networks: []model.ProjectNetwork{},
+			Networks: []model.MachineNetwork{},
 		})
-		project.Domains[0].Networks = append(project.Domains[0].Networks, model.ProjectNetwork{
+		project.Domains[0].Networks = append(project.Domains[0].Networks, model.MachineNetwork{
 			Id: NewUUIDString(),
 			Name: "Defaut Network",
 			Options: [][]string{},
-			CServers: []model.ProjectCloudServer{},
-			Servers: []model.ProjectServer{},
+			CloudMachines: []model.CloudMachine{},
+			LocalMachines: []model.LocalMachine{},
 			Installations: []model.InstallationPlan{},
 		})
 	}
@@ -482,18 +484,18 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 					fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.NetworkSample, true))
 				}
 				break
-			case LServer:
+			case LMachine:
 				if CorrectInput(SampleFormat) == "json" {
-					fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.ServerSample, true))
+					fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.MachineSample, true))
 				} else {
-					fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.ServerSample, true))
+					fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.MachineSample, true))
 				}
 				break
-			case CLServer:
+			case CLMachine:
 				if CorrectInput(SampleFormat) == "json" {
-					fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.CloudServerSample, true))
+					fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.CloudMachineSample, true))
 				} else {
-					fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.CloudServerSample, true))
+					fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.CloudMachineSample, true))
 				}
 				break
 			default:
@@ -1280,29 +1282,29 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 			for _, network := range domain.Networks {
 				num, options := vmio.StripOptions(network.Options)
 				fmt.Printf("   Network: %s (Id: %s) - Options [%d] :%s\n", network.Name, network.Id, num, options)
-				fmt.Printf("   Servers: %d\n", len(network.Servers))
-				serversMap := make(map[string]string)
-				for _, server := range network.Servers {
-					serversMap[server.Id] = server.Name
-					fmt.Printf("      Server: %s (Id: %s) - Driver: %s - OS : %s:%s\n", server.Name, server.Id, server.Driver, server.OSType, server.OSVersion)
+				fmt.Printf("   Local Machines: %d\n", len(network.LocalMachines))
+				machinesMap := make(map[string]string)
+				for _, machine := range network.LocalMachines {
+					machinesMap[machine.Id] = machine.Name
+					fmt.Printf("      Local Machine: %s (Id: %s) - Driver: %s - OS : %s:%s\n", machine.Name, machine.Id, machine.Driver, machine.OSType, machine.OSVersion)
 				}
-				fmt.Printf("   Cloud Servers: %d\n", len(network.CServers))
-				for _, server := range network.CServers {
-					serversMap[server.Id] = server.Name
-					num, options := vmio.StripOptions(server.Options)
-					fmt.Printf("      Server: %s (Id: %s) - Driver: %s - Options [%d] :%s\n", server.Name, server.Id, server.Driver, num, options)
+				fmt.Printf("   Cloud Machines: %d\n", len(network.CloudMachines))
+				for _, machine := range network.CloudMachines {
+					machinesMap[machine.Id] = machine.Name
+					num, options := vmio.StripOptions(machine.Options)
+					fmt.Printf("      Cloud Machine: %s (Id: %s) - Driver: %s - Options [%d] :%s\n", machine.Name, machine.Id, machine.Driver, num, options)
 				}
 				fmt.Printf("   Installation Plans: %d\n", len(network.Installations))
 				for _, installation := range network.Installations {
-					serverName, ok := serversMap[installation.ServerId]
+					machineName, ok := machinesMap[installation.MachineId]
 					if !ok {
-						serverName = "<invalid>"
+						machineName = "<invalid>"
 					}
 					cloud := "no"
 					if installation.IsCloud {
 						cloud = "yes"
 					}
-					fmt.Printf("      Plan: Id: %s - Server: %s [Id: %s] - Cloud: %s - Envoronment : %s  Role: %s  Type: %s\n", installation.Id, serverName, installation.ServerId, cloud, installation.Environment, installation.Role, installation.Type)
+					fmt.Printf("      Plan: Id: %s - Machine: %s [Id: %s] - Cloud: %s - Envoronment : %s  Role: %s  Type: %s\n", installation.Id, machineName, installation.MachineId, cloud, installation.Environment, installation.Role, installation.Type)
 				}
 			}
 		}
@@ -1408,9 +1410,9 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			continue
 		}
 		for _, network := range domain.Networks {
-			if len(network.Servers) > 0 {
+			if len(network.LocalMachines) > 0 {
 				ValidProject = true
-			} else if len(network.CServers) > 0 {
+			} else if len(network.CloudMachines) > 0 {
 				ValidProject = true
 			}
 		}
@@ -1419,7 +1421,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	if !ValidProject {
 		response := Response{
 			Status: false,
-			Message: "Project not valid, please define some servers and eventually plans before to build it!!",
+			Message: "Project not valid, please define some machines and eventually plans before to build it!!",
 		}
 		return response, errors.New("Unable to execute task")
 	}
@@ -1709,18 +1711,18 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 					fmt.Printf("%s\n", utils.GetXMLFromObj(ImportNetworkSample, true))
 				}
 				break
-			case LServer:
+			case LMachine:
 				if CorrectInput(SampleFormat) == "json" {
-					fmt.Printf("%s\n", utils.GetJSONFromObj(ImportLocalServerSample, true))
+					fmt.Printf("%s\n", utils.GetJSONFromObj(ImportLocalMachineSample, true))
 				} else {
-					fmt.Printf("%s\n", utils.GetXMLFromObj(ImportLocalServerSample, true))
+					fmt.Printf("%s\n", utils.GetXMLFromObj(ImportLocalMachineSample, true))
 				}
 				break
-			case CLServer:
+			case CLMachine:
 				if CorrectInput(SampleFormat) == "json" {
-					fmt.Printf("%s\n", utils.GetJSONFromObj(ImportCloudServerSample, true))
+					fmt.Printf("%s\n", utils.GetJSONFromObj(ImportCloudMachineSample, true))
 				} else {
-					fmt.Printf("%s\n", utils.GetXMLFromObj(ImportCloudServerSample, true))
+					fmt.Printf("%s\n", utils.GetXMLFromObj(ImportCloudMachineSample, true))
 				}
 				break
 			default:
@@ -1774,20 +1776,20 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 		if ElementType == SNetwork {
 			ImportNetworks = "yes"
 		}
-		ImportServers := "no"
-		if ElementType == LServer {
-			ImportServers = "yes"
+		ImportMachines := "no"
+		if ElementType == LMachine {
+			ImportMachines = "yes"
 		}
-		ImportCServers := "no"
-		if ElementType == CLServer {
-			ImportCServers = "yes"
+		ImportCMachines := "no"
+		if ElementType == CLMachine {
+			ImportCMachines = "yes"
 		}
 		ImportPlans := "no"
 		if ElementType == SPlan {
 			ImportPlans = "yes"
 		}
-		fmt.Printf("Import Domains : %s\nImport Networks : %s\nImport Servers : %s\nImport Cloud Servers : %s\nImport Plans : %s\n",
-			ImportDomains, ImportNetworks, ImportServers, ImportCServers, ImportPlans)
+		fmt.Printf("Import Domains : %s\nImport Networks : %s\nImport Machines : %s\nImport Cloud Machines : %s\nImport Plans : %s\n",
+			ImportDomains, ImportNetworks, ImportMachines, ImportCMachines, ImportPlans)
 	}
 	if ! FullImport && ElementType == NoElement {
 		response := Response{
@@ -1861,15 +1863,17 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 				return response, err
 			}
 		}
+	} else {
+		descriptor.Open = true
 	}
 	
 	AllowInfraDeletion := OverrideInfra && Force
 	AllowInfraBackup := OverrideInfra && Force
 	InfraBackup := ""
 	
-	if descriptor.InfraId != "" && OverrideInfra {
+	if descriptor.InfraId != "" && OverrideInfra && (FullImport || ElementType == SProject) {
 		if ! AllowInfraDeletion {
-			AllowInfraDeletion = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with deletion process for Infrastructure named '%s'?", descriptor.InfraName))
+			AllowInfraDeletion = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with override process for Infrastructure named '%s'?", descriptor.InfraName))
 			if ! AllowInfraDeletion {
 				response := Response{
 					Status: false,
@@ -1883,7 +1887,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 		}
 	}
 	
-	if existsInfrastructure && OverrideInfra {
+	if existsInfrastructure && OverrideInfra && (FullImport || ElementType == SProject) {
 		if AllowInfraBackup {
 			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube", model.GetEmergencyFolder(), string(os.PathSeparator), utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name), utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
 			infra, err := vmio.LoadInfrastructure(descriptor.Id)
@@ -1970,7 +1974,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 		switch ElementType {
 		case SDomain:
 			domains := ExportImportDomains{
-				Domains: []model.ProjectDomain{},
+				Domains: []model.MachineDomain{},
 			}
 			domains, err = UserImportDomains(File, Format)
 			if err != nil {
@@ -2091,9 +2095,9 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 				utils.PrintlnWarning(fmt.Sprintf("Warning: No Network to import from file '%s' in format '%s'", File, Format))
 			}
 			break
-		case LServer:
-			var servers []ExportImportLocalServers
-			servers, err = UserImportLocalServers(File, Format)
+		case LMachine:
+			var machines []ExportImportLocalMachines
+			machines, err = UserImportLocalMachines(File, Format)
 			if err != nil {
 				response := Response{
 					Status: false,
@@ -2101,37 +2105,37 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 				}
 				return response, errors.New("Unable to execute task")
 			}
-			for _, serverImport := range servers {
-				DomainId := serverImport.Network.DomainId
-				DomainName := serverImport.Network.DomainName
-				NetworkId := serverImport.Network.NetworkId
-				NetworkName := serverImport.Network.NetworkName
+			for _, machineImport := range machines {
+				DomainId := machineImport.Network.DomainId
+				DomainName := machineImport.Network.DomainName
+				NetworkId := machineImport.Network.NetworkId
+				NetworkName := machineImport.Network.NetworkName
 				Found := false
 				for i := 0; i < len(project.Domains); i++ {
 					if project.Domains[i].Id == DomainId || project.Domains[i].Name == DomainName {
 						for j := 0; j < len(project.Domains[i].Networks); j++ {
 							if project.Domains[i].Networks[j].Id == NetworkId || project.Domains[i].Networks[j].Name == NetworkName {
 								Found = true
-								for _, server := range serverImport.Servers {
-									server.PostImport()
-									errorList := server.Validate()
+								for _, machine := range machineImport.Machines {
+									machine.PostImport()
+									errorList := machine.Validate()
 									if len(errorList) > 0 {
-										_, errorValue := vmio.StripErrorMessages("Servers import is invalid, clause(s) :", errorList)
+										_, errorValue := vmio.StripErrorMessages("Machines import is invalid, clause(s) :", errorList)
 										response := Response{
 											Status: false,
 											Message: errorValue,
 										}
 										return response, errors.New("Unable to execute task")
 									}
-									project.Domains[i].Networks[j].Servers = append(project.Domains[i].Networks[j].Servers, server)
+									project.Domains[i].Networks[j].LocalMachines = append(project.Domains[i].Networks[j].LocalMachines, machine)
 									if existsInfrastructure {
 										AddProjectChangeActions(descriptor.Id, ActionDescriptor{
 											Id: NewUUIDString(),
 											Date: time.Now(),
 											DropAction: false,
-											ElementType: LServer,
-											ElementId: server.Id,
-											ElementName: server.Name,
+											ElementType: LMachine,
+											ElementId: machine.Id,
+											ElementName: machine.Name,
 											FullProject: false,
 											JSONImage: ProjectJSON,
 											Request: request.Type,
@@ -2146,13 +2150,13 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 				if ! Found {
 					response := Response{
 						Status: false,
-						Message: fmt.Sprintf("Errors during Servers Import : Import target Domain not found by name : '%s' or by id : '%s and target Network not found by name : '%s' or by id : '%s '", DomainName, DomainId, NetworkName, NetworkId),
+						Message: fmt.Sprintf("Errors during Machines Import : Import target Domain not found by name : '%s' or by id : '%s and target Network not found by name : '%s' or by id : '%s '", DomainName, DomainId, NetworkName, NetworkId),
 					}
 					return response, errors.New("Unable to execute task")
 				}
 			}
-			if len(servers) > 0 {
-				project.LastMessage = fmt.Sprintf("Servers (no. %d) imported from file %s, format %s", len(servers), File, Format)
+			if len(machines) > 0 {
+				project.LastMessage = fmt.Sprintf("Machines (no. %d) imported from file %s, format %s", len(machines), File, Format)
 				err = vmio.SaveProject(project)
 				if err != nil {
 					response := Response{
@@ -2161,14 +2165,14 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 					}
 					return response, errors.New("Unable to execute task")
 				}
-				utils.PrintlnSuccess(fmt.Sprintf("Successfully imported Project '%s' Local Servers from file '%s' in format '%s'", Name, File, Format))
+				utils.PrintlnSuccess(fmt.Sprintf("Successfully imported Project '%s' Local Machines from file '%s' in format '%s'", Name, File, Format))
 			} else {
-				utils.PrintlnWarning(fmt.Sprintf("Warning: No Server to import from file '%s' in format '%s'", File, Format))
+				utils.PrintlnWarning(fmt.Sprintf("Warning: No Machine to import from file '%s' in format '%s'", File, Format))
 			}
 			break
-		case CLServer:
-			var servers []ExportImportCloudServers
-			servers, err = UserImportCloudServers(File, Format)
+		case CLMachine:
+			var machines []ExportImportCloudMachines
+			machines, err = UserImportCloudMachines(File, Format)
 			if err != nil {
 				response := Response{
 					Status: false,
@@ -2176,37 +2180,37 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 				}
 				return response, errors.New("Unable to execute task")
 			}
-			for _, serverImport := range servers {
-				DomainId := serverImport.Network.DomainId
-				DomainName := serverImport.Network.DomainName
-				NetworkId := serverImport.Network.NetworkId
-				NetworkName := serverImport.Network.NetworkName
+			for _, machineImport := range machines {
+				DomainId := machineImport.Network.DomainId
+				DomainName := machineImport.Network.DomainName
+				NetworkId := machineImport.Network.NetworkId
+				NetworkName := machineImport.Network.NetworkName
 				Found := false
 				for i := 0; i < len(project.Domains); i++ {
 					if project.Domains[i].Id == DomainId || project.Domains[i].Name == DomainName {
 						for j := 0; j < len(project.Domains[i].Networks); j++ {
 							if project.Domains[i].Networks[j].Id == NetworkId || project.Domains[i].Networks[j].Name == NetworkName {
 								Found = true
-								for _, server := range serverImport.Servers {
-									server.PostImport()
-									errorList := server.Validate()
+								for _, machine := range machineImport.Machines {
+									machine.PostImport()
+									errorList := machine.Validate()
 									if len(errorList) > 0 {
-										_, errorValue := vmio.StripErrorMessages("Servers import is invalid, clause(s) :", errorList)
+										_, errorValue := vmio.StripErrorMessages("Machines import is invalid, clause(s) :", errorList)
 										response := Response{
 											Status: false,
 											Message: errorValue,
 										}
 										return response, errors.New("Unable to execute task")
 									}
-									project.Domains[i].Networks[j].CServers = append(project.Domains[i].Networks[j].CServers, server)
+									project.Domains[i].Networks[j].CloudMachines = append(project.Domains[i].Networks[j].CloudMachines, machine)
 									if existsInfrastructure {
 										AddProjectChangeActions(descriptor.Id, ActionDescriptor{
 											Id: NewUUIDString(),
 											Date: time.Now(),
 											DropAction: false,
-											ElementType: CLServer,
-											ElementId: server.Id,
-											ElementName: server.Name,
+											ElementType: CLMachine,
+											ElementId: machine.Id,
+											ElementName: machine.Name,
 											FullProject: false,
 											JSONImage: ProjectJSON,
 											Request: request.Type,
@@ -2221,13 +2225,13 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 				if ! Found {
 					response := Response{
 						Status: false,
-						Message: fmt.Sprintf("Errors during Cloud Servers Import : Import target Domain not found by name : '%s' or by id : '%s and target Network not found by name : '%s' or by id : '%s '", DomainName, DomainId, NetworkName, NetworkId),
+						Message: fmt.Sprintf("Errors during Cloud Machines Import : Import target Domain not found by name : '%s' or by id : '%s and target Network not found by name : '%s' or by id : '%s '", DomainName, DomainId, NetworkName, NetworkId),
 					}
 					return response, errors.New("Unable to execute task")
 				}
 			}
-			if len(servers) > 0 {
-				project.LastMessage = fmt.Sprintf("Cloud Servers (no. %d) imported from file %s, format %s", len(servers), File, Format)
+			if len(machines) > 0 {
+				project.LastMessage = fmt.Sprintf("Cloud Machines (no. %d) imported from file %s, format %s", len(machines), File, Format)
 				err = vmio.SaveProject(project)
 				if err != nil {
 					response := Response{
@@ -2236,9 +2240,9 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 					}
 					return response, errors.New("Unable to execute task")
 				}
-				utils.PrintlnSuccess(fmt.Sprintf("Successfully imported Project '%s' Cloud Servers from file '%s' in format '%s'", Name, File, Format))
+				utils.PrintlnSuccess(fmt.Sprintf("Successfully imported Project '%s' Cloud Machines from file '%s' in format '%s'", Name, File, Format))
 			} else {
-				utils.PrintlnWarning(fmt.Sprintf("Warning: No Server to import from file '%s' in format '%s'", File, Format))
+				utils.PrintlnWarning(fmt.Sprintf("Warning: No Machine to import from file '%s' in format '%s'", File, Format))
 			}
 			break
 		default:
@@ -2274,32 +2278,32 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 										}
 										return response, errors.New("Unable to execute task")
 									}
-									FoundServer := false
+									FoundMachine := false
 									if plan.IsCloud {
-										for _, server := range project.Domains[i].Networks[j].CServers {
-											if plan.ServerId == server.Id || CorrectInput(plan.ServerId) == CorrectInput(server.Name) {
-												FoundServer = true
-												plan.ServerId = server.Id
+										for _, machine := range project.Domains[i].Networks[j].CloudMachines {
+											if plan.MachineId == machine.Id || CorrectInput(plan.MachineId) == CorrectInput(machine.Name) {
+												FoundMachine = true
+												plan.MachineId = machine.Id
 												break
 											}
 										}
 									} else {
-										for _, server := range project.Domains[i].Networks[j].Servers {
-											if plan.ServerId == server.Id || CorrectInput(plan.ServerId) == CorrectInput(server.Name) {
-												FoundServer = true
-												plan.ServerId = server.Id
+										for _, machine := range project.Domains[i].Networks[j].LocalMachines {
+											if plan.MachineId == machine.Id || CorrectInput(plan.MachineId) == CorrectInput(machine.Name) {
+												FoundMachine = true
+												plan.MachineId = machine.Id
 												break
 											}
 										}
 									}
-									if ! FoundServer {
+									if ! FoundMachine {
 										IsCloud := "no"
 										if plan.IsCloud {
 											IsCloud = "yes"
 										}
 										response := Response{
 											Status: false,
-											Message: fmt.Sprintf("Errors during Plans Import : Plan Server id/name: %s from Cloud: %s not found in domain id: %s, name: %s and network id: %s, name: %s", plan.ServerId, IsCloud, DomainName, DomainId, NetworkName, NetworkId),
+											Message: fmt.Sprintf("Errors during Plans Import : Plan Machine id/name: %s from Cloud: %s not found in domain id: %s, name: %s and network id: %s, name: %s", plan.MachineId, IsCloud, DomainName, DomainId, NetworkName, NetworkId),
 										}
 										return response, errors.New("Unable to execute task")
 									}
@@ -2311,8 +2315,8 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 											DropAction: false,
 											ElementType: SPlan,
 											ElementId: plan.Id,
-											ElementName: fmt.Sprintf("Plan for server id : %s", plan.ServerId),
-											RelatedId: plan.ServerId,
+											ElementName: fmt.Sprintf("Plan for machine id : %s", plan.MachineId),
+											RelatedId: plan.MachineId,
 											FullProject: false,
 											JSONImage: ProjectJSON,
 											Request: request.Type,
@@ -2432,20 +2436,20 @@ func (request *CmdRequest) ExportProject() (Response, error) {
 		if ElementType == SNetwork {
 			ExportNetworks = "yes"
 		}
-		ExportServers := "no"
-		if ElementType == LServer {
-			ExportServers = "yes"
+		ExportMachines := "no"
+		if ElementType == LMachine {
+			ExportMachines = "yes"
 		}
-		ExportCServers := "no"
-		if ElementType == CLServer {
-			ExportCServers = "yes"
+		ExportCMachines := "no"
+		if ElementType == CLMachine {
+			ExportCMachines = "yes"
 		}
 		ExportPlans := "no"
 		if ElementType == SPlan {
 			ExportPlans = "yes"
 		}
-		fmt.Printf("Export Domains : %s\nExport Networks : %s\nExport Servers : %s\nExport Cloud Servers : %s\nExport Plans : %s\n",
-			ExportDomains, ExportNetworks, ExportServers, ExportCServers, ExportPlans)
+		fmt.Printf("Export Domains : %s\nExport Networks : %s\nExport Machines : %s\nExport Cloud Machines : %s\nExport Plans : %s\n",
+			ExportDomains, ExportNetworks, ExportMachines, ExportCMachines, ExportPlans)
 	}
 	if ! FullExport && ElementType == NoElement {
 		response := Response{
@@ -2485,7 +2489,7 @@ func (request *CmdRequest) ExportProject() (Response, error) {
 		switch ElementType {
 		case SDomain:
 			domains := ExportImportDomains{
-				Domains: []model.ProjectDomain{},
+				Domains: []model.MachineDomain{},
 			}
 			domains.Domains = append(domains.Domains, project.Domains...)
 			err = utils.ExportStructureToFile(File, Format, domains)
@@ -2520,23 +2524,23 @@ func (request *CmdRequest) ExportProject() (Response, error) {
 			}
 			utils.PrintlnSuccess(fmt.Sprintf("Successfully exported Project '%s' Networks to file '%s' in format '%s'", Name, File, Format))
 			break
-		case LServer:
-			var servers []ExportImportLocalServers = make([]ExportImportLocalServers, 0)
+		case LMachine:
+			var machines []ExportImportLocalMachines = make([]ExportImportLocalMachines, 0)
 			for _, domain := range project.Domains {
 				for _, network := range domain.Networks {
-					server := ExportImportLocalServers{
+					machine := ExportImportLocalMachines{
 						Network: NetworkReference{
 							DomainId: domain.Id,
 							DomainName: domain.Name,
 							NetworkId: network.Id,
 							NetworkName: network.Name,
 						},
-						Servers: network.Servers,
+						Machines: network.LocalMachines,
 					}
-					servers = append(servers, server)
+					machines = append(machines, machine)
 				}
 			}
-			err = utils.ExportStructureToFile(File, Format, servers)
+			err = utils.ExportStructureToFile(File, Format, machines)
 			if err != nil {
 				response := Response{
 					Status: false,
@@ -2544,25 +2548,25 @@ func (request *CmdRequest) ExportProject() (Response, error) {
 				}
 				return response, errors.New("Unable to execute task")
 			}
-			utils.PrintlnSuccess(fmt.Sprintf("Successfully exported Project '%s' Local Servers to file '%s' in format '%s'", Name, File, Format))
+			utils.PrintlnSuccess(fmt.Sprintf("Successfully exported Project '%s' Local Machines to file '%s' in format '%s'", Name, File, Format))
 			break
-		case CLServer:
-			var servers []ExportImportCloudServers = make([]ExportImportCloudServers, 0)
+		case CLMachine:
+			var machines []ExportImportCloudMachines = make([]ExportImportCloudMachines, 0)
 			for _, domain := range project.Domains {
 				for _, network := range domain.Networks {
-					server := ExportImportCloudServers{
+					machine := ExportImportCloudMachines{
 						Network: NetworkReference{
 							DomainId: domain.Id,
 							DomainName: domain.Name,
 							NetworkId: network.Id,
 							NetworkName: network.Name,
 						},
-						Servers: network.CServers,
+						Machines: network.CloudMachines,
 					}
-					servers = append(servers, server)
+					machines = append(machines, machine)
 				}
 			}
-			err = utils.ExportStructureToFile(File, Format, servers)
+			err = utils.ExportStructureToFile(File, Format, machines)
 			if err != nil {
 				response := Response{
 					Status: false,
@@ -2570,7 +2574,7 @@ func (request *CmdRequest) ExportProject() (Response, error) {
 				}
 				return response, errors.New("Unable to execute task")
 			}
-			utils.PrintlnSuccess(fmt.Sprintf("Successfully exported Project '%s' Cloud Servers to file '%s' in format '%s'", Name, File, Format))
+			utils.PrintlnSuccess(fmt.Sprintf("Successfully exported Project '%s' Cloud Machines to file '%s' in format '%s'", Name, File, Format))
 			break
 		default:
 			//Plans

@@ -88,7 +88,7 @@ func (element *Domain) Save(file string) error {
 	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 }
 
-func (element *ProjectDomain) Validate() []error {
+func (element *MachineDomain) Validate() []error {
 	errorList := make([]error, 0)
 	if element.Id == "" {
 		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
@@ -110,7 +110,7 @@ func (element *ProjectDomain) Validate() []error {
 	return errorList
 }
 
-func (element *ProjectDomain) Load(file string) error {
+func (element *MachineDomain) Load(file string) error {
 	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
@@ -121,7 +121,7 @@ func (element *ProjectDomain) Load(file string) error {
 	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
-func (element *ProjectDomain) Import(file string, format string) error {
+func (element *MachineDomain) Import(file string, format string) error {
 	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
@@ -146,7 +146,7 @@ func (element *ProjectDomain) Import(file string, format string) error {
 	return err
 }
 
-func (element *ProjectDomain) PostImport() error {
+func (element *MachineDomain) PostImport() error {
 	if element.Id == "" {
 		element.Id = NewUUIDString()
 	}
@@ -159,7 +159,7 @@ func (element *ProjectDomain) PostImport() error {
 	return nil
 }
 
-func (element *ProjectDomain) Save(file string) error {
+func (element *MachineDomain) Save(file string) error {
 	byteArray, err := json.MarshalIndent(element, "", "  ")
 	if err != nil {
 		return  err

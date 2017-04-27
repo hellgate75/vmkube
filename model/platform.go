@@ -111,17 +111,17 @@ func ToInstanceEngineOpt(opt ProjectEngineOpt) EngineOpt {
 }
 
 /*
-Describe Server options, contains
+Describe Machine options, contains
 	
   * Id          (string)     Unique Identifier
 	
-  * ServerId    (string)     Project Server Unique Identifier
+  * MachineId    (string)     Project Machine Unique Identifier
   
-  * Name        (string)     Server Local Name
+  * Name        (string)     Machine Local Name
    
   * Roles       ([]string)   Roles used in the deployment plan
  
-  * Driver      (string)     Server Driver (virtualbox,vmware,hyperv) ref: https://docs.docker.com/machine/drivers/
+  * Driver      (string)     Machine Driver (virtualbox,vmware,hyperv) ref: https://docs.docker.com/machine/drivers/
   
   * Memory      (int)        Memory Size MB
   
@@ -139,7 +139,7 @@ Describe Server options, contains
   
   * Options     ([][]string) Specific vendor option in format key value pairs array without signs (e.g.: --<driver>)
   
-  * Hostname    (string)     Network Server Hostname
+  * Hostname    (string)     Network Machine Hostname
 
   * IPAddress   (string)     Network IP Address
 
@@ -149,7 +149,7 @@ Describe Server options, contains
 */
 type Instance struct {
 	Id          string      `json:"Id" xml:"Id"`
-	ServerId    string      `json:"ServerId" xml:"ServerId"`
+	MachineId    string      `json:"MachineId" xml:"MachineId"`
 	Name        string      `json:"Name" xml:"Name"`
 	Roles     []string      `json:"Roles" xml:"Roles"`
 	Driver      string      `json:"Driver" xml:"Driver"`
@@ -169,21 +169,21 @@ type Instance struct {
 }
 
 /*
-Describe Cloud Server options, contains
+Describe Cloud Machine options, contains
 	
   * Id          (string)      Unique Identifier
 	
-  * ServerId    (string)      Project Cloud Server Unique Identifier
+  * MachineId    (string)      Project Cloud Machine Unique Identifier
   
   * Name        (string)      Cloud Instance Name
   
-  * Driver      (string)      Cloud Server Driver (amazonec2, digitalocean, azure, etc...)
+  * Driver      (string)      Cloud Machine Driver (amazonec2, digitalocean, azure, etc...)
   
-  * Hostname    (string)      Cloud Server Hostname
+  * Hostname    (string)      Cloud Machine Hostname
   
   * Roles       ([]string)    Roles used in the deployment plan
   
-  * Options     ([][]string)  Cloud Server Options
+  * Options     ([][]string)  Cloud Machine Options
  
   * IPAddress   (string)      Cloud IP Address
 
@@ -195,7 +195,7 @@ Describe Cloud Server options, contains
 */
 type CloudInstance struct {
 	Id          string      `json:"Id" xml:"Id"`
-	ServerId    string      `json:"ServerId" xml:"ServerId"`
+	MachineId    string      `json:"MachineId" xml:"MachineId"`
 	Name        string      `json:"Name" xml:"Name"`
 	Driver      string      `json:"Driver" xml:"Driver"`
 	Hostname    string      `json:"Hostname" xml:"Hostname"`
@@ -209,29 +209,29 @@ type CloudInstance struct {
 /*
 Describe Installation Type Enum
 	
-  * Server  Take Part to installation cluster as Main Server
+  * Machine  Take Part to installation cluster as Main Machine
   
   * Host    Take part to installation cluster as simple host
 */
 type InstallationType int
 
 const(
-	ServerType InstallationType = iota // value 0
+	MachineType InstallationType = iota // value 0
 	HostType
 )
 
-func ToInstanceInstallation(role InstallationRole) InstallationType {
+func ToInstanceInstallation(role DeploymentRole) InstallationType {
 	switch role {
-	case ServerRole:
-		return ServerType
+	case MachineDeployment:
+		return MachineType
 	default:
 		return HostType
 	}
 }
 func InstanceInstallationToString(role InstallationType) string {
 	switch role {
-	case ServerType:
-		return "Server"
+	case MachineType:
+		return "Machine"
 	default:
 		return "Host"
 	}
@@ -240,11 +240,11 @@ func InstanceInstallationToString(role InstallationType) string {
 /*
 Describe Role Type Enum
 	
-  * StandAlone      StandAlone Server Unit
+  * StandAlone      StandAlone Machine Unit
   
-  * Master          Master Server in a cluster
+  * Master          Master Machine in a cluster
   
-  * Slave           Dependant Server in a cluster
+  * Slave           Dependant Machine in a cluster
   
   * ClusterMember  Peer Role in a cluster
 */
@@ -257,7 +257,7 @@ const(
 	ClusterMember
 )
 
-func ToInstanceRole(role SystemRole) RoleType {
+func ToInstanceRole(role MachineRole) RoleType {
 	switch role {
 	case StandAloneRole:
 		return StandAlone
@@ -307,7 +307,7 @@ const(
 	Custom
 )
 
-func ToInstanceEnvironment(env ProjectEnvironment) EnvironmentType {
+func ToInstanceEnvironment(env MachineEnvironment) EnvironmentType {
 	switch env {
 		case CattleEnv:
 			return Cattle
@@ -357,7 +357,7 @@ type LogStorage struct {
 
 
 /*
-Describe Server Installation options, contains
+Describe Machine Installation options, contains
 	
   * Id          	(string)            Unique Identifier
   
@@ -409,18 +409,18 @@ Describe Network options, contains
   
   * CInstances    ([]CloudInstance) Cloud Instances List
   
-  * Installations ([]Installation)  Server Executed Installations
+  * Installations ([]Installation)  Machine Executed Installations
   
   * Options       ([][]string)      Specific Network information (eg. cloud provider info or local info)
 
 */
 type Network struct {
-	Id          	string          `json:"Id" xml:"Id"`
-	Name          string          `json:"Name" xml:"Name"`
-	Instances     []Instance      `json:"Instances" xml:"Instances"`
-	CInstances    []CloudInstance `json:"CInstances" xml:"CInstances"`
-	Installations []Installation  `json:"Installations" xml:"Installations"`
-	Options     [][]string        `json:"Options" xml:"Options"`
+	Id             string          `json:"Id" xml:"Id"`
+	Name           string          `json:"Name" xml:"Name"`
+	LocalInstances []Instance      `json:"LocalInstances" xml:"LocalInstances"`
+	CloudInstances []CloudInstance `json:"CloudInstances" xml:"CloudInstances"`
+	Installations  []Installation  `json:"Installations" xml:"Installations"`
+	Options        [][]string      `json:"Options" xml:"Options"`
 }
 
 /*
@@ -442,7 +442,7 @@ type Domain struct {
 }
 
 /*
-Describe Server State, contains
+Describe Machine State, contains
 	
   * Id           (string)     State Unique Identifier
   
@@ -452,7 +452,7 @@ Describe Server State, contains
   
   * InstanceId   (string)     Target Instance Id
   
-  * IsCloud      (bool)       Is A Cloud Server
+  * IsCloud      (bool)       Is A Cloud Machine
   
   * NetworkId    (string)     Target Network Id
   
@@ -495,7 +495,7 @@ Describe Network State, contains
   
   * DomainId        (string)         Target Domain Id
   
-  * InstanceStates  ([]ServerState)  List Of Instance States
+  * InstanceStates  ([]MachineState)  List Of Instance States
 
   * Creation        (time.Time )     Creation Date
 

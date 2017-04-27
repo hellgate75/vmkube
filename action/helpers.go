@@ -686,7 +686,7 @@ func InitHelpers() {
 		HelperOption{
 			Option: "elem-type",
 			Type: "<text>",
-			Description: "Type of entity to require field information (allowed: Server, Cloud-Server, Network, Domain,...)",
+			Description: "Type of entity to require field information (allowed: Machine, Cloud-Machine, Network, Domain,...)",
 			Mandatory: false,
 		},
 		HelperOption{
@@ -750,7 +750,7 @@ func InitHelpers() {
 		HelperOption{
 			Option: "elem-type",
 			Type: "<text>",
-			Description: "Type of entity to create/modify/delete in the project (allowed: Server, Cloud-Server, Network, Domain,...)",
+			Description: "Type of entity to create/modify/delete in the project (allowed: Machine, Cloud-Machine, Network, Domain,...)",
 			Mandatory: true,
 		},
 		HelperOption{
@@ -768,7 +768,7 @@ func InitHelpers() {
 		HelperOption{
 			Option: "anchor-elem-type",
 			Type: "<text>",
-			Description: "Type of anchor entity for new element to create in the project (allowed: Server, Cloud-Server, Network, Domain,...)",
+			Description: "Type of anchor entity for new element to create in the project (allowed: Machine, Cloud-Machine, Network, Domain,...)",
 			Mandatory: false,
 		},
 		HelperOption{
@@ -854,7 +854,7 @@ func InitHelpers() {
 		HelperOption{
 			Option: "elem-type",
 			Type: "<text>",
-			Description: "Type of entity top level in the import (allowed: Server, Cloud-Server, Network, Domain,... valid if full-export = false)",
+			Description: "Type of entity top level in the import (allowed: Machine, Cloud-Machine, Network, Domain,... valid if full-export = false)",
 			Mandatory: false,
 		},
 		HelperOption{
@@ -912,7 +912,7 @@ func InitHelpers() {
 		HelperOption{
 			Option: "elem-type",
 			Type: "<text>",
-			Description: "Type of entity top level in the export (allowed: Server, Cloud-Server, Network, Domain,... valid if full-export = false)",
+			Description: "Type of entity top level in the export (allowed: Machine, Cloud-Machine, Network, Domain,... valid if full-export = false)",
 			Mandatory: false,
 		},
 	)

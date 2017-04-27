@@ -16,8 +16,8 @@ func (element *CloudInstance) Validate() []error {
 	if element.Name == "" {
 		errorList = append(errorList, errors.New("Unassigned Name field"))
 	}
-	if element.ServerId == "" {
-		errorList = append(errorList, errors.New("Unassigned Project Server Id field"))
+	if element.MachineId == "" {
+		errorList = append(errorList, errors.New("Unassigned Project Machine Id field"))
 	}
 	if element.Driver == "" {
 		errorList = append(errorList, errors.New("Unassigned Driver field"))
@@ -90,7 +90,7 @@ func (element *CloudInstance) Save(file string) error {
 	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 }
 
-func (element *ProjectCloudServer) Validate() []error {
+func (element *CloudMachine) Validate() []error {
 	errorList := make([]error, 0)
 	if element.Id == "" {
 		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
@@ -115,7 +115,7 @@ func (element *ProjectCloudServer) Validate() []error {
 	return errorList
 }
 
-func (element *ProjectCloudServer) Load(file string) error {
+func (element *CloudMachine) Load(file string) error {
 	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
@@ -126,7 +126,7 @@ func (element *ProjectCloudServer) Load(file string) error {
 	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
-func (element *ProjectCloudServer) Import(file string, format string) error {
+func (element *CloudMachine) Import(file string, format string) error {
 	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
@@ -151,14 +151,14 @@ func (element *ProjectCloudServer) Import(file string, format string) error {
 	return err
 }
 
-func (element *ProjectCloudServer) PostImport() error {
+func (element *CloudMachine) PostImport() error {
 	if element.Id == "" {
 		element.Id = NewUUIDString()
 	}
 	return nil
 }
 
-func (element *ProjectCloudServer) Save(file string) error {
+func (element *CloudMachine) Save(file string) error {
 	byteArray, err := json.Marshal(element)
 	if err != nil {
 		return  err

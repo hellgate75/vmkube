@@ -123,6 +123,16 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		return  response, errors.New("Unable to execute task")
 	}
 	
+	project, err := vmio.LoadProject(descriptor.Id)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
 	utils.PrintlnImportant("Now Proceding with machines destroy ...!!")
 	NumThreads := Threads
 	if runtime.NumCPU() - 1 < Threads && !Overclock {
@@ -156,7 +166,7 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 	
 	for _,domain := range infrastructure.Domains {
 		for _,network := range domain.Networks {
-			for _,instance := range network.Instances {
+			for _,instance := range network.LocalInstances {
 				err = DeleteInfrastructureLogs(instance.Logs)
 				if err != nil {
 					response := Response{
@@ -166,7 +176,7 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 					return  response, errors.New("Unable to execute task")
 				}
 			}
-			for _,instance := range network.CInstances {
+			for _,instance := range network.CloudInstances {
 				err = DeleteInfrastructureLogs(instance.Logs)
 				if err != nil {
 					response := Response{
@@ -255,8 +265,24 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 	}
 	descriptor.InfraId = ""
 	descriptor.InfraName = ""
+
+	utils.PrintlnWarning(fmt.Sprintf("Reopening Project '%s' ...", descriptor.Name))
 	
+	project.Open = true
+	
+	err = vmio.SaveProject(project)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+
 	utils.PrintlnWarning("Updating global indexes ...")
+	
+	descriptor.Open = true
 
 	err = UpdateIndexWithProjectsDescriptor(descriptor, true)
 	
@@ -682,23 +708,23 @@ func (request *CmdRequest) StatusInfra() (Response, error) {
 		for _,network := range domain.Networks {
 			num, options := vmio.StripOptions(network.Options)
 			fmt.Printf("   Network: %s (Id: %s) - Options [%d] :%s\n", network.Name, network.Id, num, options)
-			fmt.Printf("   Instances: %d\n", len(network.Instances))
-			serversMap := make(map[string]string)
-			for _,server := range network.Instances {
-				serversMap[server.Id] = server.Name
-				fmt.Printf("      Instance: %s (Id: %s) - Driver: %s - OS : %s:%s - IP Address: %s\n", server.Name, server.Id, server.Driver, server.OSType, server.OSVersion, server.IPAddress)
+			fmt.Printf("   Instances: %d\n", len(network.LocalInstances))
+			machinesMap := make(map[string]string)
+			for _,machine := range network.LocalInstances {
+				machinesMap[machine.Id] = machine.Name
+				fmt.Printf("      Instance: %s (Id: %s) - Driver: %s - OS : %s:%s - IP Address: %s\n", machine.Name, machine.Id, machine.Driver, machine.OSType, machine.OSVersion, machine.IPAddress)
 			}
-			fmt.Printf("   Cloud Instances: %d\n", len(network.CInstances))
-			for _,server := range network.CInstances {
-				serversMap[server.Id] = server.Name
-				num, options := vmio.StripOptions(server.Options)
-				fmt.Printf("      Cloud Instance: %s (Id: %s) - Driver: %s - IP Address: %s - Options [%d] :%s\n", server.Name, server.Id, server.Driver, server.IPAddress, num, options)
+			fmt.Printf("   Cloud Instances: %d\n", len(network.CloudInstances))
+			for _,machine := range network.CloudInstances {
+				machinesMap[machine.Id] = machine.Name
+				num, options := vmio.StripOptions(machine.Options)
+				fmt.Printf("      Cloud Instance: %s (Id: %s) - Driver: %s - IP Address: %s - Options [%d] :%s\n", machine.Name, machine.Id, machine.Driver, machine.IPAddress, num, options)
 			}
 			fmt.Printf("   Installation Plans: %d\n", len(network.Installations))
 			for _,installation := range network.Installations {
-				serverName,ok := serversMap[installation.InstanceId]
+				machineName,ok := machinesMap[installation.InstanceId]
 				if !ok {
-					serverName = "<invalid>"
+					machineName = "<invalid>"
 				}
 				cloud := "no"
 				if installation.IsCloud {
@@ -708,7 +734,7 @@ func (request *CmdRequest) StatusInfra() (Response, error) {
 				if installation.Success {
 					success = "yes"
 				}
-				fmt.Printf("      Plan: Id: %s - Instance: %s [Id: %s] - Success: %s - Cloud: %s - Envoronment : %s  Role: %s  Type: %s\n", installation.Id, serverName, installation.InstanceId, success, cloud, model.InstanceEnvironmentToString(installation.Environment), model.InstanceRoleToString(installation.Role), model.InstanceInstallationToString(installation.Type))
+				fmt.Printf("      Plan: Id: %s - Instance: %s [Id: %s] - Success: %s - Cloud: %s - Envoronment : %s  Role: %s  Type: %s\n", installation.Id, machineName, installation.InstanceId, success, cloud, model.InstanceEnvironmentToString(installation.Environment), model.InstanceRoleToString(installation.Role), model.InstanceInstallationToString(installation.Type))
 			}
 		}
 	}

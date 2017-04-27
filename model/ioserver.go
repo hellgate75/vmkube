@@ -16,8 +16,8 @@ func (element *Instance) Validate() []error {
 	if element.Name == "" {
 		errorList = append(errorList, errors.New("Unassigned Name field"))
 	}
-	if element.ServerId == "" {
-		errorList = append(errorList, errors.New("Unassigned Project Server Id field"))
+	if element.MachineId == "" {
+		errorList = append(errorList, errors.New("Unassigned Project Machine Id field"))
 	}
 	if element.Driver == "" {
 		errorList = append(errorList, errors.New("Unassigned Driver field"))
@@ -100,7 +100,7 @@ func (element *Instance) Save(file string) error {
 	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
 }
 
-func (element *ProjectServer) Validate() []error {
+func (element *LocalMachine) Validate() []error {
 	errorList := make([]error, 0)
 	if element.Id == "" {
 		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
@@ -138,7 +138,7 @@ func (element *ProjectServer) Validate() []error {
 	return errorList
 }
 
-func (element *ProjectServer) Load(file string) error {
+func (element *LocalMachine) Load(file string) error {
 	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
@@ -149,7 +149,7 @@ func (element *ProjectServer) Load(file string) error {
 	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
-func (element *ProjectServer) Import(file string, format string) error {
+func (element *LocalMachine) Import(file string, format string) error {
 	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
@@ -174,14 +174,14 @@ func (element *ProjectServer) Import(file string, format string) error {
 	return err
 }
 
-func (element *ProjectServer) PostImport() error {
+func (element *LocalMachine) PostImport() error {
 	if element.Id == "" {
 		element.Id = NewUUIDString()
 	}
 	return nil
 }
 
-func (element *ProjectServer) Save(file string) error {
+func (element *LocalMachine) Save(file string) error {
 	byteArray, err := json.MarshalIndent(element, "", "  ")
 	if err != nil {
 		return  err

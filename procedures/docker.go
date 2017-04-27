@@ -11,8 +11,8 @@ import (
 	"errors"
 )
 
-func DockerMachineDefineCloudServerCommand(server model.ProjectCloudServer) []string {
-	name, driver, uuid, options := server.Name, server.Driver, server.Id, server.Options
+func DockerMachineDefineCloudMachineCommand(machine model.CloudMachine) []string {
+	name, driver, uuid, options := machine.Name, machine.Driver, machine.Id, machine.Options
 	var command []string = make([]string, 0)
 	command = append( command,  "docker-machine")
 	command = append( command,  "create")
@@ -27,10 +27,10 @@ func DockerMachineDefineCloudServerCommand(server model.ProjectCloudServer) []st
 	return command
 }
 
-func DockerMachineDefineLocalServerCommand(server model.ProjectServer, imagePath string) ([]string, int) {
-	driver, disksize, cpus, noshare := server.Driver, server.DiskSize, server.Cpus, server.NoShare
-	name, memory, osname := server.Name, server.Memory, server.OSType
-	options, engine, swarm, uuid:= server.Options, server.Engine, server.Swarm, server.Id
+func DockerMachineDefineLocalMachineCommand(machine model.LocalMachine, imagePath string) ([]string, int) {
+	driver, disksize, cpus, noshare := machine.Driver, machine.DiskSize, machine.Cpus, machine.NoShare
+	name, memory, osname := machine.Name, machine.Memory, machine.OSType
+	options, engine, swarm, uuid:= machine.Options, machine.Engine, machine.Swarm, machine.Id
 	DiskResize := 0
 	var command []string = make([]string, 0)
 	command = append( command,  "docker-machine")
@@ -157,7 +157,7 @@ func DockerMachineDefineLocalServerCommand(server model.ProjectServer, imagePath
 	return command, DiskResize
 }
 
-func DockerMachineInterruptSignal(machine *DockerMachine, commandPipe chan MachineMessage, operation MachineOperation, state MachineState, message string, err error){
+func DockerMachineInterruptSignal(machine *DockerMachineExecutor, commandPipe chan MachineMessage, operation MachineOperation, state MachineState, message string, err error){
 	commandPipe <- MachineMessage{
 		Complete: true,
 		Cmd: []string{},
@@ -172,14 +172,14 @@ func DockerMachineInterruptSignal(machine *DockerMachine, commandPipe chan Machi
 	}
 }
 
-func (machine *DockerMachine)  CreateCloudServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
+func (machine *DockerMachineExecutor)  CreateCloudMachine(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
 	var name, uuid string
 	if machine.NewInfra {
-		name, uuid= machine.CServer.Name, machine.CServer.Id
+		name, uuid= machine.CMachine.Name, machine.CMachine.Id
 	} else {
-		name, uuid= machine.CInstance.Name, machine.CInstance.ServerId
+		name, uuid= machine.CInstance.Name, machine.CInstance.MachineId
 	}
-	var command []string = DockerMachineDefineCloudServerCommand(machine.CServer)
+	var command []string = DockerMachineDefineCloudMachineCommand(machine.CMachine)
 	cmd := executeSyncCommand(command)
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
@@ -194,7 +194,7 @@ func (machine *DockerMachine)  CreateCloudServer(commandPipe chan MachineMessage
 	var ipAddress string = ""
 	cmd1 := executeSyncCommand([]string{"docker-machine", "inspect", machineName})
 	if machine.Control.Interrupt {
-		DockerMachineInterruptSignal(machine, commandPipe,StartServer,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
+		DockerMachineInterruptSignal(machine, commandPipe,StartMachine,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
 		return
 	}
 	commandChannel <- cmd1
@@ -208,7 +208,7 @@ func (machine *DockerMachine)  CreateCloudServer(commandPipe chan MachineMessage
 	machine.CInstance.InspectJSON = json
 	cmd2 := executeSyncCommand([]string{"docker-machine", "ip", machineName})
 	if machine.Control.Interrupt {
-		DockerMachineInterruptSignal(machine, commandPipe,StartServer,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
+		DockerMachineInterruptSignal(machine, commandPipe,StartMachine,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
 		return
 	}
 	commandChannel <- cmd2
@@ -221,7 +221,7 @@ func (machine *DockerMachine)  CreateCloudServer(commandPipe chan MachineMessage
 	}
 	cmd3 := executeSyncCommand([]string{"docker-machine", "stop", machineName})
 	if machine.Control.Interrupt {
-		DockerMachineInterruptSignal(machine, commandPipe,StartServer,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
+		DockerMachineInterruptSignal(machine, commandPipe,StartMachine,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
 		return
 	}
 	commandChannel <- cmd1
@@ -245,12 +245,12 @@ func (machine *DockerMachine)  CreateCloudServer(commandPipe chan MachineMessage
 	}
 }
 
-func (machine *DockerMachine)  CreateServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
+func (machine *DockerMachineExecutor)  CreateMachine(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
 	var name, uuid, osname, osver string
 	if machine.NewInfra {
-		name, uuid, osname, osver = machine.Server.Name, machine.Server.Id, machine.Server.OSType, machine.Server.OSVersion
+		name, uuid, osname, osver = machine.Machine.Name, machine.Machine.Id, machine.Machine.OSType, machine.Machine.OSVersion
 	} else {
-		name, uuid, osname, osver = machine.Instance.Name, machine.Instance.ServerId, machine.Instance.OSType, machine.Instance.OSVersion
+		name, uuid, osname, osver = machine.Instance.Name, machine.Instance.MachineId, machine.Instance.OSType, machine.Instance.OSVersion
 	}
 	log, path, err := DownloadISO(osname, osver)
 	if err != nil {
@@ -259,7 +259,7 @@ func (machine *DockerMachine)  CreateServer(commandPipe chan MachineMessage, com
 			Cmd: []string{},
 			Project: machine.Project,
 			Infra: machine.Infra,
-			Operation: CreateServer,
+			Operation: CreateMachine,
 			Error: err,
 			Result: log,
 			State: Machine_State_Error,
@@ -270,7 +270,7 @@ func (machine *DockerMachine)  CreateServer(commandPipe chan MachineMessage, com
 	}
 	var command []string
 	var diskSize int
-	command, diskSize = DockerMachineDefineLocalServerCommand(machine.Server, path)
+	command, diskSize = DockerMachineDefineLocalMachineCommand(machine.Machine, path)
 	cmd := executeSyncCommand(command)
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
@@ -296,7 +296,7 @@ func (machine *DockerMachine)  CreateServer(commandPipe chan MachineMessage, com
 	cmd1 := executeSyncCommand([]string{"docker-machine", "inspect", machineName})
 	commandChannel <- cmd1
 	if machine.Control.Interrupt {
-		DockerMachineInterruptSignal(machine, commandPipe,StartServer,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
+		DockerMachineInterruptSignal(machine, commandPipe,StartMachine,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
 		return
 	}
 	bytes1, err1 := cmd1.CombinedOutput()
@@ -309,7 +309,7 @@ func (machine *DockerMachine)  CreateServer(commandPipe chan MachineMessage, com
 	machine.Instance.InspectJSON = json
 	cmd2 := executeSyncCommand([]string{"docker-machine", "ip", machineName})
 	if machine.Control.Interrupt {
-		DockerMachineInterruptSignal(machine, commandPipe,StartServer,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
+		DockerMachineInterruptSignal(machine, commandPipe,StartMachine,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
 		return
 	}
 	commandChannel <- cmd2
@@ -322,7 +322,7 @@ func (machine *DockerMachine)  CreateServer(commandPipe chan MachineMessage, com
 	}
 	cmd3 := executeSyncCommand([]string{"docker-machine", "stop", machineName})
 	if machine.Control.Interrupt {
-		DockerMachineInterruptSignal(machine, commandPipe,StartServer,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
+		DockerMachineInterruptSignal(machine, commandPipe,StartMachine,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
 		return
 	}
 	commandChannel <- cmd3
@@ -335,7 +335,7 @@ func (machine *DockerMachine)  CreateServer(commandPipe chan MachineMessage, com
 			string(os.PathSeparator) +  machineName + string(os.PathSeparator) + "disk.vmdk"
 		cmd4 := executeSyncCommand([]string{"vmware-vdiskmanager", "-x", fmt.Sprintf("%dGB", diskSize), file})
 		if machine.Control.Interrupt {
-			DockerMachineInterruptSignal(machine, commandPipe,StartServer,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
+			DockerMachineInterruptSignal(machine, commandPipe,StartMachine,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
 			return
 		}
 		commandChannel <- cmd4
@@ -347,7 +347,7 @@ func (machine *DockerMachine)  CreateServer(commandPipe chan MachineMessage, com
 		Cmd: command,
 		Project: machine.Project,
 		Infra: machine.Infra,
-		Operation: CreateServer,
+		Operation: CreateMachine,
 		Error: err,
 		Result: string(bytes),
 		Supply: message,
@@ -359,19 +359,19 @@ func (machine *DockerMachine)  CreateServer(commandPipe chan MachineMessage, com
 	}
 }
 
-func (machine *DockerMachine)  RemoveServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
+func (machine *DockerMachineExecutor)  RemoveMachine(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
 	var name, id string
 	if machine.IsCloud {
 		if machine.NewInfra {
-			name, id= machine.CServer.Name, machine.CServer.Id
+			name, id= machine.CMachine.Name, machine.CMachine.Id
 		} else {
-			name, id= machine.CInstance.Name, machine.CInstance.ServerId
+			name, id= machine.CInstance.Name, machine.CInstance.MachineId
 		}
 	} else {
 		if machine.NewInfra {
-			name, id = machine.Server.Name, machine.Server.Id
+			name, id = machine.Machine.Name, machine.Machine.Id
 		} else {
-			name, id = machine.Instance.Name, machine.Instance.ServerId
+			name, id = machine.Instance.Name, machine.Instance.MachineId
 		}
 	}
 	var command []string = make([]string, 0)
@@ -391,7 +391,7 @@ func (machine *DockerMachine)  RemoveServer(commandPipe chan MachineMessage, com
 		Cmd: command,
 		Project: machine.Project,
 		Infra: machine.Infra,
-		Operation: DestroyServer,
+		Operation: DestroyMachine,
 		Error: err,
 		Result: string(bytes),
 		State: state,
@@ -400,19 +400,19 @@ func (machine *DockerMachine)  RemoveServer(commandPipe chan MachineMessage, com
 	}
 }
 
-func (machine *DockerMachine)  StopServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
+func (machine *DockerMachineExecutor)  StopMachine(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
 	var name, id string
 	if machine.IsCloud {
 		if machine.NewInfra {
-			name, id= machine.CServer.Name, machine.CServer.Id
+			name, id= machine.CMachine.Name, machine.CMachine.Id
 		} else {
-			name, id= machine.CInstance.Name, machine.CInstance.ServerId
+			name, id= machine.CInstance.Name, machine.CInstance.MachineId
 		}
 	} else {
 		if machine.NewInfra {
-			name, id = machine.Server.Name, machine.Server.Id
+			name, id = machine.Machine.Name, machine.Machine.Id
 		} else {
-			name, id = machine.Instance.Name, machine.Instance.ServerId
+			name, id = machine.Instance.Name, machine.Instance.MachineId
 		}
 	}
 	var command []string = make([]string, 0)
@@ -431,7 +431,7 @@ func (machine *DockerMachine)  StopServer(commandPipe chan MachineMessage, comma
 		Cmd: command,
 		Project: machine.Project,
 		Infra: machine.Infra,
-		Operation: StopServer,
+		Operation: StopMachine,
 		Error: err,
 		Result: string(bytes),
 		State: state,
@@ -440,19 +440,19 @@ func (machine *DockerMachine)  StopServer(commandPipe chan MachineMessage, comma
 	}
 }
 
-func (machine *DockerMachine)  StartServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
+func (machine *DockerMachineExecutor)  StartMachine(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
 	var name, id string
 	if machine.IsCloud {
 		if machine.NewInfra {
-			name, id= machine.CServer.Name, machine.CServer.Id
+			name, id= machine.CMachine.Name, machine.CMachine.Id
 		} else {
-			name, id= machine.CInstance.Name, machine.CInstance.ServerId
+			name, id= machine.CInstance.Name, machine.CInstance.MachineId
 		}
 	} else {
 		if machine.NewInfra {
-			name, id = machine.Server.Name, machine.Server.Id
+			name, id = machine.Machine.Name, machine.Machine.Id
 		} else {
-			name, id = machine.Instance.Name, machine.Instance.ServerId
+			name, id = machine.Instance.Name, machine.Instance.MachineId
 		}
 	}
 	var command []string = make([]string, 0)
@@ -471,7 +471,7 @@ func (machine *DockerMachine)  StartServer(commandPipe chan MachineMessage, comm
 		Cmd: command,
 		Project: machine.Project,
 		Infra: machine.Infra,
-		Operation: StartServer,
+		Operation: StartMachine,
 		Error: err,
 		Result: string(bytes),
 		State: state,
@@ -480,19 +480,19 @@ func (machine *DockerMachine)  StartServer(commandPipe chan MachineMessage, comm
 	}
 }
 
-func (machine *DockerMachine)  RestartServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
+func (machine *DockerMachineExecutor)  RestartMachine(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
 	var name, id string
 	if machine.IsCloud {
 		if machine.NewInfra {
-			name, id= machine.CServer.Name, machine.CServer.Id
+			name, id= machine.CMachine.Name, machine.CMachine.Id
 		} else {
-			name, id= machine.CInstance.Name, machine.CInstance.ServerId
+			name, id= machine.CInstance.Name, machine.CInstance.MachineId
 		}
 	} else {
 		if machine.NewInfra {
-			name, id = machine.Server.Name, machine.Server.Id
+			name, id = machine.Machine.Name, machine.Machine.Id
 		} else {
-			name, id = machine.Instance.Name, machine.Instance.ServerId
+			name, id = machine.Instance.Name, machine.Instance.MachineId
 		}
 	}
 	var command []string = make([]string, 0)
@@ -511,7 +511,7 @@ func (machine *DockerMachine)  RestartServer(commandPipe chan MachineMessage, co
 		Cmd: command,
 		Project: machine.Project,
 		Infra: machine.Infra,
-		Operation: RestartServer,
+		Operation: RestartMachine,
 		Error: err,
 		Result: string(bytes),
 		State: state,
@@ -520,19 +520,19 @@ func (machine *DockerMachine)  RestartServer(commandPipe chan MachineMessage, co
 	}
 }
 
-func (machine *DockerMachine)  ServerStatus(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
+func (machine *DockerMachineExecutor)  MachineStatus(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
 	var name, id string
 	if machine.IsCloud {
 		if machine.NewInfra {
-			name, id= machine.CServer.Name, machine.CServer.Id
+			name, id= machine.CMachine.Name, machine.CMachine.Id
 		} else {
-			name, id= machine.CInstance.Name, machine.CInstance.ServerId
+			name, id= machine.CInstance.Name, machine.CInstance.MachineId
 		}
 	} else {
 		if machine.NewInfra {
-			name, id = machine.Server.Name, machine.Server.Id
+			name, id = machine.Machine.Name, machine.Machine.Id
 		} else {
-			name, id = machine.Instance.Name, machine.Instance.ServerId
+			name, id = machine.Instance.Name, machine.Instance.MachineId
 		}
 	}
 	var command []string = make([]string, 0)
@@ -549,7 +549,7 @@ func (machine *DockerMachine)  ServerStatus(commandPipe chan MachineMessage, com
 		Cmd: command,
 		Project: machine.Project,
 		Infra: machine.Infra,
-		Operation: StatusServer,
+		Operation: StatusMachine,
 		Error: err,
 		Result: string(bytesArray),
 		State: state,
@@ -558,19 +558,19 @@ func (machine *DockerMachine)  ServerStatus(commandPipe chan MachineMessage, com
 	}
 }
 
-func (machine *DockerMachine)  ServerEnv(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
+func (machine *DockerMachineExecutor)  MachineEnv(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
 	var name, id string
 	if machine.IsCloud {
 		if machine.NewInfra {
-			name, id= machine.CServer.Name, machine.CServer.Id
+			name, id= machine.CMachine.Name, machine.CMachine.Id
 		} else {
-			name, id= machine.CInstance.Name, machine.CInstance.ServerId
+			name, id= machine.CInstance.Name, machine.CInstance.MachineId
 		}
 	} else {
 		if machine.NewInfra {
-			name, id = machine.Server.Name, machine.Server.Id
+			name, id = machine.Machine.Name, machine.Machine.Id
 		} else {
-			name, id = machine.Instance.Name, machine.Instance.ServerId
+			name, id = machine.Instance.Name, machine.Instance.MachineId
 		}
 	}
 	var command []string = make([]string, 0)
@@ -589,7 +589,7 @@ func (machine *DockerMachine)  ServerEnv(commandPipe chan MachineMessage, comman
 		Cmd: command,
 		Project: machine.Project,
 		Infra: machine.Infra,
-		Operation: ServerEnvironment,
+		Operation: MachineEnvironment,
 		Error: err,
 		Result: string(bytes),
 		State: state,
@@ -598,19 +598,19 @@ func (machine *DockerMachine)  ServerEnv(commandPipe chan MachineMessage, comman
 	}
 }
 
-func (machine *DockerMachine)  ServerInspect(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
+func (machine *DockerMachineExecutor)  MachineInspect(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
 	var name, id string
 	if machine.IsCloud {
 		if machine.NewInfra {
-			name, id= machine.CServer.Name, machine.CServer.Id
+			name, id= machine.CMachine.Name, machine.CMachine.Id
 		} else {
-			name, id= machine.CInstance.Name, machine.CInstance.ServerId
+			name, id= machine.CInstance.Name, machine.CInstance.MachineId
 		}
 	} else {
 		if machine.NewInfra {
-			name, id = machine.Server.Name, machine.Server.Id
+			name, id = machine.Machine.Name, machine.Machine.Id
 		} else {
-			name, id = machine.Instance.Name, machine.Instance.ServerId
+			name, id = machine.Instance.Name, machine.Instance.MachineId
 		}
 	}
 	var command []string = make([]string, 0)
@@ -629,7 +629,7 @@ func (machine *DockerMachine)  ServerInspect(commandPipe chan MachineMessage, co
 		Cmd: command,
 		Project: machine.Project,
 		Infra: machine.Infra,
-		Operation: ServerInspect,
+		Operation: MachineInspect,
 		Error: err,
 		Result: string(bytes),
 		State: state,
@@ -638,19 +638,19 @@ func (machine *DockerMachine)  ServerInspect(commandPipe chan MachineMessage, co
 	}
 }
 
-func (machine *DockerMachine)  ServerIPAddress(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
+func (machine *DockerMachineExecutor)  MachineIPAddress(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
 	var name, id string
 	if machine.IsCloud {
 		if machine.NewInfra {
-			name, id= machine.CServer.Name, machine.CServer.Id
+			name, id= machine.CMachine.Name, machine.CMachine.Id
 		} else {
-			name, id= machine.CInstance.Name, machine.CInstance.ServerId
+			name, id= machine.CInstance.Name, machine.CInstance.MachineId
 		}
 	} else {
 		if machine.NewInfra {
-			name, id = machine.Server.Name, machine.Server.Id
+			name, id = machine.Machine.Name, machine.Machine.Id
 		} else {
-			name, id = machine.Instance.Name, machine.Instance.ServerId
+			name, id = machine.Instance.Name, machine.Instance.MachineId
 		}
 	}
 	var command []string = make([]string, 0)
@@ -669,7 +669,7 @@ func (machine *DockerMachine)  ServerIPAddress(commandPipe chan MachineMessage, 
 		Cmd: command,
 		Project: machine.Project,
 		Infra: machine.Infra,
-		Operation: ServerIPAddress,
+		Operation: MachineIPAddress,
 		Error: err,
 		Result: string(bytes),
 		State: state,
@@ -677,10 +677,10 @@ func (machine *DockerMachine)  ServerIPAddress(commandPipe chan MachineMessage, 
 		IsCloud: machine.IsCloud,
 	}
 }
- func (machine *DockerMachine) IsThreadSafeCommand() bool {
+ func (machine *DockerMachineExecutor) IsThreadSafeCommand() bool {
 	 return false
  }
 
-func (machine *DockerMachine) SetControlStructure(Control *ControlStructure) {
+func (machine *DockerMachineExecutor) SetControlStructure(Control *MachineControlStructure) {
 	machine.Control = Control
 }

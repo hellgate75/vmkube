@@ -82,8 +82,8 @@ func (element *InstallationPlan) Validate() []error {
 	if element.Id == "" {
 		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
 	}
-	if element.ServerId == "" {
-		errorList = append(errorList, errors.New("Unassigned Server Unique Identifier field"))
+	if element.MachineId == "" {
+		errorList = append(errorList, errors.New("Unassigned Machine Unique Identifier field"))
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)

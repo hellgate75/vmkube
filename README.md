@@ -43,7 +43,7 @@ Provided features:
 
 * Custom Deployment plans with main providers (VMKubelet, [Ansible](http://docs.ansible.com/ansible/index.html), [Helm for Kubernetes](https://github.com/kubernetes/helm), ...)
 
-* Digital Control and multi vendor instances (Server and Cloud-Servers can be defined)
+* Digital Control and multi vendor instances (Machine and Cloud-Machines can be defined)
 
 * Multiple project/infrastructure information export formats
 

@@ -97,8 +97,8 @@ type CmdElementType int
 
 const (
 	NoElement					CmdElementType = iota
-	LServer
-	CLServer
+	LMachine
+	CLMachine
 	SPlan
 	SNetwork
 	SDomain
@@ -107,8 +107,8 @@ const (
 
 var CmdElementTypeDescriptors []string = []string{
 	"No Element",
-	"Local Server",
-	"Cloud Server",
+	"Local Machine",
+	"Cloud Machine",
 	"Installation Plan",
 	"Network",
 	"Domain",

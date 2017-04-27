@@ -12,8 +12,8 @@ type CmdElementTypeDesc int
 
 const (
 	NoElementDesc					CmdElementTypeDesc = iota
-	ServerDesc
-	CServerDesc
+	MachineDesc
+	CMachineDesc
 	PlanDesc
 	NetworkDesc
 	DomainDesc
@@ -22,8 +22,8 @@ const (
 
 var ElementTypeDescriptors []string = []string{
 	"No Element",
-	"Local Server",
-	"Cloud Server",
+	"Local Machine",
+	"Cloud Machine",
 	"Installation Plan",
 	"Network",
 	"Domain",
@@ -31,8 +31,8 @@ var ElementTypeDescriptors []string = []string{
 }
 var ElementTypeCodes []CmdElementTypeDesc = []CmdElementTypeDesc{
 	NoElementDesc,
-	ServerDesc,
-	CServerDesc,
+	MachineDesc,
+	CMachineDesc,
 	PlanDesc,
 	NetworkDesc,
 	DomainDesc,
@@ -57,16 +57,16 @@ func lookupForDuplicates(project model.Project, code CmdElementTypeDesc, name st
 						count ++
 					}
 				} else {
-					if code == ServerDesc {
-						for k := 0; k < len(project.Domains[i].Networks[j].Servers); k++ {
-							if (id == "" &&  utils.CorrectInput(project.Domains[i].Networks[j].Servers[k].Name) == utils.CorrectInput(name)) || project.Domains[i].Networks[j].Servers[k].Id == id {
+					if code == MachineDesc {
+						for k := 0; k < len(project.Domains[i].Networks[j].LocalMachines); k++ {
+							if (id == "" &&  utils.CorrectInput(project.Domains[i].Networks[j].LocalMachines[k].Name) == utils.CorrectInput(name)) || project.Domains[i].Networks[j].LocalMachines[k].Id == id {
 								indexes = append(indexes, []int{i, j, k})
 								count ++
 							}
 						}
-					} else if code == CServerDesc {
-						for k := 0; k < len(project.Domains[i].Networks[j].CServers); k++ {
-							if (id == "" &&  utils.CorrectInput(project.Domains[i].Networks[j].CServers[k].Name) == utils.CorrectInput(name)) || project.Domains[i].Networks[j].CServers[k].Id == id {
+					} else if code == CMachineDesc {
+						for k := 0; k < len(project.Domains[i].Networks[j].CloudMachines); k++ {
+							if (id == "" &&  utils.CorrectInput(project.Domains[i].Networks[j].CloudMachines[k].Name) == utils.CorrectInput(name)) || project.Domains[i].Networks[j].CloudMachines[k].Id == id {
 								indexes = append(indexes, []int{i, j, k})
 								count ++
 							}
@@ -126,7 +126,7 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 	
 	switch ElementCode {
 	case DomainDesc:
-		var domain model.ProjectDomain
+		var domain model.MachineDomain
 		err := domain.Import(file, format)
 		if err != nil {
 			return "", err
@@ -141,7 +141,7 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 		}
 		return domain.Id+"|"+domain.Name, nil
 	case NetworkDesc:
-		var network model.ProjectNetwork
+		var network model.MachineNetwork
 		err := network.Import(file, format)
 		if err != nil {
 			return "", err
@@ -155,36 +155,36 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 			return "", errors.New(desc)
 		}
 		return network.Id+"|"+network.Name, nil
-	case ServerDesc:
-		var server model.ProjectServer
-		err := server.Import(file, format)
+	case MachineDesc:
+		var machine model.LocalMachine
+		err := machine.Import(file, format)
 		if err != nil {
 			return "", err
 		}
-		server.Name = name
-		errorsList :=  server.Validate()
+		machine.Name = name
+		errorsList :=  machine.Validate()
 		if len(errorsList) == 0 {
-			project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].Servers = append(project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].Servers, server)
+			project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].LocalMachines = append(project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].LocalMachines, machine)
 		} else {
-			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Server from file '%s' format '%s', stack trace : ", file, format), errorsList)
+			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Machine from file '%s' format '%s', stack trace : ", file, format), errorsList)
 			return "", errors.New(desc)
 		}
-		return server.Id+"|"+server.Name, nil
-	case CServerDesc:
-		var server model.ProjectCloudServer
-		err := server.Import(file, format)
+		return machine.Id+"|"+machine.Name, nil
+	case CMachineDesc:
+		var machine model.CloudMachine
+		err := machine.Import(file, format)
 		if err != nil {
 			return "", err
 		}
-		server.Name = name
-		errorsList :=  server.Validate()
+		machine.Name = name
+		errorsList :=  machine.Validate()
 		if len(errorsList) == 0 {
-			project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].CServers = append(project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].CServers, server)
+			project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].CloudMachines = append(project.Domains[anchorIndexSet[0]].Networks[anchorIndexSet[1]].CloudMachines, machine)
 		} else {
-			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Server from file '%s' format '%s', stack trace : ", file, format), errorsList)
+			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Machine from file '%s' format '%s', stack trace : ", file, format), errorsList)
 			return "", errors.New(desc)
 		}
-		return server.Id+"|"+server.Name, nil
+		return machine.Id+"|"+machine.Name, nil
 	default:
 		//Plan
 		var plan model.InstallationPlan
@@ -193,29 +193,29 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 			return "", err
 		}
 		errorsList :=  plan.Validate()
-		SubElementCode := ServerDesc
+		SubElementCode := MachineDesc
 		if plan.IsCloud {
-			SubElementCode = CServerDesc
+			SubElementCode = CMachineDesc
 		}
-		numOcc, _ := lookupForDuplicates(project, SubElementCode, "", plan.ServerId)
+		numOcc, _ := lookupForDuplicates(project, SubElementCode, "", plan.MachineId)
 		if numOcc == 0 {
 			cloud := "no"
 			if plan.IsCloud {
 				cloud = "yes"
 			}
-			numOcc, serverIndexes := lookupForDuplicates(project, SubElementCode, plan.ServerId, "")
+			numOcc, machineIndexes := lookupForDuplicates(project, SubElementCode, plan.MachineId, "")
 			if numOcc == 1 {
-				//First Occurrence of Server or Cloud Server is the Plan reference, we recover and replace the Id in the plan
+				//First Occurrence of Machine or Cloud Machine is the Plan reference, we recover and replace the Id in the plan
 				if plan.IsCloud {
-					plan.ServerId = project.Domains[serverIndexes[0][0]].Networks[serverIndexes[0][1]].CServers[serverIndexes[0][2]].Id
+					plan.MachineId = project.Domains[machineIndexes[0][0]].Networks[machineIndexes[0][1]].CloudMachines[machineIndexes[0][2]].Id
 				} else {
-					plan.ServerId = project.Domains[serverIndexes[0][0]].Networks[serverIndexes[0][1]].Servers[serverIndexes[0][2]].Id
+					plan.MachineId = project.Domains[machineIndexes[0][0]].Networks[machineIndexes[0][1]].LocalMachines[machineIndexes[0][2]].Id
 				}
-				fmt.Printf("Plan Server Id auto-discovery : %s\n", plan.ServerId)
+				fmt.Printf("Plan Machine Id auto-discovery : %s\n", plan.MachineId)
 			} else if numOcc > 1 {
-				return "", errors.New(fmt.Sprintf("Server Cloud: '%s' Id/Name : '%s' multiple occurrences : %d found in project", cloud, plan.ServerId, numOcc))
+				return "", errors.New(fmt.Sprintf("Machine Cloud: '%s' Id/Name : '%s' multiple occurrences : %d found in project", cloud, plan.MachineId, numOcc))
 			} else {
-				return "", errors.New(fmt.Sprintf("Server Cloud: '%s' Id/Name : '%s' not found in project", cloud, plan.ServerId))
+				return "", errors.New(fmt.Sprintf("Machine Cloud: '%s' Id/Name : '%s' not found in project", cloud, plan.MachineId))
 			}
 		}
 		if len(errorsList) == 0 {
@@ -224,7 +224,7 @@ func AddElementToProject(project model.Project, typeElem int, name string, ancho
 			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Installation Plane from file '%s' format '%s', stack trace : ", file, format), errorsList)
 			return "", errors.New(desc)
 		}
-		return plan.Id+":"+plan.ServerId+"|"+fmt.Sprintf("Plan for server id : %s", plan.ServerId), nil
+		return plan.Id+":"+plan.MachineId+"|"+fmt.Sprintf("Plan for machine id : %s", plan.MachineId), nil
 	}
 	return "", errors.New("Request Not Implemented!!")
 }
@@ -251,7 +251,7 @@ func AlterElementInProject(project model.Project, typeElem int, name string, id 
 		if len(targetIndexSet) < 1 {
 			return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 		}
-		var domain model.ProjectDomain
+		var domain model.MachineDomain
 		err := domain.Import(file, format)
 		if err != nil {
 			return "", err
@@ -260,7 +260,7 @@ func AlterElementInProject(project model.Project, typeElem int, name string, id 
 		if len(errorsList) == 0 {
 			project.Domains[targetIndexSet[0]] = domain
 		} else {
-			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Server from file '%s' format '%s', stack trace : ", file, format), errorsList)
+			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Machine from file '%s' format '%s', stack trace : ", file, format), errorsList)
 			return "", errors.New(desc)
 		}
 		return project.Domains[targetIndexSet[0]].Id+"|"+project.Domains[targetIndexSet[0]].Name, nil
@@ -268,7 +268,7 @@ func AlterElementInProject(project model.Project, typeElem int, name string, id 
 		if len(targetIndexSet) < 2 {
 			return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 		}
-		var network model.ProjectNetwork
+		var network model.MachineNetwork
 		err := network.Import(file, format)
 		if err != nil {
 			return "", err
@@ -277,47 +277,47 @@ func AlterElementInProject(project model.Project, typeElem int, name string, id 
 		if len(errorsList) == 0 {
 			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]] = network
 		} else {
-			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Server from file '%s' format '%s', stack trace : ", file, format), errorsList)
+			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Machine from file '%s' format '%s', stack trace : ", file, format), errorsList)
 			return "", errors.New(desc)
 		}
 		return project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Id+"|"+
 			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Name, nil
-	case ServerDesc:
+	case MachineDesc:
 		if len(targetIndexSet) < 3 {
 			return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 		}
-		var server model.ProjectServer
-		err := server.Import(file, format)
+		var machine model.LocalMachine
+		err := machine.Import(file, format)
 		if err != nil {
 			return "", err
 		}
-		errorsList :=  server.Validate()
+		errorsList :=  machine.Validate()
 		if len(errorsList) == 0 {
-			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Servers[targetIndexSet[2]] = server
+			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].LocalMachines[targetIndexSet[2]] = machine
 		} else {
-			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Server from file '%s' format '%s', stack trace : ", file, format), errorsList)
+			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Machine from file '%s' format '%s', stack trace : ", file, format), errorsList)
 			return "", errors.New(desc)
 		}
-		return project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Servers[targetIndexSet[2]].Id+"|"+
-			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Servers[targetIndexSet[2]].Name, nil
-	case CServerDesc:
+		return project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].LocalMachines[targetIndexSet[2]].Id+"|"+
+			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].LocalMachines[targetIndexSet[2]].Name, nil
+	case CMachineDesc:
 		if len(targetIndexSet) < 3 {
 			return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 		}
-		var server model.ProjectCloudServer
-		err := server.Import(file, format)
+		var machine model.CloudMachine
+		err := machine.Import(file, format)
 		if err != nil {
 			return "",  err
 		}
-		errorsList :=  server.Validate()
+		errorsList :=  machine.Validate()
 		if len(errorsList) == 0 {
-			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].CServers[targetIndexSet[2]] = server
+			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].CloudMachines[targetIndexSet[2]] = machine
 		} else {
-			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Server from file '%s' format '%s', stack trace : ", file, format), errorsList)
+			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Machine from file '%s' format '%s', stack trace : ", file, format), errorsList)
 			return "", errors.New(desc)
 		}
-		return project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].CServers[targetIndexSet[2]].Id+"|"+
-			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].CServers[targetIndexSet[2]].Name, nil
+		return project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].CloudMachines[targetIndexSet[2]].Id+"|"+
+			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].CloudMachines[targetIndexSet[2]].Name, nil
 	default:
 		//Plan
 		if len(targetIndexSet) < 3 {
@@ -332,12 +332,12 @@ func AlterElementInProject(project model.Project, typeElem int, name string, id 
 		if len(errorsList) == 0 {
 			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]] = plan
 		} else {
-			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Server from file '%s' format '%s', stack trace : ", file, format), errorsList)
+			_, desc := vmio.StripErrorMessages(fmt.Sprintf("Errors importing new Cloud Machine from file '%s' format '%s', stack trace : ", file, format), errorsList)
 			return "", errors.New(desc)
 		}
 		return project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]].Id+":"+
-			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]].ServerId+"|"+
-			fmt.Sprintf("Plan for server id : %s", project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]].ServerId), nil
+			project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]].MachineId+"|"+
+			fmt.Sprintf("Plan for machine id : %s", project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]].MachineId), nil
 	}
 	return "", errors.New("Request Not Implemented!!")
 }
@@ -380,25 +380,25 @@ func DeleteElementInProject(project model.Project, typeElem int, name string, id
 			project.Domains[targetIndexSet[0]].Networks = project.Domains[targetIndexSet[0]].Networks[:targetIndexSet[1]]
 			project.Domains[targetIndexSet[0]].Networks = append(project.Domains[targetIndexSet[0]].Networks, nSet...)
 			return Id, nil
-		case ServerDesc:
+		case MachineDesc:
 			if len(targetIndexSet) < 3 {
 				return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 			}
-			Id := project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Servers[targetIndexSet[2]].Id+"|"+
-				project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Servers[targetIndexSet[2]].Name
-			sSet := project.Domains[targetIndexSet[0]].Networks[1].Servers[(targetIndexSet[2]+1):]
-			project.Domains[targetIndexSet[0]].Networks[1].Servers = project.Domains[targetIndexSet[0]].Networks[1].Servers[:targetIndexSet[2]]
-			project.Domains[targetIndexSet[0]].Networks[1].Servers = append(project.Domains[targetIndexSet[0]].Networks[1].Servers, sSet...)
+			Id := project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].LocalMachines[targetIndexSet[2]].Id+"|"+
+				project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].LocalMachines[targetIndexSet[2]].Name
+			sSet := project.Domains[targetIndexSet[0]].Networks[1].LocalMachines[(targetIndexSet[2]+1):]
+			project.Domains[targetIndexSet[0]].Networks[1].LocalMachines = project.Domains[targetIndexSet[0]].Networks[1].LocalMachines[:targetIndexSet[2]]
+			project.Domains[targetIndexSet[0]].Networks[1].LocalMachines = append(project.Domains[targetIndexSet[0]].Networks[1].LocalMachines, sSet...)
 			return Id, nil
-		case CServerDesc:
+		case CMachineDesc:
 			if len(targetIndexSet) < 3 {
 				return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 			}
-			Id := project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].CServers[targetIndexSet[2]].Id+"|"+
-				project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].CServers[targetIndexSet[2]].Name
-			csSet := project.Domains[targetIndexSet[0]].Networks[1].CServers[(targetIndexSet[2]+1):]
-			project.Domains[targetIndexSet[0]].Networks[1].CServers = project.Domains[targetIndexSet[0]].Networks[1].CServers[:targetIndexSet[2]]
-			project.Domains[targetIndexSet[0]].Networks[1].CServers = append(project.Domains[targetIndexSet[0]].Networks[1].CServers, csSet...)
+			Id := project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].CloudMachines[targetIndexSet[2]].Id+"|"+
+				project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].CloudMachines[targetIndexSet[2]].Name
+			csSet := project.Domains[targetIndexSet[0]].Networks[1].CloudMachines[(targetIndexSet[2]+1):]
+			project.Domains[targetIndexSet[0]].Networks[1].CloudMachines = project.Domains[targetIndexSet[0]].Networks[1].CloudMachines[:targetIndexSet[2]]
+			project.Domains[targetIndexSet[0]].Networks[1].CloudMachines = append(project.Domains[targetIndexSet[0]].Networks[1].CloudMachines, csSet...)
 			return Id, nil
 		default:
 			//Plan
@@ -406,8 +406,8 @@ func DeleteElementInProject(project model.Project, typeElem int, name string, id
 				return "", errors.New(fmt.Sprintf("Element Type '%s' Name '%s' (Id %s) wrong position!!", ElementTypeDescriptors[typeElem], name, id))
 			}
 			Id := project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]].Id+":"+
-				project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]].ServerId+"|"+
-				fmt.Sprintf("Plan for server id : %s", project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]].ServerId)
+				project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]].MachineId+"|"+
+				fmt.Sprintf("Plan for machine id : %s", project.Domains[targetIndexSet[0]].Networks[targetIndexSet[1]].Installations[targetIndexSet[2]].MachineId)
 			pSet := project.Domains[targetIndexSet[0]].Networks[1].Installations[(targetIndexSet[2]+1):]
 			project.Domains[targetIndexSet[0]].Networks[1].Installations = project.Domains[targetIndexSet[0]].Networks[1].Installations[:targetIndexSet[2]]
 			project.Domains[targetIndexSet[0]].Networks[1].Installations = append(project.Domains[targetIndexSet[0]].Networks[1].Installations, pSet...)

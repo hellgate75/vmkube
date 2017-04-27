@@ -33,51 +33,51 @@ func DownloadISO(machineType string, version string) (string, string, error) {
 }
 
 type MachineActions interface {
-	CreateCloudServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
-	CreateServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
-	RemoveServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
-	StopServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
-	StartServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
-	RestartServer(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
-	ServerStatus(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
-	ServerEnv(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
-	ServerInspect(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
-	ServerIPAddress(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	CreateCloudMachine(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	CreateMachine(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	RemoveMachine(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	StopMachine(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	StartMachine(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	RestartMachine(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	MachineStatus(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	MachineEnv(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	MachineInspect(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	MachineIPAddress(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
 	IsThreadSafeCommand() bool
-	SetControlStructure(Control *ControlStructure)
+	SetControlStructure(Control *MachineControlStructure)
 }
 
-type ControlStructure struct {
+type MachineControlStructure struct {
 	CurrentCommand   *exec.Cmd
 	Interrupt        bool
 }
 
-type DockerMachine struct {
+type DockerMachineExecutor struct {
 	Project     model.Project
 	Infra       model.Infrastructure
 	IsCloud     bool
 	InstanceId  string
-	Server      model.ProjectServer
-	CServer     model.ProjectCloudServer
+	Machine      model.LocalMachine
+	CMachine     model.CloudMachine
 	Instance    model.Instance
 	CInstance   model.CloudInstance
 	NewInfra    bool
-	Control     *ControlStructure
+	Control     *MachineControlStructure
 }
 
 type MachineOperation int
 
 const(
 	CreateCloud MachineOperation = iota
-	CreateServer
-	DestroyServer
-	StartServer
-	StopServer
-	RestartServer
-	StatusServer
-	ServerEnvironment
-	ServerInspect
-	ServerIPAddress
+	CreateMachine
+	DestroyMachine
+	StartMachine
+	StopMachine
+	RestartMachine
+	StatusMachine
+	MachineEnvironment
+	MachineInspect
+	MachineIPAddress
 )
 
 type MachineMessage struct {
@@ -103,20 +103,20 @@ func executeSyncCommand(command []string) *exec.Cmd {
 	return cmd
 }
 
-func GetCurrentServerMachine( Project     model.Project,
+func GetCurrentMachineExecutor( Project     model.Project,
 												Infra       model.Infrastructure,
-												Server      model.ProjectServer,
-												CServer     model.ProjectCloudServer,
+												Machine      model.LocalMachine,
+												CMachine     model.CloudMachine,
 												Instance    model.Instance,
 												CInstance   model.CloudInstance,
 												InstanceId  string,
 												IsCloud     bool,
 												NewInfra    bool) MachineActions {
-	return MachineActions(&DockerMachine{
+	return MachineActions(&DockerMachineExecutor{
 		Project: Project,
 		Infra: Infra,
-		Server: Server,
-		CServer: CServer,
+		Machine: Machine,
+		CMachine: CMachine,
 		Instance:Instance,
 		CInstance:CInstance,
 		InstanceId: InstanceId,

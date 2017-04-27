@@ -45,10 +45,10 @@ func ParseCommandLine(args []string) (CmdRequest, error) {
 
 func CmdParseElement(value string) (CmdElementType, error) {
 	switch CorrectInput(value) {
-	case "server":
-		return  LServer, nil
-	case "cloud-server":
-		return  CLServer, nil
+	case "machine":
+		return  LMachine, nil
+	case "cloud-machine":
+		return  CLMachine, nil
 	case "network":
 		return  SNetwork, nil
 	case "domain":
@@ -58,7 +58,7 @@ func CmdParseElement(value string) (CmdElementType, error) {
 	case "plan":
 		return  SPlan, nil
 	default:
-		return  NoElement, errors.New("Element '"+value+"' is not an infratructure element. Available ones : Server, Cloud-Server, Network, Domain, Plan, Project")
+		return  NoElement, errors.New("Element '"+value+"' is not an infratructure element. Available ones : Machine, Cloud-Machine, Network, Domain, Plan, Project")
 		
 	}
 }
@@ -96,37 +96,37 @@ func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error
 				Id: NewUUIDString(),
 				Name: network.Name,
 				Options: network.Options,
-				Instances: []model.Instance{},
-				CInstances: []model.CloudInstance{},
+				LocalInstances: []model.Instance{},
+				CloudInstances: []model.CloudInstance{},
 				Installations: []model.Installation{},
 			}
-			serverConvertionMap := make(map[string]string)
-			for _,server := range network.Servers {
+			machineConvertionMap := make(map[string]string)
+			for _,machine := range network.LocalMachines {
 				var disks []model.Disk = make([]model.Disk,0)
 				disks = append(disks, model.Disk{
 					Id: NewUUIDString(),
 					Name: "sda0",
-					Size: server.DiskSize,
+					Size: machine.DiskSize,
 					Type: 0,
 				})
 				instanceId := NewUUIDString()
 				instance := model.Instance{
 					Id: instanceId,
-					Name: server.Name,
-					Options: server.Options,
-					Cpus: server.Cpus,
-					Memory: server.Memory,
+					Name: machine.Name,
+					Options: machine.Options,
+					Cpus: machine.Cpus,
+					Memory: machine.Memory,
 					Disks: disks,
-					Driver: server.Driver,
-					Engine: model.ToInstanceEngineOpt(server.Engine),
-					Swarm: model.ToInstanceSwarmOpt(server.Swarm),
-					Hostname: server.Hostname,
+					Driver: machine.Driver,
+					Engine: model.ToInstanceEngineOpt(machine.Engine),
+					Swarm: model.ToInstanceSwarmOpt(machine.Swarm),
+					Hostname: machine.Hostname,
 					IPAddress: "",
-					NoShare: server.NoShare,
-					OSType: server.OSType,
-					OSVersion: server.OSVersion,
-					Roles: server.Roles,
-					ServerId: server.Id,
+					NoShare: machine.NoShare,
+					OSType: machine.OSType,
+					OSVersion: machine.OSVersion,
+					Roles: machine.Roles,
+					MachineId: machine.Id,
 					Logs: model.LogStorage{
 						ProjectId: project.Id,
 						InfraId: infrastructure.Id,
@@ -134,23 +134,23 @@ func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error
 						LogLines: []string{},
 					},
 				}
-				if _,ok := serverConvertionMap[server.Id]; ok {
-					return infrastructure, errors.New("Duplicate Server Id in Project : " + server.Id)
+				if _,ok := machineConvertionMap[machine.Id]; ok {
+					return infrastructure, errors.New("Duplicate Machine Id in Project : " + machine.Id)
 				}
-				serverConvertionMap[server.Id] = instance.Id
-				newNetwork.Instances = append(newNetwork.Instances, instance)
+				machineConvertionMap[machine.Id] = instance.Id
+				newNetwork.LocalInstances = append(newNetwork.LocalInstances, instance)
 			}
-			for _,server := range network.CServers {
+			for _,machine := range network.CloudMachines {
 				instanceId := NewUUIDString()
 				instance := model.CloudInstance{
 					Id: instanceId,
-					Name: server.Name,
-					Driver: server.Driver,
-					Hostname: server.Hostname,
+					Name: machine.Name,
+					Driver: machine.Driver,
+					Hostname: machine.Hostname,
 					IPAddress: "",
-					Options: server.Options,
-					Roles: server.Roles,
-					ServerId: server.Id,
+					Options: machine.Options,
+					Roles: machine.Roles,
+					MachineId: machine.Id,
 					Logs: model.LogStorage{
 						ProjectId: project.Id,
 						InfraId: infrastructure.Id,
@@ -158,17 +158,17 @@ func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error
 						LogLines: []string{},
 					},
 				}
-				if _,ok := serverConvertionMap[server.Id]; ok {
-					return infrastructure, errors.New("Duplicate Server Id in Project : " + server.Id)
+				if _,ok := machineConvertionMap[machine.Id]; ok {
+					return infrastructure, errors.New("Duplicate Machine Id in Project : " + machine.Id)
 				}
-				serverConvertionMap[server.Id] = instance.Id
-				newNetwork.CInstances = append(newNetwork.CInstances, instance)
+				machineConvertionMap[machine.Id] = instance.Id
+				newNetwork.CloudInstances = append(newNetwork.CloudInstances, instance)
 			}
 			for _,plan := range network.Installations {
-				if _,ok := serverConvertionMap[plan.ServerId]; ! ok {
-					return infrastructure, errors.New("Invalid server reference in plan : " + plan.ServerId)
+				if _,ok := machineConvertionMap[plan.MachineId]; ! ok {
+					return infrastructure, errors.New("Invalid machine reference in plan : " + plan.MachineId)
 				}
-				instanceId, _  := serverConvertionMap[plan.ServerId]
+				instanceId, _  := machineConvertionMap[plan.MachineId]
 				installationId := NewUUIDString()
 				installation := model.Installation{
 					Id: installationId,
@@ -487,7 +487,7 @@ func ConvertActivityTaskInString(task operations.ActivityTask) string {
 func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastructureActionCouples []operations.ActivityCouple, NumThreads int, postTaskCallback func(task scheduler.ScheduleTask)) []error {
 	var errorsList []error = make([]error, 0)
 	var maxJobNameLen int = 0
-	var ServerCreationAnswerChannel chan *operations.ServerOperationsJob = make(chan *operations.ServerOperationsJob)
+	var MachineCreationAnswerChannel chan *operations.MachineOperationsJob = make(chan *operations.MachineOperationsJob)
 	var jobsArrayLen int = 0
 	var termElements []term.KeyValueElement = make([]term.KeyValueElement, 0)
 	jobsArrayLen += len(infrastructureActionCouples)
@@ -509,9 +509,9 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 		jobIds = append(jobIds, jobId)
 		var name string
 		if infrastructureActionCouples[i].IsCloud {
-			name = fmt.Sprintf("%s Cloud Instance Server %s", ConvertActivityTaskInString(infrastructureActionCouples[i].Task), infrastructureActionCouples[i].CInstance.Name)
+			name = fmt.Sprintf("%s Cloud Machine Instance: '%s'", ConvertActivityTaskInString(infrastructureActionCouples[i].Task), infrastructureActionCouples[i].CInstance.Name)
 		} else {
-			name = fmt.Sprintf("%s Instance Server %s", ConvertActivityTaskInString(infrastructureActionCouples[i].Task), infrastructureActionCouples[i].Instance.Name)
+			name = fmt.Sprintf("%s Machine Instance: '%s'", ConvertActivityTaskInString(infrastructureActionCouples[i].Task), infrastructureActionCouples[i].Instance.Name)
 		}
 		
 		if len(name) > maxJobNameLen {
@@ -538,14 +538,14 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 					Jobs: []scheduler.Job{
 						{
 							Id: jobIds[i],
-							Name: fmt.Sprintf("Process Instance from Project Server Id: %s", infrastructureActionCouples[i].Instance.ServerId),
-							Runnable: operations.RunnableStruct(&operations.ServerOperationsJob{
-								Name: fmt.Sprintf("Process Instance from Project Server Id: %s", infrastructureActionCouples[i].Instance.ServerId),
+							Name: fmt.Sprintf("Process Instance from Project Machine Id: %s", infrastructureActionCouples[i].Instance.MachineId),
+							Runnable: operations.RunnableStruct(&operations.MachineOperationsJob{
+								Name: fmt.Sprintf("Process Instance from Project Machine Id: %s", infrastructureActionCouples[i].Instance.MachineId),
 								Infra: infrastructureActionCouples[i].Infra,
 								Project:infrastructureActionCouples[i].Project,
 								Activity: infrastructureActionCouples[i],
 								InstanceId: infrastructureActionCouples[i].Instance.Id,
-								OutChan: ServerCreationAnswerChannel,
+								OutChan: MachineCreationAnswerChannel,
 								OwnState: termElements[i],
 								SendStartMessage: true,
 							}),
@@ -558,14 +558,14 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 					Jobs: []scheduler.Job{
 						{
 							Id: jobIds[i],
-							Name: fmt.Sprintf("Process Instance from Project Server Id: %s", infrastructureActionCouples[i].CInstance.ServerId),
-							Runnable: operations.RunnableStruct(&operations.ServerOperationsJob{
-								Name: fmt.Sprintf("Process Instance from Project Server Id: %s", infrastructureActionCouples[i].CInstance.ServerId),
+							Name: fmt.Sprintf("Process Instance from Project Machine Id: %s", infrastructureActionCouples[i].CInstance.MachineId),
+							Runnable: operations.RunnableStruct(&operations.MachineOperationsJob{
+								Name: fmt.Sprintf("Process Instance from Project Machine Id: %s", infrastructureActionCouples[i].CInstance.MachineId),
 								Infra: infrastructureActionCouples[i].Infra,
 								Project:infrastructureActionCouples[i].Project,
 								Activity: infrastructureActionCouples[i],
 								InstanceId: infrastructureActionCouples[i].Instance.Id,
-								OutChan: ServerCreationAnswerChannel,
+								OutChan: MachineCreationAnswerChannel,
 								OwnState: termElements[i],
 								SendStartMessage: true,
 							}),
@@ -596,20 +596,20 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 		var answerScreenIds []string = make([]string, 0)
 		var errorsInProgress bool = false
 		for pending > 0 {
-			serverOpsJob, ok := (<- ServerCreationAnswerChannel)
-			if ok && serverOpsJob != nil {
-				if ! serverOpsJob.State {
+			machineOpsJob, ok := (<- MachineCreationAnswerChannel)
+			if ok && machineOpsJob != nil {
+				if ! machineOpsJob.State {
 					answerCounter++
 				}
-				go func(serverOpsJob *operations.ServerOperationsJob) {
-					machineMessage := serverOpsJob.MachineMessage
-					activity := serverOpsJob.Activity
+				go func(machineOpsJob *operations.MachineOperationsJob) {
+					machineMessage := machineOpsJob.MachineMessage
+					activity := machineOpsJob.Activity
 					
-					if ! serverOpsJob.State {
+					if ! machineOpsJob.State {
 						for _,domain := range infrastructure.Domains {
 							for _,network := range domain.Networks {
 								if activity.IsCloud {
-									for _,instance := range network.CInstances {
+									for _,instance := range network.CloudInstances {
 										if instance.Id == activity.CInstance.Id {
 											instance.InspectJSON = machineMessage.InspectJSON
 											instance.IPAddress = machineMessage.IPAddress
@@ -617,7 +617,7 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 										}
 									}
 								} else {
-									for _,instance := range network.Instances {
+									for _,instance := range network.LocalInstances {
 										if instance.Id == activity.Instance.Id {
 											instance.InspectJSON = machineMessage.InspectJSON
 											instance.IPAddress = machineMessage.IPAddress
@@ -631,7 +631,7 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 					}
 					
 					if utils.NO_COLORS {
-						if ! serverOpsJob.State {
+						if ! machineOpsJob.State {
 							message := "success!!"
 							if machineMessage.Error != nil {
 								errorsList = append(errorsList, machineMessage.Error)
@@ -639,11 +639,11 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 							}
 							operation := ConvertActivityTaskInString(activity.Task)
 							if activity.IsCloud {
-								operation += " Cloud Instance Server "
-								fmt.Println(fmt.Sprintf("%s%s%s", utils.StrPad(operation+activity.CInstance.Name,maxJobNameLen), resultsSeparator, message))
+								operation += " Cloud Machine Instance "
+								fmt.Println(fmt.Sprintf("%s%s%s", utils.StrPad(operation+"'"+activity.CInstance.Name+"'",maxJobNameLen), resultsSeparator, message))
 							} else {
-								operation += " Instance Server "
-								fmt.Println(fmt.Sprintf("%s%s%s", utils.StrPad(operation+activity.Instance.Name,maxJobNameLen), resultsSeparator, message))
+								operation += " Machine Instance "
+								fmt.Println(fmt.Sprintf("%s%s%s", utils.StrPad(operation+"'"+activity.Instance.Name+"'",maxJobNameLen), resultsSeparator, message))
 							}
 							if machineMessage.Error != nil {
 								errorsList = append(errorsList, machineMessage.Error)
@@ -662,14 +662,14 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 							} else {
 								pending--
 								if pending == 0 {
-									close(ServerCreationAnswerChannel)
+									close(MachineCreationAnswerChannel)
 								}
 							}
 						}
 					} else {
 						//Interactive ...
-						keyTerm := serverOpsJob.OwnState
-						if serverOpsJob.State {
+						keyTerm := machineOpsJob.OwnState
+						if machineOpsJob.State {
 							keyTerm.State = term.StateColorYellow
 							keyTerm.Value = "processing..."
 						} else {
@@ -707,19 +707,19 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 										screenManager.CommChannel <- signal
 									}
 								}
-							} else if ! serverOpsJob.State {
+							} else if ! machineOpsJob.State {
 								pending --
 							}
 						} else {
-							if ! serverOpsJob.State {
+							if ! machineOpsJob.State {
 								pending--
 							}
 							if pending == 0 {
-								close(ServerCreationAnswerChannel)
+								close(MachineCreationAnswerChannel)
 							}
 						}
 					}
-				}(serverOpsJob)
+				}(machineOpsJob)
 			} else {
 				pending = 0
 				if utils.NO_COLORS {
@@ -761,17 +761,17 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 func FixInfrastructureElementValue(Infrastructure model.Infrastructure, instanceId string, ipAddress string, json string) bool {
 	for i := 0; i < len(Infrastructure.Domains); i++ {
 		for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
-			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].Instances); k++ {
-				if Infrastructure.Domains[i].Networks[j].Instances[k].Id == instanceId {
-					Infrastructure.Domains[i].Networks[j].Instances[k].IPAddress = ipAddress
-					Infrastructure.Domains[i].Networks[j].Instances[k].InspectJSON = json
+			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].LocalInstances); k++ {
+				if Infrastructure.Domains[i].Networks[j].LocalInstances[k].Id == instanceId {
+					Infrastructure.Domains[i].Networks[j].LocalInstances[k].IPAddress = ipAddress
+					Infrastructure.Domains[i].Networks[j].LocalInstances[k].InspectJSON = json
 					return true
 				}
 			}
-			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CInstances); k++ {
-				if Infrastructure.Domains[i].Networks[j].CInstances[k].Id == instanceId {
-					Infrastructure.Domains[i].Networks[j].CInstances[k].IPAddress = ipAddress
-					Infrastructure.Domains[i].Networks[j].CInstances[k].InspectJSON = json
+			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CloudInstances); k++ {
+				if Infrastructure.Domains[i].Networks[j].CloudInstances[k].Id == instanceId {
+					Infrastructure.Domains[i].Networks[j].CloudInstances[k].IPAddress = ipAddress
+					Infrastructure.Domains[i].Networks[j].CloudInstances[k].InspectJSON = json
 					return true
 				}
 			}
@@ -783,7 +783,7 @@ func FixInfrastructureElementValue(Infrastructure model.Infrastructure, instance
 func DefineDestroyActivityFromCreateOne(activity operations.ActivityCouple) operations.ActivityCouple {
 	return operations.ActivityCouple{
 		CInstance: activity.CInstance,
-		CServer: activity.CServer,
+		CMachine: activity.CMachine,
 		Infra: activity.Infra,
 		Instance: activity.Instance,
 		IsCloud: activity.IsCloud,
@@ -791,7 +791,7 @@ func DefineDestroyActivityFromCreateOne(activity operations.ActivityCouple) oper
 		NewInfra: activity.NewInfra,
 		Plans: activity.Plans,
 		Project: activity.Project,
-		Server: activity.Server,
+		Machine: activity.Machine,
 		Task: operations.DestroyMachine,
 	}
 }
@@ -808,11 +808,11 @@ func DefineRebuildOfWholeInfrastructure(activities []operations.ActivityCouple) 
 func FindActivityById(activities []operations.ActivityCouple, id string) (operations.ActivityCouple, error) {
 	for _, activity := range activities {
 		if activity.IsCloud {
-			if activity.CInstance.ServerId == id {
+			if activity.CInstance.MachineId == id {
 				return activity, nil
 			}
 		} else {
-			if activity.CInstance.ServerId == id {
+			if activity.CInstance.MachineId == id {
 				return activity, nil
 			}
 		}

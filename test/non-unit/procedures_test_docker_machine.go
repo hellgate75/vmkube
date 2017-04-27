@@ -7,16 +7,17 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"os/exec"
 )
 
-var Server1 model.ProjectServer = model.ProjectServer{
+var Machine1 model.LocalMachine = model.LocalMachine{
 	Id: model.NewUUIDString(),
-	Name: "Server1",
+	Name: "Machine1",
 	Memory: 4096,
 	DiskSize: 50,
 	Cpus: 2,
 	Driver: "vmwarefusion",
-	Hostname: "server1",
+	Hostname: "machine1",
 	OSType: "rancheros",
 	OSVersion: "1.0.0",
 	NoShare: true,
@@ -26,7 +27,7 @@ var Server1 model.ProjectServer = model.ProjectServer{
 
 var Instance1 model.Instance = model.Instance{
 	Id: model.NewUUIDString(),
-	Name: "Server1",
+	Name: "Machine1",
 	Memory: 4096,
 	Disks: []model.Disk{
 		{
@@ -38,21 +39,21 @@ var Instance1 model.Instance = model.Instance{
 	},
 	Cpus: 2,
 	Driver: "virtualbox",
-	Hostname: "server1",
+	Hostname: "machine1",
 	OSType: "rancheros",
 	OSVersion: "1.0.0",
 	NoShare: true,
 	Roles: []string{"rancher", "server"},
 }
 
-var Server2 model.ProjectServer = model.ProjectServer{
+var Machine2 model.LocalMachine = model.LocalMachine{
 	Id: model.NewUUIDString(),
-	Name: "Server2",
+	Name: "Machine2",
 	Memory: 4096,
 	DiskSize: 50,
 	Cpus: 2,
 	Driver: "virtualbox",
-	Hostname: "server2",
+	Hostname: "machine2",
 	OSType: "rancheros",
 	OSVersion: "1.0.0",
 	NoShare: false,
@@ -65,7 +66,7 @@ var Server2 model.ProjectServer = model.ProjectServer{
 
 var Instance2 model.Instance = model.Instance{
 	Id: model.NewUUIDString(),
-	Name: "Server2",
+	Name: "Machine2",
 	Memory: 4096,
 	Disks: []model.Disk{
 		{
@@ -77,7 +78,7 @@ var Instance2 model.Instance = model.Instance{
 	},
 	Cpus: 2,
 	Driver: "virtualbox",
-	Hostname: "server2",
+	Hostname: "machine2",
 	OSType: "rancheros",
 	OSVersion: "1.0.0",
 	NoShare: true,
@@ -93,20 +94,20 @@ var myProject model.Project = model.Project{
 	LastMessage: "",
 	Modified: time.Now(),
 	Open: false,
-	Domains: []model.ProjectDomain{
+	Domains: []model.MachineDomain{
 		{
 			Id: model.NewUUIDString(),
 			Name: "Default Domain",
 			Options: [][]string{},
-			Networks: []model.ProjectNetwork{
+			Networks: []model.MachineNetwork{
 				{
 					Id: model.NewUUIDString(),
 					Name: "Default Network",
-					CServers: []model.ProjectCloudServer{},
+					CloudMachines: []model.CloudMachine{},
 					Installations: []model.InstallationPlan{},
-					Servers: []model.ProjectServer{
-						Server1,
-						Server2,
+					LocalMachines: []model.LocalMachine{
+						Machine1,
+						Machine2,
 					},
 				},
 			},
@@ -130,9 +131,9 @@ var myInfra model.Infrastructure = model.Infrastructure{
 				{
 					Id: model.NewUUIDString(),
 					Name: "Default Network",
-					CInstances: []model.CloudInstance{},
+					CloudInstances: []model.CloudInstance{},
 					Installations: []model.Installation{},
-					Instances: []model.Instance{
+					LocalInstances: []model.Instance{
 						Instance1,
 						Instance2,
 					},
@@ -143,17 +144,18 @@ var myInfra model.Infrastructure = model.Infrastructure{
 }
 
 func TestVMFusionDockerMachineCreation() {
-	var mySyncDockerMachine procedures.DockerMachine = procedures.DockerMachine{
+	var mySyncDockerMachine procedures.DockerMachineExecutor = procedures.DockerMachineExecutor{
 		Infra: myInfra,
 		Project: myProject,
 		InstanceId: Instance1.Id,
 		IsCloud: false,
-		Server: Server1,
+		Machine: Machine1,
 		Instance: Instance1,
 		NewInfra: true,
 	}
+	commandChan := make(chan *exec.Cmd)
 	responseChan := make(chan procedures.MachineMessage)
-	go mySyncDockerMachine.CreateServer(responseChan)
+	go mySyncDockerMachine.CreateMachine(responseChan, commandChan)
 	wGroup := sync.WaitGroup{}
 	wGroup.Add(1)
 	go func(wGroup *sync.WaitGroup, responseChan chan procedures.MachineMessage) {
@@ -168,17 +170,18 @@ func TestVMFusionDockerMachineCreation() {
 }
 
 func TestVirtualBoxDockerMachineCreation() {
-	var mySyncDockerMachine procedures.DockerMachine = procedures.DockerMachine{
+	var mySyncDockerMachine procedures.DockerMachineExecutor = procedures.DockerMachineExecutor{
 		Infra: myInfra,
 		Project: myProject,
 		InstanceId: Instance1.Id,
 		IsCloud: false,
-		Server: Server2,
+		Machine: Machine2,
 		Instance: Instance2,
 		NewInfra: true,
 	}
+	commandChan := make(chan *exec.Cmd)
 	responseChan := make(chan procedures.MachineMessage)
-	go mySyncDockerMachine.CreateServer(responseChan)
+	go mySyncDockerMachine.CreateMachine(responseChan, commandChan)
 	wGroup := sync.WaitGroup{}
 	wGroup.Add(1)
 	go func(wGroup *sync.WaitGroup, responseChan chan procedures.MachineMessage) {
