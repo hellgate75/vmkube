@@ -46,7 +46,6 @@ func (job *ServerOperationsJob) Start() {
 			job.OutChan <- job
 		}
 		job.commandPipe = make(chan procedures.MachineMessage)
-		var message procedures.MachineMessage
 		machineAdapter := procedures.GetCurrentServerMachine(job.Project, job.Infra, job.Activity.Server, job.Activity.CServer, job.Activity.Instance, job.Activity.CInstance, job.Activity.Instance.Id, job.Activity.IsCloud, job.Activity.NewInfra)
 		job.threadSafeCmd = machineAdapter.IsThreadSafeCommand()
 		machineAdapter.SetControlStructure(&job.control)
@@ -92,8 +91,7 @@ func (job *ServerOperationsJob) Start() {
 			}
 		}()
 		if ! job.control.Interrupt {
-			message = <- job.commandPipe
-			job.MachineMessage = message
+			job.MachineMessage = <- job.commandPipe
 			job.State = false
 			job.OutChan <- job
 		}
