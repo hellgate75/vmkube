@@ -108,14 +108,37 @@ Alternatively you can execute following commands :
  * `go build --buildmode exe .` to create an executable command
 
 
-## Further test 
-
-
-
-
 ## Execution
 
+The tool provides an help section, describing commands, sub-commands and has a nested help level for commands details.
 
+The help is available executing : 
+* `vmkube help` General Help
+* `vmkube help [command]` Detailed Command syntax helper
+
+Import / Alter Project Commands provides a sample for the expected imput format. Import and Export of components is provided in following file formats:
+* JSON - standard JSON language
+* XML - Untagged and un-described XML format (Pure XML tag sequence, no XML definition or version is accepted).
+
+In this release the command list is composed by following keys :
+* `help` : Show generic commands help
+* `start-infra` : Start an existing Infrastructure
+* `stop-infra` : Stop a Running Infrastructure
+* `restart-infra` : Restart a Running Infrastructure
+* `destroy-infra` : Destroy a specific Infrastructure
+* `backup-infra` : Backup a specific Infrastructure to a backup file
+* `recover-infra` : Recover a specific Infrastructure from a backup file
+* `infra-status` : Require information about a specific Infrastructure
+* `list-all-infra` : Require list of all Infrastructures
+* `list-projects` : Require list of all available projects
+* `project-status` : Require information about a specific projects
+* `define-project` : Creates a new project
+* `alter-project` : Modify existing project, e.g.: open, close project or add, modify, delete items
+* `info-project` : Provides information about project elements definition
+* `delete-project` : Delete existing project
+* `build-project` : Build and existing project and create/modify an infrastructure
+* `import-project` : Import project from existing configuration
+* `export-project` : Export existing project configuration
 
 ## License
 

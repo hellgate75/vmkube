@@ -155,11 +155,11 @@ var(
 		Options:	[]HelperOption{},
 	}
 	ListAllInfras CommandHelper = CommandHelper{
-		Command: "status-all",
+		Command: "list-all-infra",
 		Name: "List Infrastructures",
 		Description: "List information about all existing infrastructures",
 		CmdType: ListInfrastructures,
-		LineHelp: "status-all",
+		LineHelp: "list-all-infra",
 		SubCommands: []SubCommandHelper{},
 		SubCmdTypes: []CmdSubRequestType{},
 		SubCmdHelperTypes: []CmdRequestType{},
@@ -234,7 +234,7 @@ var(
 	BuildProject CommandHelper = CommandHelper{
 		Command: "build-project",
 		Name: "Build Project",
-		Description: "Build and existing project and create/modify an infrstructure",
+		Description: "Build and existing project and create/modify an infrastructure",
 		CmdType: BuildConfig,
 		LineHelp: "build-project [OPTIONS]",
 		SubCommands: []SubCommandHelper{},
@@ -299,19 +299,19 @@ func InitHelpers() {
 		},
 		SubCommandHelper{
 			Command: "infra-status",
-			Description: "Require information about a specific Infrastructure",
+			Description: "Get information about a specific Infrastructure",
 		},
 		SubCommandHelper{
-			Command: "status-all",
-			Description: "Require list of all Infrastructures",
+			Command: "list-all-infra",
+			Description: "Get list of all Infrastructures",
 		},
 		SubCommandHelper{
 			Command: "list-projects",
-			Description: "Require list of all available projects",
+			Description: "Get list of all available projects",
 		},
 		SubCommandHelper{
 			Command: "project-status",
-			Description: "Require information about a specific projects",
+			Description: "Get information about a specific projects",
 		},
 		SubCommandHelper{
 			Command: "define-project",
@@ -331,10 +331,10 @@ func InitHelpers() {
 		},
 		SubCommandHelper{
 			Command: "build-project",
-			Description: "Build and existing project and create/modify an infrstructure",
+			Description: "Build and existing project and create/modify an infrastructure",
 		},
 		SubCommandHelper{
-			Command: "import-projec",
+			Command: "import-project",
 			Description: "Import project from existing configuration",
 		},
 		SubCommandHelper{
