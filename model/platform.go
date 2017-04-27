@@ -228,6 +228,14 @@ func ToInstanceInstallation(role InstallationRole) InstallationType {
 		return HostType
 	}
 }
+func InstanceInstallationToString(role InstallationType) string {
+	switch role {
+	case ServerType:
+		return "Server"
+	default:
+		return "Host"
+	}
+}
 
 /*
 Describe Role Type Enum
@@ -259,6 +267,19 @@ func ToInstanceRole(role SystemRole) RoleType {
 		return Slave
 	default:
 		return ClusterMember
+	}
+}
+
+func InstanceRoleToString(role RoleType) string {
+	switch role {
+	case StandAlone:
+		return "Stand-Alone"
+	case Master:
+		return "Master"
+	case Slave:
+		return "Slave"
+	default:
+		return "Cluster-Member"
 	}
 }
 
@@ -301,6 +322,20 @@ func ToInstanceEnvironment(env ProjectEnvironment) EnvironmentType {
 	}
 }
 
+func InstanceEnvironmentToString(env EnvironmentType) string {
+	switch env {
+	case Cattle:
+		return "Cattle"
+	case Kubernetes:
+		return "Kubernetes"
+	case Mesos:
+		return "Mesos"
+	case Swarm:
+		return "Swarm"
+	default:
+		return "Custom"
+	}
+}
 
 /*
 Describe Log Storage, contains

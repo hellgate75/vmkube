@@ -6,25 +6,29 @@ import (
 	"os/exec"
 	"io"
 	"strings"
+	"errors"
 )
 
-func DownloadISO(machineType string, version string) (string, string, bool) {
+func DownloadISO(machineType string, version string) (string, string, error) {
 	machineAction, error := model.GetMachineAction(machineType)
 	var log string = ""
 	if error == nil {
 		if ! machineAction.Check(version) {
-			log += fmt.Sprintf("Machine %s Version %s not present, downloading from internet...\n",strings.ToUpper(machineType),version)
+			log += fmt.Sprintf("OS %s Version %s not present, downloading from internet...\n",strings.ToUpper(machineType),version)
 			downloaded := machineAction.Download(version)
-			log += fmt.Sprintf("Machine %s Version %s dowanloaded: %t\n",strings.ToUpper(machineType),version,downloaded)
-			return log, machineAction.Path(version), downloaded
+			log += fmt.Sprintf("OS %s Version %s dowanloaded: %t\n",strings.ToUpper(machineType),version,downloaded)
+			if downloaded {
+				return log, machineAction.Path(version), nil
+			} else {
+				return log, machineAction.Path(version), errors.New(fmt.Sprintf("Unable to download locally OS %s Version %s!!\n",strings.ToUpper(machineType),version))
+			}
 		} else {
-			log += fmt.Sprintf("Machine %s Version %s already dowanloaded...\n",strings.ToUpper(machineType),version)
-			return log, machineAction.Path(version), true
+			log += fmt.Sprintf("OS %s Version %s already dowanloaded...\n",strings.ToUpper(machineType),version)
+			return log, machineAction.Path(version), nil
 		}
 	} else {
-		log += fmt.Sprintf("Machine %s v.%s not found!! - error: %v\n", strings.ToUpper(machineType),version, error)
-		panic(log)
-		return  "", "", false
+		log += fmt.Sprintf("OS %s v.%s not found!! - error: %v\n", strings.ToUpper(machineType),version, error)
+		return  log, "", errors.New(log)
 	}
 }
 
@@ -39,6 +43,13 @@ type MachineActions interface {
 	ServerEnv(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
 	ServerInspect(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
 	ServerIPAddress(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	IsThreadSafeCommand() bool
+	SetControlStructure(Control *ControlStructure)
+}
+
+type ControlStructure struct {
+	CurrentCommand   *exec.Cmd
+	Interrupt        bool
 }
 
 type DockerMachine struct {
@@ -51,6 +62,7 @@ type DockerMachine struct {
 	Instance    model.Instance
 	CInstance   model.CloudInstance
 	NewInfra    bool
+	Control     *ControlStructure
 }
 
 type MachineOperation int

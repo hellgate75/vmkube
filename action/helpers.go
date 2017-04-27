@@ -345,7 +345,7 @@ func InitHelpers() {
 	//Start Infrastructure
 	StartInfra.Options = append(StartInfra.Options,
 		HelperOption{
-			Option: "name",
+			Option: "infra-name",
 			Type: "<text>",
 			Description: "Infrastructure name",
 			Mandatory: true,
@@ -355,7 +355,7 @@ func InitHelpers() {
 	//Stop Infrastructure
 	StopInfra.Options = append(StopInfra.Options,
 		HelperOption{
-			Option: "name",
+			Option: "infra-name",
 			Type: "<text>",
 			Description: "Infrastructure name",
 			Mandatory: true,
@@ -365,7 +365,7 @@ func InitHelpers() {
 	//Restart Infrastructure
 	RestartInfra.Options = append(RestartInfra.Options,
 		HelperOption{
-			Option: "name",
+			Option: "infra-name",
 			Type: "<text>",
 			Description: "Infrastructure name",
 			Mandatory: true,
@@ -375,7 +375,7 @@ func InitHelpers() {
 	//Destroy Infrastructure
 	DestroyInfra.Options = append(DestroyInfra.Options,
 		HelperOption{
-			Option: "name",
+			Option: "infra-name",
 			Type: "<text>",
 			Description: "Infrastructure name",
 			Mandatory: true,
@@ -391,7 +391,7 @@ func InitHelpers() {
 	//Backup Infrastructure
 	BackupInfra.Options = append(BackupInfra.Options,
 		HelperOption{
-			Option: "name",
+			Option: "infra-name",
 			Type: "<text>",
 			Description: "Infrastructure name",
 			Mandatory: true,
@@ -407,7 +407,7 @@ func InitHelpers() {
 	//Recover Infrastructure
 	RecoverInfra.Options = append(RecoverInfra.Options,
 		HelperOption{
-			Option: "name",
+			Option: "infra-name",
 			Type: "<text>",
 			Description: "Infrastructure name",
 			Mandatory: true,
@@ -441,7 +441,7 @@ func InitHelpers() {
 	//Status Infrastructure
 	ListInfra.Options = append(ListInfra.Options,
 		HelperOption{
-			Option: "name",
+			Option: "infra-name",
 			Type: "<text>",
 			Description: "Infrastructure name",
 			Mandatory: true,

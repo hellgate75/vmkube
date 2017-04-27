@@ -13,6 +13,7 @@ type RunnableStruct interface {
 	Start()
 	Stop()
 	Status() bool
+	Response() interface{}
 }
 
 
@@ -27,20 +28,27 @@ type ServerOperationsJob struct {
 	Activity         ActivityCouple
 	MachineMessage   procedures.MachineMessage
 	SendStartMessage bool
-	currentCommand   *exec.Cmd
 	commandPipe      chan procedures.MachineMessage
-	commandChannel chan *exec.Cmd
+	commandChannel   chan *exec.Cmd
+	threadSafeCmd    bool
+	control          procedures.ControlStructure
+}
+
+func (job *ServerOperationsJob) Response() interface{} {
+	return []string{job.MachineMessage.InstanceId, job.MachineMessage.InspectJSON, job.MachineMessage.IPAddress}
 }
 
 func (job *ServerOperationsJob) Start() {
 	if !job.State {
 		job.State = true
-		if job.SendStartMessage {
+		if job.SendStartMessage && ! job.control.Interrupt {
 			job.OutChan <- job
 		}
 		job.commandPipe = make(chan procedures.MachineMessage)
 		var message procedures.MachineMessage
 		machineAdapter := procedures.GetCurrentServerMachine(job.Project, job.Infra, job.Activity.Server, job.Activity.CServer, job.Activity.Instance, job.Activity.CInstance, job.Activity.Instance.Id, job.Activity.IsCloud, job.Activity.NewInfra)
+		job.threadSafeCmd = machineAdapter.IsThreadSafeCommand()
+		machineAdapter.SetControlStructure(&job.control)
 		job.commandChannel = make(chan *exec.Cmd)
 		switch job.Activity.Task {
 		case CreateMachine:
@@ -79,22 +87,34 @@ func (job *ServerOperationsJob) Start() {
 		}
 		go func(){
 			for job.State {
-				job.currentCommand = <- job.commandChannel
+				job.control.CurrentCommand = <- job.commandChannel
 			}
 		}()
-		message = <- job.commandPipe
-		close(job.commandPipe)
-		job.MachineMessage = message
+		if ! job.control.Interrupt {
+			message = <- job.commandPipe
+			job.MachineMessage = message
+			job.State = false
+			job.OutChan <- job
+		}
 		job.State = false
-		job.OutChan <- job
 	}
 }
 
 func (job *ServerOperationsJob) Stop() {
-	close(job.commandChannel)
-	close(job.commandPipe)
-	if job.currentCommand.Process.Pid > 0 {
-		job.currentCommand.Process.Kill()
+	if job.threadSafeCmd {
+		job.control.Interrupt = true
+		if job.control.CurrentCommand.Process.Pid > 0 {
+			job.control.CurrentCommand.Process.Kill()
+		}
+		close(job.commandChannel)
+		close(job.commandPipe)
+	} else {
+		job.control.Interrupt = true
+		if job.control.CurrentCommand.Process.Pid > 0 {
+			job.control.CurrentCommand.Wait()
+		}
+		close(job.commandChannel)
+		close(job.commandPipe)
 	}
 	job.State = false
 }

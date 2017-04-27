@@ -66,7 +66,7 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 	Name := ""
 	Force := false
 	for _,option := range request.Arguments.Options {
-		if "name" == CorrectInput(option[0]) {
+		if "infra-name" == CorrectInput(option[0]) {
 			Name = option[1]
 		} else if "force" == CorrectInput(option[0]) {
 			Force = GetBoolean(option[1])
@@ -278,7 +278,7 @@ func (request *CmdRequest) ListInfras() (Response, error) {
 func (request *CmdRequest) StatusInfra() (Response, error) {
 	Name := ""
 	for _,option := range request.Arguments.Options {
-		if "name" == CorrectInput(option[0]) {
+		if "infra-name" == CorrectInput(option[0]) {
 			Name = option[1]
 		}
 	}
@@ -364,7 +364,7 @@ func (request *CmdRequest) StatusInfra() (Response, error) {
 				if installation.Success {
 					success = "yes"
 				}
-				fmt.Printf("      Plan: Id: %s - Instance: %s [Id: %s] - Success: %s - Cloud: %s - Envoronment : %s  Role: %s  Type: %s\n", installation.Id, serverName, installation.InstanceId, success, cloud, installation.Environment, installation.Role, installation.Type)
+				fmt.Printf("      Plan: Id: %s - Instance: %s [Id: %s] - Success: %s - Cloud: %s - Envoronment : %s  Role: %s  Type: %s\n", installation.Id, serverName, installation.InstanceId, success, cloud, model.InstanceEnvironmentToString(installation.Environment), model.InstanceRoleToString(installation.Role), model.InstanceInstallationToString(installation.Type))
 			}
 		}
 	}

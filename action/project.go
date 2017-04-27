@@ -226,6 +226,11 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 				utils.PrintlnImportant(fmt.Sprintf("Emergency Infrastructure backup at : %s", InfraBackup))
 			}
 		}
+		request.Arguments.Options = append(request.Arguments.Options, []string{"infra-name", descriptor.InfraName})
+		request.Type = DestroyInfrastructure
+		request.TypeStr = "delete-infra"
+		request.SubType = NoSubCommand
+		request.SubTypeStr = ""
 		response, err := request.DeleteInfra()
 		if err != nil {
 			return response, err
@@ -257,6 +262,11 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			}
 		}
 		if (AllowInfraDeletion) {
+			request.Arguments.Options = append(request.Arguments.Options, []string{"infra-name", descriptor.InfraName})
+			request.Type = DestroyInfrastructure
+			request.TypeStr = "delete-infra"
+			request.SubType = NoSubCommand
+			request.SubTypeStr = ""
 			response, err := request.DeleteInfra()
 			if err != nil {
 				return response, err
@@ -687,6 +697,11 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			}
 		}
 		if (AllowInfraDeletion) {
+			request.Arguments.Options = append(request.Arguments.Options, []string{"infra-name", descriptor.InfraName})
+			request.Type = DestroyInfrastructure
+			request.TypeStr = "delete-infra"
+			request.SubType = NoSubCommand
+			request.SubTypeStr = ""
 			response, err := request.DeleteInfra()
 			if err != nil {
 				return response, err
@@ -942,7 +957,7 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 	existsInfrastructure := (descriptor.InfraId != "")
 	existanceClause := ""
 	if existsInfrastructure {
-		existanceClause = " and proceding with deletion of existing Infrastructure named'" + descriptor.InfraName + "'"
+		existanceClause = " and proceding with deletion of existing Infrastructure named '" + descriptor.InfraName + "'"
 	}
 	utils.PrintlnWarning(fmt.Sprintf("\nProceding with deletion of Project named  '%s'%s...", descriptor.Name, existanceClause))
 	
@@ -957,6 +972,11 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 	}
 	
 	if existsInfrastructure {
+		request.Arguments.Options = append(request.Arguments.Options, []string{"infra-name", descriptor.InfraName})
+		request.Type = DestroyInfrastructure
+		request.TypeStr = "delete-infra"
+		request.SubType = NoSubCommand
+		request.SubTypeStr = ""
 		resp, err := request.DeleteInfra()
 		if err != nil {
 			return resp, err
@@ -1291,7 +1311,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		return response, errors.New("Unable to execute task")
 	}
 	existsInfrastructure := (descriptor.InfraId != "")
-	ForceReuild := Force && existsInfrastructure
+	ForceRebuild := Force && existsInfrastructure
 	AllowInfraBackup := Force && existsInfrastructure
 	InfraBackup := ""
 	
@@ -1328,6 +1348,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	}
 	
 	Infrastructure, err := ProjectToInfrastructure(project)
+	Infrastructure.Name = InfraName
 	
 	if err != nil {
 		response := Response{
@@ -1347,9 +1368,9 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 				Message: fmt.Sprintf("Infrastructure Named : %s already exists and no rebuild clause provided!!", descriptor.InfraName),
 			}
 			return response, errors.New("Unable to execute task")
-		} else if ! ForceReuild {
-			ForceReuild = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with override process for existing Infrastructure named '%s'?",descriptor.InfraName))
-			if ! ForceReuild {
+		} else if ! ForceRebuild {
+			ForceRebuild = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with override process for existing Infrastructure named '%s'?",descriptor.InfraName))
+			if ! ForceRebuild {
 				response := Response{
 					Status: false,
 					Message: "User task interruption",
@@ -1373,6 +1394,11 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 				utils.PrintlnImportant(fmt.Sprintf("Emergency Infrastructure backup at : %s", InfraBackup))
 			}
 		}
+		request.Arguments.Options = append(request.Arguments.Options, []string{"infra-name", descriptor.InfraName})
+		request.Type = DestroyInfrastructure
+		request.TypeStr = "delete-infra"
+		request.SubType = NoSubCommand
+		request.SubTypeStr = ""
 		response, err := request.DeleteInfra()
 		if err != nil {
 			return response, err
@@ -1395,7 +1421,17 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		creationCouples, err = operations.GetPostBuildTaskActivities(Infrastructure, operations.CreateMachine)
 	}
 	var errorsList []error = make([]error, 0)
-	errorsList = ExecuteInfrastructureActions(Infrastructure, creationCouples, NumThreads,func(task scheduler.ScheduleTask){})
+	var fixInfraValue int = len(creationCouples)
+	errorsList = ExecuteInfrastructureActions(Infrastructure, creationCouples, NumThreads,func(task scheduler.ScheduleTask){
+		response := []string(task.Jobs[0].Runnable.Response())
+		
+		json := response[1]
+		ipAddress := response[2]
+		instanceId := response[0]
+		FixInfrastructureElementValue(Infrastructure, instanceId, ipAddress, json)
+		fixInfraValue--
+		
+	})
 
 	err = UpdateIndexWithInfrastructure(Infrastructure)
 	
@@ -1414,26 +1450,44 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 
 	if len(errorsList) > 0 {
 		utils.PrintlnError(fmt.Sprintf("Unable to complete %sBuild of project %s : Errors building Infrastructure : %s!!", reOpt, Name, InfraName))
-		//Remove previous Name
-		for i:= 0 ; i < len(request.Arguments.Options); i++ {
-			if CorrectInput(request.Arguments.Options[i][0]) == "name" {
-				request.Arguments.Options[i][1] = InfraName
-			} else if CorrectInput(request.Arguments.Options[i][0]) == "force" {
-				request.Arguments.Options[i][1] = "true"
-			}
-		}
-		request.Arguments.Options = append(request.Arguments.Options, []string{"force","true"})
-		utils.PrintlnWarning(fmt.Sprintf("Forcing delete of partial Project '%s' Infrastructure '%s' ...", Name, InfraName))
-		if existsInfrastructure {
-			utils.PrintlnWarning("Rolback not available, please check if you have any backup in the screen logs ...")
-		}
-		request.DeleteInfra()
-		_, messages := vmio.StripErrorMessages("Errors occured during Infrastructure creation : ", errorsList)
+		_, message := vmio.StripErrorMessages(fmt.Sprintf("Error building infrastructure : %s", InfraName), errorsList)
 		response := Response{
 			Status: false,
-			Message: messages,
+			Message: message,
 		}
 		return response, errors.New("Unable to execute task")
+		
+		//Remove previous Name
+		//if existsInfrastructure {
+		//	for i:= 0 ; i < len(request.Arguments.Options); i++ {
+		//		if CorrectInput(request.Arguments.Options[i][0]) == "force" {
+		//			request.Arguments.Options[i][1] = "true"
+		//		}
+		//	}
+		//	request.Arguments.Options = append(request.Arguments.Options, []string{"force","true"})
+		//	utils.PrintlnWarning(fmt.Sprintf("Forcing delete of partial Project '%s' Infrastructure '%s' ...", Name, InfraName))
+		//	if existsInfrastructure {
+		//		utils.PrintlnWarning("Rolback not available, please check if you have any backup in the screen logs ...")
+		//	}
+		//	request.Arguments.Options = append(request.Arguments.Options, []string{"infra-name", InfraName})
+		//	request.Type = DestroyInfrastructure
+		//	request.TypeStr = "delete-infra"
+		//	request.SubType = NoSubCommand
+		//	request.SubTypeStr = ""
+		//	request.DeleteInfra()
+		//	_, messages := vmio.StripErrorMessages("Errors occured during Infrastructure creation : ", errorsList)
+		//	response := Response{
+		//		Status: false,
+		//		Message: messages,
+		//	}
+		//	return response, errors.New("Unable to execute task")
+		//}
+	}
+	
+	utils.PrintlnWarning(fmt.Sprintf("Waiting for Instance recovery information in Project '%s' Infrastrcucture '%s'", Name, InfraName))
+	
+	for fixInfraValue > 0 {
+		time.Sleep(1*time.Second)
 	}
 	
 	utils.PrintlnWarning(fmt.Sprintf("Saving new Project '%s' Infrastrcucture '%s' descriptors", Name, InfraName))
@@ -1736,6 +1790,11 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			}
 		}
 		if (AllowInfraDeletion) {
+			request.Arguments.Options = append(request.Arguments.Options, []string{"infra-name", descriptor.InfraName})
+			request.Type = DestroyInfrastructure
+			request.TypeStr = "delete-infra"
+			request.SubType = NoSubCommand
+			request.SubTypeStr = ""
 			response, err := request.DeleteInfra()
 			if err != nil {
 				return response, err
