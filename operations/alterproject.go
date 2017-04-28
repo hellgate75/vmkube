@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"vmkube/utils"
 	"vmkube/vmio"
-	"vmkube/action"
 )
 
 type CmdElementTypeDesc int

@@ -241,6 +241,42 @@ func GetTaskActivities(project model.Project, infrastructure model.Infrastructur
 	}
 	return taskList, nil
 }
+func FilterByInstanceState(activities []ActivityCouple, isNew bool) []ActivityCouple {
+	var outActivities []ActivityCouple = make([]ActivityCouple, 0)
+	for _,activity := range activities {
+		if activity.Task == StartMachine || activity.Task == StopMachine || activity.Task == RestartMachine {
+			instanceId := ""
+			if activity.IsCloud {
+				instanceId = activity.CInstance.Id
+			} else {
+				instanceId = activity.Instance.Id
+			}
+			executor := procedures.GetCurrentMachineExecutor(
+				activity.Project,
+				activity.Infra,
+				activity.Machine,
+				activity.CMachine,
+				activity.Instance,
+				activity.CInstance,
+				instanceId,
+				activity.IsCloud,
+				isNew,
+			)
+			var commandPipe chan procedures.MachineMessage = make(chan procedures.MachineMessage)
+			var commandChannel chan *exec.Cmd = make(chan *exec.Cmd)
+			executor.MachineStatus(commandPipe, commandChannel)
+			message := <- commandPipe
+			if message.State != procedures.Machine_State_None && (activity.Task == StartMachine && activity.Task == RestartMachine && message.State == procedures.Machine_State_Stopped) &&
+				(activity.Task == StopMachine &&  message.State == procedures.Machine_State_Running){
+				//TODO: Implement Filter by DefaultMachineExecutor.State
+				outActivities = append(outActivities, activity)
+			}
+		} else {
+			outActivities = append(outActivities, activity)
+		}
+	}
+	return outActivities
+}
 
 func GetPostBuildTaskActivities(infrastructure model.Infrastructure, task ActivityTask) ([]ActivityCouple, error) {
 	var taskList []ActivityCouple = make([]ActivityCouple, 0)

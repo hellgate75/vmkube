@@ -730,7 +730,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 }
 
 func (request *CmdRequest) StartInfra() (Response, error) {
-	//TODO: Check Each Existence (from new MachineExecutor function) and Check Status 'Running' Before Start Any Instance. Manage other error status ...
+	//TODO: Manage other error status ...
 	
 	Name := ""
 	Force := false
@@ -806,6 +806,17 @@ func (request *CmdRequest) StartInfra() (Response, error) {
 	
 	startMachineActivities, err := operations.GetPostBuildTaskActivities(infrastructure, operations.StartMachine)
 	
+	startMachineActivities = operations.FilterByInstanceState(startMachineActivities, false)
+	
+	if len(startMachineActivities) == 0 {
+		utils.PrintlnImportant("No machine to start ...")
+		response := Response{
+			Status: true,
+			Message: "Success",
+		}
+		return  response, nil
+	}
+	
 	if err != nil {
 		response := Response{
 			Status: false,
@@ -835,7 +846,7 @@ func (request *CmdRequest) StartInfra() (Response, error) {
 }
 
 func (request *CmdRequest) StopInfra() (Response, error) {
-	//TODO: Check Each Existence (from new MachineExecutor function) and Check Status 'Stopped' Before Start Any Instance. Manage other error status ...
+	//TODO: Manage other error status ...
 
 	Name := ""
 	Force := false
@@ -904,6 +915,17 @@ func (request *CmdRequest) StopInfra() (Response, error) {
 	
 	stopMachineActivities, err := operations.GetPostBuildTaskActivities(infrastructure, operations.StopMachine)
 	
+	stopMachineActivities = operations.FilterByInstanceState(stopMachineActivities, false)
+	
+	if len(stopMachineActivities) == 0 {
+		utils.PrintlnImportant("No machine to stop ...")
+		response := Response{
+			Status: true,
+			Message: "Success",
+		}
+		return  response, nil
+	}
+	
 	if err != nil {
 		response := Response{
 			Status: false,
@@ -933,7 +955,7 @@ func (request *CmdRequest) StopInfra() (Response, error) {
 }
 
 func (request *CmdRequest) RestartInfra() (Response, error) {
-	//TODO: Check Each Existence (from new MachineExecutor function) and Check Status 'Running' Before Start Any Instance. Manage other error status ...
+	//TODO: Manage other error status ...
 
 	Name := ""
 	Force := false
@@ -1008,6 +1030,17 @@ func (request *CmdRequest) RestartInfra() (Response, error) {
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
 	
 	restartMachineActivities, err := operations.GetPostBuildTaskActivities(infrastructure, operations.RestartMachine)
+	
+	restartMachineActivities = operations.FilterByInstanceState(restartMachineActivities, false)
+	
+	if len(restartMachineActivities) == 0 {
+		utils.PrintlnImportant("No machine to restart ...")
+		response := Response{
+			Status: true,
+			Message: "Success",
+		}
+		return  response, nil
+	}
 	
 	if err != nil {
 		response := Response{
