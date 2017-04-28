@@ -389,6 +389,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 	Threads := 1
 	Overclock := false
 	BackupDir := ""
+	Backup := false
 	utils.NO_COLORS = false
 	for _,option := range request.Arguments.Options {
 		if "infra-name" == CorrectInput(option[0]) {
@@ -409,6 +410,8 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 			Threads = GetInteger(option[1], Threads)
 		} else if "backup-dir" == CorrectInput(option[0]) {
 			BackupDir = option[1]
+		} else if "backup" == CorrectInput(option[0]) {
+			Backup = GetBoolean(option[1])
 		}
 	}
 	if Name == "" {
@@ -551,46 +554,48 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 	
 	if DeleteFromDescriptor {
 		utils.PrintlnWarning(fmt.Sprintf("Removing Project %s and Infrastructure '%s'...", descriptor.Name, descriptor.InfraName))
-		AllowBackup := Force
-		if ! AllowBackup {
-			AllowBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Project named '%s'?",descriptor.Name))
-		}
-		if AllowBackup {
-			folder := model.GetEmergencyFolder()
-			if BackupDir != "" {
-				folder = BackupDir
+		if Backup {
+			AllowBackup := Force
+			if ! AllowBackup {
+				AllowBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Project named '%s'?",descriptor.Name))
 			}
-			if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
-				folder += string(os.PathSeparator)
+			if AllowBackup {
+				folder := model.GetEmergencyFolder()
+				if BackupDir != "" {
+					folder = BackupDir
+				}
+				if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
+					folder += string(os.PathSeparator)
+				}
+				ProjectBackup := fmt.Sprintf("%s.project-%s-%s.json", folder, utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name))
+				project, err := vmio.LoadProject(descriptor.Id)
+				if err == nil {
+					vmio.ExportUserProject(project, ProjectBackup, "json", true)
+					utils.PrintlnImportant(fmt.Sprintf("Emergency Project '%s' backup at : %s", descriptor.Name, ProjectBackup))
+				}
 			}
-			ProjectBackup := fmt.Sprintf("%s.project-%s-%s.json", folder, utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name))
-			project, err := vmio.LoadProject(descriptor.Id)
-			if err == nil {
-				vmio.ExportUserProject(project, ProjectBackup, "json", true)
-				utils.PrintlnImportant(fmt.Sprintf("Emergency Project '%s' backup at : %s", descriptor.Name, ProjectBackup))
+			AllowBackup = Force
+			if ! AllowBackup {
+				AllowBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Infrastructure named '%s'?",descriptor.InfraName))
 			}
-		}
-		AllowBackup = Force
-		if ! AllowBackup {
-			AllowBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Infrastructure named '%s'?",descriptor.InfraName))
-		}
-		if AllowBackup {
-			folder := model.GetEmergencyFolder()
-			if BackupDir != "" {
-				folder = BackupDir
-			}
-			if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
-				folder += string(os.PathSeparator)
-			}
-			InfraBackup := fmt.Sprintf("%s.prj-%s-%s-infra-export-%s-%s.vmkube", folder, utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name), utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
-			infra, err := vmio.LoadInfrastructure(descriptor.Id)
-			if err == nil {
-				infra.Save(InfraBackup)
-				utils.PrintlnImportant(fmt.Sprintf("Emergency Infrastructure '%s' backup at : %s", descriptor.InfraName, InfraBackup))
+			if AllowBackup {
+				folder := model.GetEmergencyFolder()
+				if BackupDir != "" {
+					folder = BackupDir
+				}
+				if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
+					folder += string(os.PathSeparator)
+				}
+				InfraBackup := fmt.Sprintf("%s.prj-%s-%s-infra-export-%s-%s.vmkube", folder, utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name), utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
+				infra, err := vmio.LoadInfrastructure(descriptor.Id)
+				if err == nil {
+					infra.Save(InfraBackup)
+					utils.PrintlnImportant(fmt.Sprintf("Emergency Infrastructure '%s' backup at : %s", descriptor.InfraName, InfraBackup))
+				}
 			}
 		}
 		request.Type = DeleteConfig
-		request.SubTypeStr = "delete=project"
+		request.SubTypeStr = "delete-project"
 		FoundName := false
 		FoundForce := false
 		for i := 0; i < len(request.Arguments.Options); i++ {
@@ -613,47 +618,49 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 	
 	if DeleteFromProjectDescriptor {
 		utils.PrintlnWarning(fmt.Sprintf("Removing Project %s and Infrastructure '%s'...", projectDescriptor.Name, projectDescriptor.InfraName))
-		AllowBackup := Force
-		if ! AllowBackup {
-			AllowBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Project named '%s'?",projectDescriptor.Name))
-		}
-		if AllowBackup {
-			folder := model.GetEmergencyFolder()
-			if BackupDir != "" {
-				folder = BackupDir
+		if Backup {
+			AllowBackup := Force
+			if ! AllowBackup {
+				AllowBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Project named '%s'?",projectDescriptor.Name))
 			}
-			if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
-				folder += string(os.PathSeparator)
+			if AllowBackup {
+				folder := model.GetEmergencyFolder()
+				if BackupDir != "" {
+					folder = BackupDir
+				}
+				if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
+					folder += string(os.PathSeparator)
+				}
+				ProjectBackup := fmt.Sprintf("%s.project-%s-%s.json", folder, utils.IdToFileFormat(projectDescriptor.Id), utils.NameToFileFormat(projectDescriptor.Name))
+				project, err := vmio.LoadProject(projectDescriptor.Id)
+				if err == nil {
+					vmio.ExportUserProject(project, ProjectBackup, "json", true)
+					utils.PrintlnImportant(fmt.Sprintf("Emergency Project '%s' backup at : %s", projectDescriptor.Name, ProjectBackup))
+				}
 			}
-			ProjectBackup := fmt.Sprintf("%s.project-%s-%s.json", folder, utils.IdToFileFormat(projectDescriptor.Id), utils.NameToFileFormat(projectDescriptor.Name))
-			project, err := vmio.LoadProject(projectDescriptor.Id)
-			if err == nil {
-				vmio.ExportUserProject(project, ProjectBackup, "json", true)
-				utils.PrintlnImportant(fmt.Sprintf("Emergency Project '%s' backup at : %s", projectDescriptor.Name, ProjectBackup))
+			AllowBackup = Force
+			if ! AllowBackup {
+				AllowBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Infrastructure named '%s'?",projectDescriptor.InfraName))
 			}
-		}
-		AllowBackup = Force
-		if ! AllowBackup {
-			AllowBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Infrastructure named '%s'?",projectDescriptor.InfraName))
-		}
-		if AllowBackup {
-			folder := model.GetEmergencyFolder()
-			if BackupDir != "" {
-				folder = BackupDir
-			}
-			if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
-				folder += string(os.PathSeparator)
-			}
-			InfraBackup := fmt.Sprintf("%s.prj-%s-%s-infra-export-%s-%s.vmkube", folder, utils.IdToFileFormat(projectDescriptor.Id), utils.NameToFileFormat(projectDescriptor.Name), utils.IdToFileFormat(projectDescriptor.InfraId), utils.NameToFileFormat(projectDescriptor.InfraName))
-			infra, err := vmio.LoadInfrastructure(projectDescriptor.Id)
-			if err == nil {
-				infra.Save(InfraBackup)
-				utils.PrintlnImportant(fmt.Sprintf("Emergency Infrastructure '%s' backup at : %s", projectDescriptor.InfraName, InfraBackup))
+			if AllowBackup {
+				folder := model.GetEmergencyFolder()
+				if BackupDir != "" {
+					folder = BackupDir
+				}
+				if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
+					folder += string(os.PathSeparator)
+				}
+				InfraBackup := fmt.Sprintf("%s.prj-%s-%s-infra-export-%s-%s.vmkube", folder, utils.IdToFileFormat(projectDescriptor.Id), utils.NameToFileFormat(projectDescriptor.Name), utils.IdToFileFormat(projectDescriptor.InfraId), utils.NameToFileFormat(projectDescriptor.InfraName))
+				infra, err := vmio.LoadInfrastructure(projectDescriptor.Id)
+				if err == nil {
+					infra.Save(InfraBackup)
+					utils.PrintlnImportant(fmt.Sprintf("Emergency Infrastructure '%s' backup at : %s", projectDescriptor.InfraName, InfraBackup))
+				}
 			}
 		}
 		
 		request.Type = DeleteConfig
-		request.SubTypeStr = "delete=project"
+		request.SubTypeStr = "delete-project"
 		FoundName := false
 		FoundForce := false
 		for i := 0; i < len(request.Arguments.Options); i++ {

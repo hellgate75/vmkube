@@ -551,6 +551,12 @@ func InitHelpers() {
 			Mandatory: false,
 		},
 		HelperOption{
+			Option: "backup",
+			Type: "<boolean>",
+			Description: "Allow to check need for backup of being removed elements (default: false)",
+			Mandatory: false,
+		},
+		HelperOption{
 			Option: "backup-dir",
 			Type: "<string>",
 			Description: "Folder used to store backup files (default: '')",
@@ -650,6 +656,12 @@ func InitHelpers() {
 			Mandatory: false,
 		},
 		HelperOption{
+			Option: "backup",
+			Type: "<boolean>",
+			Description: "Allow to check need for backup of being removed elements (default: false)",
+			Mandatory: false,
+		},
+		HelperOption{
 			Option: "backup-dir",
 			Type: "<string>",
 			Description: "Folder used to store backup files (default: '')",
@@ -699,6 +711,12 @@ func InitHelpers() {
 			Option: "no-colors",
 			Type: "<boolean>",
 			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "backup",
+			Type: "<boolean>",
+			Description: "Allow to check need for backup of being removed elements (default: false)",
 			Mandatory: false,
 		},
 		HelperOption{
@@ -856,6 +874,12 @@ func InitHelpers() {
 			Mandatory: false,
 		},
 		HelperOption{
+			Option: "backup",
+			Type: "<boolean>",
+			Description: "Allow to check need for backup of being removed elements (default: false)",
+			Mandatory: false,
+		},
+		HelperOption{
 			Option: "backup-dir",
 			Type: "<string>",
 			Description: "Folder used to store backup files (default: '')",
@@ -945,6 +969,12 @@ func InitHelpers() {
 			Option: "no-colors",
 			Type: "<boolean>",
 			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "backup",
+			Type: "<boolean>",
+			Description: "Allow to check need for backup of being removed elements (default: false)",
 			Mandatory: false,
 		},
 		HelperOption{

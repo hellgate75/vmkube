@@ -57,6 +57,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	InputFile := ""
+	Backup := false
 	BackupDir := ""
 	InputFormat := "json"
 	Force := false
@@ -77,6 +78,8 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			utils.NO_COLORS = GetBoolean(option[1])
 		} else if "backup-dir" == CorrectInput(option[0]) {
 			BackupDir = option[1]
+		} else if "backup" == CorrectInput(option[0]) {
+			Backup = GetBoolean(option[1])
 		}
 	}
 	if Name == "" {
@@ -88,8 +91,8 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	
 	AllowProjectDeletion := Force
 	AllowInfraDeletion := OverrideInfra && Force
-	AllowProjectBackup := Force
-	AllowInfraBackup := OverrideInfra && Force
+	AllowProjectBackup := Backup && Force
+	AllowInfraBackup := Backup && OverrideInfra && Force
 	
 	descriptor, err := vmio.GetProjectDescriptor(Name)
 	
@@ -132,7 +135,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 				return response, errors.New("Unable to execute task")
 			}
 		}
-		if AllowProjectDeletion && ! AllowProjectBackup {
+		if Backup && AllowProjectDeletion && ! AllowProjectBackup {
 			
 			AllowProjectBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Project named '%s'?", descriptor.Name))
 		}
@@ -157,7 +160,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 				return response, errors.New("Unable to execute task")
 			}
 		}
-		if AllowInfraDeletion && ! AllowInfraBackup {
+		if Backup && AllowInfraDeletion && ! AllowInfraBackup {
 			AllowInfraBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Infrastructure named '%s'?",descriptor.InfraName))
 		}
 	}
@@ -394,10 +397,11 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	File := ""
-	BackupDir := ""
 	Format := "json"
 	Force := true
 	OverrideInfra := false
+	BackupDir := ""
+	Backup := false
 	var ElementType CmdElementType = NoElement
 	ElementName := ""
 	ElementId := ""
@@ -444,6 +448,8 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			utils.NO_COLORS = GetBoolean(option[1])
 		} else if "backup-dir" == CorrectInput(option[0]) {
 			BackupDir = option[1]
+		} else if "backup" == CorrectInput(option[0]) {
+			Backup = GetBoolean(option[1])
 		}
 		//else {
 		//	PrintCommandHelper(request.TypeStr, request.SubTypeStr)
@@ -775,7 +781,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 	
 	AllowProjectOverwrite := Force
 	if existsProject && ! AllowProjectOverwrite {
-		AllowProjectOverwrite = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with deletion process for Infrastructure named '%s'?", descriptor.InfraName))
+		AllowProjectOverwrite = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with alter process for Project named '%s'?", descriptor.Name))
 		if ! AllowProjectOverwrite {
 			response := Response{
 				Status: false,
@@ -787,7 +793,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 	}
 	
 	AllowInfraDeletion := OverrideInfra && Force
-	AllowInfraBackup := OverrideInfra && Force
+	AllowInfraBackup := Backup && OverrideInfra && Force
 	InfraBackup := ""
 	
 	if descriptor.InfraId != "" && OverrideInfra {
@@ -801,7 +807,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 				return response, errors.New("Unable to execute task")
 			}
 		}
-		if AllowInfraDeletion && ! AllowInfraBackup {
+		if Backup && AllowInfraDeletion && ! AllowInfraBackup {
 			AllowInfraBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Infrastructure named '%s'?",descriptor.InfraName))
 		}
 	}
@@ -1397,6 +1403,7 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 func (request *CmdRequest) BuildProject() (Response, error) {
 	Name := ""
 	InfraName := ""
+	Backup := false
 	BackupDir := ""
 	Force := false
 	Rebuild := false
@@ -1420,6 +1427,8 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			Threads = GetInteger(option[1], Threads)
 		} else if "backup-dir" == CorrectInput(option[0]) {
 			BackupDir = option[1]
+		} else if "backup" == CorrectInput(option[0]) {
+			Backup = GetBoolean(option[1])
 		}
 	}
 	if Name == "" {
@@ -1454,7 +1463,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	}
 	existsInfrastructure := descriptor.InfraId != ""
 	ForceRebuild := Force && existsInfrastructure
-	AllowInfraBackup := Force && existsInfrastructure
+	AllowInfraBackup := Backup && Force && existsInfrastructure
 	InfraBackup := ""
 	
 	project, err := vmio.LoadProject(descriptor.Id)
@@ -1521,7 +1530,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			}
 		}
 		
-		if ! AllowInfraBackup {
+		if Backup && ! AllowInfraBackup {
 			AllowInfraBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Infrastructure named '%s'?",descriptor.InfraName))
 		}
 		
@@ -1700,6 +1709,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	File := ""
+	Backup := false
 	BackupDir := ""
 	Format := "json"
 	FullImport := true
@@ -1735,6 +1745,8 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			utils.NO_COLORS = GetBoolean(option[1])
 		} else if "backup-dir" == CorrectInput(option[0]) {
 			BackupDir = option[1]
+		} else if "backup" == CorrectInput(option[0]) {
+			Backup = GetBoolean(option[1])
 		}
 	}
 	if CorrectInput(SampleFormat) == "" {
@@ -1904,7 +1916,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 		ProjectJSON = string(utils.GetJSONFromObj(project, true))
 		if FullImport || ElementType == SProject {
 			AllowProjectDeletion := Force
-			AllowProjectBackup := Force
+			AllowProjectBackup := Backup && Force
 			if err == nil {
 				if ! AllowProjectDeletion {
 					AllowProjectDeletion = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with deletion process for Project named '%s'?", descriptor.Name))
@@ -1916,7 +1928,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 						return response, errors.New("Unable to execute task")
 					}
 				}
-				if AllowProjectDeletion && ! AllowProjectBackup {
+				if Backup && AllowProjectDeletion && ! AllowProjectBackup {
 					AllowProjectBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Project named '%s'?", descriptor.Name))
 				}
 			}
@@ -1956,7 +1968,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 	}
 	
 	AllowInfraDeletion := OverrideInfra && Force
-	AllowInfraBackup := OverrideInfra && Force
+	AllowInfraBackup := Backup && OverrideInfra && Force
 	InfraBackup := ""
 	
 	if descriptor.InfraId != "" && OverrideInfra && (FullImport || ElementType == SProject) {
@@ -1970,7 +1982,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 				return response, errors.New("Unable to execute task")
 			}
 		}
-		if AllowInfraDeletion && ! AllowInfraBackup {
+		if Backup && AllowInfraDeletion && ! AllowInfraBackup {
 			AllowInfraBackup = utils.RequestConfirmation(fmt.Sprintf("Do you want backup Infrastructure named '%s'?",descriptor.InfraName))
 		}
 	}
