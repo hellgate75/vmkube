@@ -42,7 +42,7 @@ func (info *InfrastructureInfo) Delete() error {
 	return nil
 }
 
-func (info *InfrastructureInfo) Evaquate() error {
+func (info *InfrastructureInfo) Evacuate() error {
 	//TODO: Implement infrastructure evacuate
 	return nil
 }

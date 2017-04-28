@@ -723,6 +723,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
+		descriptor.Active = !project.Open
 		break
 	case Close:
 		project, err = operations.CloseProject(project)
@@ -734,6 +735,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
+		descriptor.Active = !project.Open
 		break
 	default:
 		response := Response{
@@ -1572,16 +1574,6 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			fixInfraValue--
 		}(task)
 	})
-
-	err = UpdateIndexWithInfrastructure(Infrastructure)
-	
-	if err != nil {
-		response := Response{
-			Status: false,
-			Message: err.Error(),
-		}
-		return response, errors.New("Unable to execute task")
-	}
 	
 	reOpt := ""
 	if existsInfrastructure {
@@ -1602,6 +1594,19 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	
 	for fixInfraValue > 0 {
 		time.Sleep(1*time.Second)
+	}
+	
+	utils.PrintlnWarning(fmt.Sprintf("Update Project '%s' indexes linking New Infrastrcucture '%s'...", Name, InfraName))
+	
+
+	err = UpdateIndexWithInfrastructure(Infrastructure)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
 	}
 	
 	utils.PrintlnWarning(fmt.Sprintf("Saving new Project '%s' Infrastrcucture '%s' descriptors...", Name, InfraName))
@@ -1954,7 +1959,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		err = UpdateIndexWithProject(project)
+		err = UpdateIndexWithProjectStates(project, false, false)
 		if err != nil {
 			response := Response{
 				Status: false,
@@ -1968,23 +1973,23 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 				Status: false,
 				Message: err.Error(),
 			}
-			UpdateIndexWithProjectsDescriptor(descriptor, false)
+			request.DeleteProject()
 
-			if existsInfrastructure {
-				AddProjectChangeActions(descriptor.Id, ActionDescriptor{
-					Id: NewUUIDString(),
-					Date: time.Now(),
-					DropAction: false,
-					ElementType: SProject,
-					ElementId: descriptor.Id,
-					ElementName: descriptor.Name,
-					FullProject: true,
-					JSONImage: ProjectJSON,
-					Request: request.Type,
-					SubRequest: request.SubType,
-				})
-			}
 			return response, errors.New("Unable to execute task")
+		}
+		if existsInfrastructure {
+			AddProjectChangeActions(descriptor.Id, ActionDescriptor{
+				Id: NewUUIDString(),
+				Date: time.Now(),
+				DropAction: false,
+				ElementType: SProject,
+				ElementId: descriptor.Id,
+				ElementName: descriptor.Name,
+				FullProject: true,
+				JSONImage: ProjectJSON,
+				Request: request.Type,
+				SubRequest: request.SubType,
+			})
 		}
 		utils.PrintlnSuccess(fmt.Sprintf("Successfully imported Project '%s' from file '%s' in format '%s'", Name, File, Format))
 	} else {
@@ -2374,6 +2379,14 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			} else {
 				utils.PrintlnWarning(fmt.Sprintf("Warning: No Plan to import from file '%s' in format '%s'", File, Format))
 			}
+		}
+		err = UpdateIndexWithProjectStates(project, false, false)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
 		}
 	}
 	if ProjectBackup != "" {

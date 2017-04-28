@@ -313,8 +313,63 @@ func UpdateIndexWithProject(project model.Project) error {
 		if CorrectInput(prj.Name) != CorrectInput(project.Name) {
 			NewIndexes = append(NewIndexes, )
 		} else {
-			synced = (prj.InfraId == "")
-			active = prj.Active
+			synced = prj.Synced
+			active = prj.InfraId != "" && !project.Open
+			InfraId = prj.InfraId
+			InfraName = prj.InfraName
+			Found = true
+		}
+	}
+	
+	vmio.LockIndex(indexes)
+	
+	indexes.Projects = append(indexes.Projects, model.ProjectsDescriptor{
+		Id: project.Id,
+		Name: project.Name,
+		Open: project.Open,
+		Synced: synced,
+		Active: active,
+		InfraId: InfraId,
+		InfraName: InfraName,
+	})
+	
+	if Found {
+		indexes.Projects = NewIndexes
+	}
+	
+	err = vmio.SaveIndex(indexes)
+	
+	vmio.UnlockIndex(indexes)
+	
+	return err
+}
+
+func UpdateIndexWithProjectStates(project model.Project, active bool, synced bool) error {
+	indexes, err := vmio.LoadIndex()
+	
+	if err != nil {
+		return err
+	}
+	
+	iFaceIndex := vmio.IFaceIndex{
+		Id: indexes.Id,
+	}
+	iFaceIndex.WaitForUnlock()
+	
+	indexes, err = vmio.LoadIndex()
+	
+	if err != nil {
+		return err
+	}
+	
+	InfraId := ""
+	InfraName := ""
+	Found := false
+	NewIndexes := make([]model.ProjectsDescriptor, 0)
+	for _,prj := range indexes.Projects {
+		if CorrectInput(prj.Name) != CorrectInput(project.Name) {
+			NewIndexes = append(NewIndexes, )
+		} else {
 			InfraId = prj.InfraId
 			InfraName = prj.InfraName
 			Found = true
@@ -375,6 +430,7 @@ func UpdateIndexWithProjectsDescriptor(project model.ProjectsDescriptor, addDesc
 	vmio.LockIndex(indexes)
 	
 	if addDescriptor {
+		project.Active = !project.Open
 		NewIndexes = append(NewIndexes, project)
 		indexes.Projects = NewIndexes
 	} else if Found {
@@ -438,6 +494,7 @@ func UpdateIndexWithInfrastructure(infrastructure model.Infrastructure) error {
 		if prj.Id == project.Id {
 			prj.InfraId = infrastructure.Id
 			prj.InfraName = infrastructure.Name
+			prj.Active = true
 			prj.Open = false
 			Found = true
 		}

@@ -60,6 +60,7 @@ func (request *CmdRequest) CreateInfra() (Response, error) {
 }
 
 func (request *CmdRequest) AlterInfra() (Response, error) {
+	//TODO: Alter Infra to : Start/Stop/Recreate/Remove Single Instance or AutoFix instances errors.
 	response := Response{
 		Status: false,
 		Message: "Not Implemented",
@@ -755,6 +756,21 @@ func (request *CmdRequest) StartInfra() (Response, error) {
 			Message: "Infrastrcuture Name not provided",
 			Status: false,},errors.New("Unable to execute task")
 	}
+	descriptor, err := vmio.GetInfrastructureProjectDescriptor(Name)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	if ! descriptor.Active {
+		response := Response{
+			Status: false,
+			Message: fmt.Sprintf("Infrastructure %s not active, unable to start it. Please close project to perform this task", Name),
+		}
+		return response, errors.New("Unable to execute task")
+	}
 	if ! Force {
 		AllowInfraStart := utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with start machines process for Infrastructure named '%s'?", Name))
 		if ! AllowInfraStart {
@@ -764,14 +780,6 @@ func (request *CmdRequest) StartInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-	}
-	descriptor, err := vmio.GetInfrastructureProjectDescriptor(Name)
-	if err != nil {
-		response := Response{
-			Status: false,
-			Message: err.Error(),
-		}
-		return  response, errors.New("Unable to execute task")
 	}
 	iFaceInfra := vmio.IFaceInfra{
 		Id: descriptor.InfraId,
@@ -951,6 +959,21 @@ func (request *CmdRequest) RestartInfra() (Response, error) {
 			Message: "Infrastrcuture Name not provided",
 			Status: false,},errors.New("Unable to execute task")
 	}
+	descriptor, err := vmio.GetInfrastructureProjectDescriptor(Name)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	if ! descriptor.Active {
+		response := Response{
+			Status: false,
+			Message: fmt.Sprintf("Infrastructure %s not active, unable to restart it. Please close project to perform this task", Name),
+		}
+		return response, errors.New("Unable to execute task")
+	}
 	if ! Force {
 		AllowInfraStop := utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with restart machines process for Infrastructure named '%s'?", Name))
 		if ! AllowInfraStop {
@@ -960,14 +983,6 @@ func (request *CmdRequest) RestartInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-	}
-	descriptor, err := vmio.GetInfrastructureProjectDescriptor(Name)
-	if err != nil {
-		response := Response{
-			Status: false,
-			Message: err.Error(),
-		}
-		return  response, errors.New("Unable to execute task")
 	}
 	iFaceInfra := vmio.IFaceInfra{
 		Id: descriptor.InfraId,
