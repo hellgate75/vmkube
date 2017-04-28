@@ -550,6 +550,12 @@ func InitHelpers() {
 			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
 			Mandatory: false,
 		},
+		HelperOption{
+			Option: "backup-dir",
+			Type: "<string>",
+			Description: "Folder used to store backup files (default: '')",
+			Mandatory: false,
+		},
 	)
 	
 	ListAllInfras.Options = append(ListAllInfras.Options,
@@ -643,6 +649,12 @@ func InitHelpers() {
 			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
 			Mandatory: false,
 		},
+		HelperOption{
+			Option: "backup-dir",
+			Type: "<string>",
+			Description: "Folder used to store backup files (default: '')",
+			Mandatory: false,
+		},
 	)
 	
 	//Build Project
@@ -687,6 +699,12 @@ func InitHelpers() {
 			Option: "no-colors",
 			Type: "<boolean>",
 			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "backup-dir",
+			Type: "<string>",
+			Description: "Folder used to store backup files (default: '')",
 			Mandatory: false,
 		},
 	)
@@ -837,6 +855,12 @@ func InitHelpers() {
 			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
 			Mandatory: false,
 		},
+		HelperOption{
+			Option: "backup-dir",
+			Type: "<string>",
+			Description: "Folder used to store backup files (default: '')",
+			Mandatory: false,
+		},
 	)
 
 	//Delete Project
@@ -921,6 +945,12 @@ func InitHelpers() {
 			Option: "no-colors",
 			Type: "<boolean>",
 			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "backup-dir",
+			Type: "<string>",
+			Description: "Folder used to store backup files (default: '')",
 			Mandatory: false,
 		},
 	)

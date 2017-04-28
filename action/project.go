@@ -57,6 +57,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	InputFile := ""
+	BackupDir := ""
 	InputFormat := "json"
 	Force := false
 	OverrideInfra := false
@@ -74,6 +75,8 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			OverrideInfra = GetBoolean(option[1])
 		} else if "no-colors" == CorrectInput(option[0]) {
 			utils.NO_COLORS = GetBoolean(option[1])
+		} else if "backup-dir" == CorrectInput(option[0]) {
+			BackupDir = option[1]
 		}
 	}
 	if Name == "" {
@@ -224,7 +227,14 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	
 	if existsInfrastructure {
 		if AllowInfraBackup {
-			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube", model.GetEmergencyFolder(), string(os.PathSeparator), utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name), utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
+			folder := model.GetEmergencyFolder()
+			if BackupDir != "" {
+				folder = BackupDir
+			}
+			if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
+				folder += string(os.PathSeparator)
+			}
+			InfraBackup = fmt.Sprintf("%s.prj-%s-%s-infra-export-%s-%s.vmkube", folder, utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name), utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
 			infra, err := vmio.LoadInfrastructure(descriptor.Id)
 			if err == nil {
 				infra.Save(InfraBackup)
@@ -243,7 +253,14 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	}
 	if existsProject {
 		if AllowProjectBackup {
-			ProjectBackup = fmt.Sprintf("%s%s.project-%s-%s.json", model.GetEmergencyFolder(), string(os.PathSeparator), utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name))
+			folder := model.GetEmergencyFolder()
+			if BackupDir != "" {
+				folder = BackupDir
+			}
+			if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
+				folder += string(os.PathSeparator)
+			}
+			ProjectBackup = fmt.Sprintf("%s.project-%s-%s.json", folder, utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name))
 			project, err := vmio.LoadProject(descriptor.Id)
 			if err == nil {
 				vmio.ExportUserProject(project, ProjectBackup, "json", true)
@@ -259,7 +276,15 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	
 	if existsInfrastructure {
 		if AllowInfraBackup {
-			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube", model.GetEmergencyFolder(), string(os.PathSeparator), utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name), utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
+			folder := model.GetEmergencyFolder()
+			if BackupDir != "" {
+				folder = BackupDir
+			}
+			if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
+				folder += string(os.PathSeparator)
+			}
+			
+			InfraBackup = fmt.Sprintf("%s.prj-%s-%s-infra-export-%s-%s.vmkube", folder, utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name), utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
 			infra, err := vmio.LoadInfrastructure(descriptor.Id)
 			if err == nil {
 				infra.Save(InfraBackup)
@@ -369,6 +394,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	File := ""
+	BackupDir := ""
 	Format := "json"
 	Force := true
 	OverrideInfra := false
@@ -416,6 +442,8 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			SampleFormat = option[1]
 		} else if "no-colors" == CorrectInput(option[0]) {
 			utils.NO_COLORS = GetBoolean(option[1])
+		} else if "backup-dir" == CorrectInput(option[0]) {
+			BackupDir = option[1]
 		}
 		//else {
 		//	PrintCommandHelper(request.TypeStr, request.SubTypeStr)
@@ -780,7 +808,14 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 	
 	if existsInfrastructure && OverrideInfra {
 		if AllowInfraBackup {
-			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube", model.GetEmergencyFolder(), string(os.PathSeparator), utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name), utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
+			folder := model.GetEmergencyFolder()
+			if BackupDir != "" {
+				folder = BackupDir
+			}
+			if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
+				folder += string(os.PathSeparator)
+			}
+			InfraBackup = fmt.Sprintf("%s.prj-%s-%s-infra-export-%s-%s.vmkube", folder, utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name), utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
 			infra, err := vmio.LoadInfrastructure(descriptor.Id)
 			if err == nil {
 				infra.Save(InfraBackup)
@@ -1362,6 +1397,7 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 func (request *CmdRequest) BuildProject() (Response, error) {
 	Name := ""
 	InfraName := ""
+	BackupDir := ""
 	Force := false
 	Rebuild := false
 	Threads := 1
@@ -1382,6 +1418,8 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			utils.NO_COLORS = GetBoolean(option[1])
 		} else if "threads" == CorrectInput(option[0]) {
 			Threads = GetInteger(option[1], Threads)
+		} else if "backup-dir" == CorrectInput(option[0]) {
+			BackupDir = option[1]
 		}
 	}
 	if Name == "" {
@@ -1491,7 +1529,14 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	
 	if Rebuild {
 		if AllowInfraBackup {
-			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube", model.GetEmergencyFolder(), string(os.PathSeparator), utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name), utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
+			folder := model.GetEmergencyFolder()
+			if BackupDir != "" {
+				folder = BackupDir
+			}
+			if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
+				folder += string(os.PathSeparator)
+			}
+			InfraBackup = fmt.Sprintf("%s.prj-%s-%s-infra-export-%s-%s.vmkube", folder, utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name), utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
 			infra, err := vmio.LoadInfrastructure(descriptor.Id)
 			if err == nil {
 				infra.Save(InfraBackup)
@@ -1655,6 +1700,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	File := ""
+	BackupDir := ""
 	Format := "json"
 	FullImport := true
 	Force := false
@@ -1687,6 +1733,8 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			}
 		} else if "no-colors" == CorrectInput(option[0]) {
 			utils.NO_COLORS = GetBoolean(option[1])
+		} else if "backup-dir" == CorrectInput(option[0]) {
+			BackupDir = option[1]
 		}
 	}
 	if CorrectInput(SampleFormat) == "" {
@@ -1882,7 +1930,14 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			}
 			
 			if AllowProjectBackup {
-				ProjectBackup = fmt.Sprintf("%s%s.project-%s-%s.json", model.GetEmergencyFolder(), string(os.PathSeparator), utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name))
+				folder := model.GetEmergencyFolder()
+				if BackupDir != "" {
+					folder = BackupDir
+				}
+				if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
+					folder += string(os.PathSeparator)
+				}
+				ProjectBackup = fmt.Sprintf("%s.project-%s-%s.json", folder, utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name))
 				project, err := vmio.LoadProject(descriptor.Id)
 				if err == nil {
 					vmio.ExportUserProject(project, ProjectBackup, "json", true)
@@ -1922,7 +1977,14 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 	
 	if existsInfrastructure && OverrideInfra && (FullImport || ElementType == SProject) {
 		if AllowInfraBackup {
-			InfraBackup = fmt.Sprintf("%s%s.prj-%s-%s-infra-export-%s-%s.vmkube", model.GetEmergencyFolder(), string(os.PathSeparator), utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name), utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
+			folder := model.GetEmergencyFolder()
+			if BackupDir != "" {
+				folder = BackupDir
+			}
+			if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
+				folder += string(os.PathSeparator)
+			}
+			InfraBackup = fmt.Sprintf("%s.prj-%s-%s-infra-export-%s-%s.vmkube", folder, utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name), utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
 			infra, err := vmio.LoadInfrastructure(descriptor.Id)
 			if err == nil {
 				infra.Save(InfraBackup)
