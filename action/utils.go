@@ -15,6 +15,7 @@ import (
 	"vmkube/scheduler"
 	"vmkube/operations"
 	"reflect"
+	"sync"
 )
 
 
@@ -96,7 +97,7 @@ func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error
 				Id: NewUUIDString(),
 				Name: network.Name,
 				Options: network.Options,
-				LocalInstances: []model.Instance{},
+				LocalInstances: []model.LocalInstance{},
 				CloudInstances: []model.CloudInstance{},
 				Installations: []model.Installation{},
 			}
@@ -110,7 +111,7 @@ func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error
 					Type: 0,
 				})
 				instanceId := NewUUIDString()
-				instance := model.Instance{
+				instance := model.LocalInstance{
 					Id: instanceId,
 					Name: machine.Name,
 					Options: machine.Options,
@@ -197,6 +198,90 @@ func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error
 	}
 	return infrastructure, nil
 }
+
+func InfrastructureToProject(infrastructure model.Infrastructure, projectName string) (model.Project, error) {
+	newProject := model.Project{}
+	newProject.Id = NewUUIDString()
+	newProject.Name = projectName
+	newProject.Created = time.Now()
+	newProject.Modified = time.Now()
+	newProject.Errors = false
+	newProject.LastMessage = fmt.Sprintf("Imported from infrastructure %s", infrastructure.Name)
+	for _,domain := range infrastructure.Domains {
+		newDomain := model.MachineDomain{
+			Id: NewUUIDString(),
+			Name: domain.Name,
+			Options: domain.Options,
+			Networks: []model.MachineNetwork{},
+		}
+		for _,network := range domain.Networks {
+			newNetwork := model.MachineNetwork{
+				Id: NewUUIDString(),
+				Name: network.Name,
+				Options: network.Options,
+				LocalMachines: []model.LocalMachine{},
+				CloudMachines: []model.CloudMachine{},
+				Installations: []model.InstallationPlan{},
+			}
+			machineConvertionMap := make(map[string]string)
+			for _,machine := range network.LocalInstances {
+				instanceId := NewUUIDString()
+				instance := model.LocalMachine{
+					Id: instanceId,
+					Name: machine.Name,
+					Options: machine.Options,
+					Cpus: machine.Cpus,
+					Memory: machine.Memory,
+					DiskSize: machine.Disks[0].Size,
+					Driver: machine.Driver,
+					Engine: model.ToMachineEngineOpt(machine.Engine),
+					Swarm: model.ToMachineSwarmOpt(machine.Swarm),
+					Hostname: machine.Hostname,
+					NoShare: machine.NoShare,
+					OSType: machine.OSType,
+					OSVersion: machine.OSVersion,
+					Roles: machine.Roles,
+				}
+				if _,ok := machineConvertionMap[machine.Id]; ok {
+					return newProject, errors.New("Duplicate Instance Id in Project : " + machine.Id)
+				}
+				machineConvertionMap[machine.Id] = instance.Id
+				newNetwork.LocalMachines = append(newNetwork.LocalMachines, instance)
+			}
+			for _,machine := range network.CloudInstances {
+				instanceId := NewUUIDString()
+				instance := model.CloudMachine{
+					Id: instanceId,
+					Name: machine.Name,
+					Driver: machine.Driver,
+					Hostname: machine.Hostname,
+					Options: machine.Options,
+					Roles: machine.Roles,
+				}
+				if _,ok := machineConvertionMap[machine.Id]; ok {
+					return newProject, errors.New("Duplicate Instance Id in Project : " + machine.Id)
+				}
+				machineConvertionMap[machine.Id] = instance.Id
+				newNetwork.CloudMachines = append(newNetwork.CloudMachines, instance)
+			}
+			for _,plan := range network.Installations {
+				if _,ok := machineConvertionMap[plan.InstanceId]; ! ok {
+					return newProject, errors.New("Invalid instance reference in plan : " + plan.InstanceId)
+				}
+				instanceId, _  := machineConvertionMap[plan.InstanceId]
+				installation := plan.Plan
+				installation.Id = NewUUIDString()
+				installation.MachineId = instanceId
+				installation.IsCloud = plan.IsCloud
+				newNetwork.Installations = append(newNetwork.Installations, installation)
+			}
+			newDomain.Networks = append(newDomain.Networks, newNetwork)
+		}
+		newProject.Domains = append(newProject.Domains, newDomain)
+	}
+	return newProject, nil
+}
+
 
 func UpdateIndexWithProject(project model.Project) error {
 	indexes, err := vmio.LoadIndex()
@@ -538,9 +623,9 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 					Jobs: []scheduler.Job{
 						{
 							Id: jobIds[i],
-							Name: fmt.Sprintf("Process Instance from Project Machine Id: %s", infrastructureActionCouples[i].Instance.MachineId),
+							Name: fmt.Sprintf("Process Instance from Project, Machine Id: %s", infrastructureActionCouples[i].Instance.MachineId),
 							Runnable: operations.RunnableStruct(&operations.MachineOperationsJob{
-								Name: fmt.Sprintf("Process Instance from Project Machine Id: %s", infrastructureActionCouples[i].Instance.MachineId),
+								Name: fmt.Sprintf("Process Instance from Project, Machine Id: %s", infrastructureActionCouples[i].Instance.MachineId),
 								Infra: infrastructureActionCouples[i].Infra,
 								Project:infrastructureActionCouples[i].Project,
 								Activity: infrastructureActionCouples[i],
@@ -558,9 +643,9 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 					Jobs: []scheduler.Job{
 						{
 							Id: jobIds[i],
-							Name: fmt.Sprintf("Process Instance from Project Machine Id: %s", infrastructureActionCouples[i].CInstance.MachineId),
+							Name: fmt.Sprintf("Process Instance from Project, Machine Id: %s", infrastructureActionCouples[i].CInstance.MachineId),
 							Runnable: operations.RunnableStruct(&operations.MachineOperationsJob{
-								Name: fmt.Sprintf("Process Instance from Project Machine Id: %s", infrastructureActionCouples[i].CInstance.MachineId),
+								Name: fmt.Sprintf("Process Instance from Project, Machine Id: %s", infrastructureActionCouples[i].CInstance.MachineId),
 								Infra: infrastructureActionCouples[i].Infra,
 								Project:infrastructureActionCouples[i].Project,
 								Activity: infrastructureActionCouples[i],
@@ -577,6 +662,7 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 	}()
 	var answerCounter int = 0
 	go func(){
+		var mutex sync.Mutex
 		var resultsSeparator string = " status: "
 		var screenManager term.KeyValueScreenManager
 		if ! utils.NO_COLORS {
@@ -649,6 +735,7 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 								errorsList = append(errorsList, machineMessage.Error)
 								if ! errorsInProgress {
 									errorsInProgress = true
+									mutex.Lock()
 									fmt.Println(fmt.Sprintf(operation + "s interrupted, pending %d instance(s) will not be processed!!", (jobsArrayLen - answerCounter - pool.NumberOfWorkers() - 1)))
 									if pool.IsRunning() {
 										pool.Pause()
@@ -656,9 +743,9 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 									for pool.IsWorking() {
 										time.Sleep(1*time.Second)
 									}
-								} else {
-									pending --
+									mutex.Unlock()
 								}
+								pending --
 							} else {
 								pending--
 								if pending == 0 {
@@ -687,6 +774,7 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 							errorsList = append(errorsList, machineMessage.Error)
 							if ! errorsInProgress {
 								errorsInProgress = true
+								mutex.Lock()
 								if pool.IsRunning() {
 									pool.Pause()
 								}
@@ -707,9 +795,9 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 										screenManager.CommChannel <- signal
 									}
 								}
-							} else if ! machineOpsJob.State {
-								pending --
+								mutex.Unlock()
 							}
+							pending --
 						} else {
 							if ! machineOpsJob.State {
 								pending--

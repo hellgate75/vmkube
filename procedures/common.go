@@ -59,7 +59,7 @@ type DockerMachineExecutor struct {
 	InstanceId  string
 	Machine      model.LocalMachine
 	CMachine     model.CloudMachine
-	Instance    model.Instance
+	Instance    model.LocalInstance
 	CInstance   model.CloudInstance
 	NewInfra    bool
 	Control     *MachineControlStructure
@@ -107,7 +107,7 @@ func GetCurrentMachineExecutor( Project     model.Project,
 												Infra       model.Infrastructure,
 												Machine      model.LocalMachine,
 												CMachine     model.CloudMachine,
-												Instance    model.Instance,
+												Instance    model.LocalInstance,
 												CInstance   model.CloudInstance,
 												InstanceId  string,
 												IsCloud     bool,

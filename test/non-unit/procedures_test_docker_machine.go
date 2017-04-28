@@ -25,7 +25,7 @@ var Machine1 model.LocalMachine = model.LocalMachine{
 	Options: [][]string{},
 }
 
-var Instance1 model.Instance = model.Instance{
+var Instance1 model.LocalInstance = model.LocalInstance{
 	Id: model.NewUUIDString(),
 	Name: "Machine1",
 	Memory: 4096,
@@ -64,7 +64,7 @@ var Machine2 model.LocalMachine = model.LocalMachine{
 	},
 }
 
-var Instance2 model.Instance = model.Instance{
+var Instance2 model.LocalInstance = model.LocalInstance{
 	Id: model.NewUUIDString(),
 	Name: "Machine2",
 	Memory: 4096,
@@ -133,7 +133,7 @@ var myInfra model.Infrastructure = model.Infrastructure{
 					Name: "Default Network",
 					CloudInstances: []model.CloudInstance{},
 					Installations: []model.Installation{},
-					LocalInstances: []model.Instance{
+					LocalInstances: []model.LocalInstance{
 						Instance1,
 						Instance2,
 					},

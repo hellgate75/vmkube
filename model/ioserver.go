@@ -8,7 +8,7 @@ import (
 	"vmkube/utils"
 )
 
-func (element *Instance) Validate() []error {
+func (element *LocalInstance) Validate() []error {
 	errorList := make([]error, 0)
 	if element.Id == "" {
 		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
@@ -48,7 +48,7 @@ func (element *Instance) Validate() []error {
 	return errorList
 }
 
-func (element *Instance) Load(file string) error {
+func (element *LocalInstance) Load(file string) error {
 	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
@@ -59,7 +59,7 @@ func (element *Instance) Load(file string) error {
 	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
-func (element *Instance) Import(file string, format string) error {
+func (element *LocalInstance) Import(file string, format string) error {
 	if ! ExistsFile(file) {
 		return  errors.New("File "+file+" doesn't exist!!")
 	}
@@ -84,14 +84,14 @@ func (element *Instance) Import(file string, format string) error {
 	return err
 }
 
-func (element *Instance) PostImport() error {
+func (element *LocalInstance) PostImport() error {
 	if element.Id == "" {
 		element.Id = NewUUIDString()
 	}
 	return nil
 }
 
-func (element *Instance) Save(file string) error {
+func (element *LocalInstance) Save(file string) error {
 	byteArray, err := json.MarshalIndent(element, "", "  ")
 	if err != nil {
 		return  err

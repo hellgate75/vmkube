@@ -529,7 +529,19 @@ func InitHelpers() {
 		HelperOption{
 			Option: "force",
 			Type: "<boolean>",
-			Description: "Define to force a project creation, if it doesn't exist, using the recovered infrastructure",
+			Description: "Define to force a project creation / infrastructure assignment, removing any previous build,index,segment",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "threads",
+			Type: "<integer>",
+			Description: "Number of parallel threads used in Infrastructure build (default: 1)",
+			Mandatory: false,
+		},
+		HelperOption{
+			Option: "overclock",
+			Type: "<boolean>",
+			Description: "Ignore the capping form the maximum available processors (default: false)",
 			Mandatory: false,
 		},
 		HelperOption{

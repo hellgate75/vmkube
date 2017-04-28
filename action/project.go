@@ -1140,7 +1140,7 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 	}
 	vmio.UnlockIndex(indexes)
 	if ! SkipIndexes {
-		utils.PrintlnWarning(fmt.Sprintf("\nProceding with deletion of indexes for Project named  '%s'...", descriptor.Name))
+		utils.PrintlnWarning(fmt.Sprintf("\nProceding with deletion of indexes for Project named '%s'...", descriptor.Name))
 		err := DeleteProjectActionChanges(descriptor.Id)
 		if err != nil {
 			response := Response{
@@ -1158,6 +1158,7 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 			return response, errors.New("Unable to execute task")
 		}
 	}
+	utils.PrintlnSuccess(fmt.Sprintf("Project %s deleted successfully!!", Name))
 	response := Response{
 		Status: true,
 		Message: "Success",
@@ -1559,15 +1560,16 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	var errorsList []error = make([]error, 0)
 	var fixInfraValue int = len(creationCouples)
 	errorsList = ExecuteInfrastructureActions(Infrastructure, creationCouples, NumThreads,func(task scheduler.ScheduleTask){
-		response := strings.Split(fmt.Sprintf("%s",task.Jobs[0].Runnable.Response()),"|")
-		if len(response) > 2 {
-			json := response[1]
-			ipAddress := response[2]
-			instanceId := response[0]
-			FixInfrastructureElementValue(Infrastructure, instanceId, ipAddress, json)
-		}
-		fixInfraValue--
-		
+		go func(task scheduler.ScheduleTask) {
+			response := strings.Split(fmt.Sprintf("%s",task.Jobs[0].Runnable.Response()),"|")
+			if len(response) > 2 {
+				json := response[1]
+				ipAddress := response[2]
+				instanceId := response[0]
+				FixInfrastructureElementValue(Infrastructure, instanceId, ipAddress, json)
+			}
+			fixInfraValue--
+		}(task)
 	})
 
 	err = UpdateIndexWithInfrastructure(Infrastructure)
@@ -1586,8 +1588,8 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	}
 
 	if len(errorsList) > 0 {
-		utils.PrintlnError(fmt.Sprintf("Unable to complete %sBuild of project %s : Errors building Infrastructure : %s!!", reOpt, Name, InfraName))
-		_, message := vmio.StripErrorMessages(fmt.Sprintf("Error building infrastructure : %s", InfraName), errorsList)
+		utils.PrintlnError(fmt.Sprintf("Unable to complete %sBuild of project '%s' : Errors building Infrastructure : '%s'!!", reOpt, Name, InfraName))
+		_, message := vmio.StripErrorMessages(fmt.Sprintf("Error building infrastructure : '%s'", InfraName), errorsList)
 		response := Response{
 			Status: false,
 			Message: message,

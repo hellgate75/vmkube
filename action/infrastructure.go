@@ -10,6 +10,7 @@ import (
 	"vmkube/scheduler"
 	"runtime"
 	"strings"
+	"time"
 )
 
 type InfrastructureActions interface {
@@ -377,11 +378,353 @@ func (request *CmdRequest) BackupInfra() (Response, error) {
 }
 
 func (request *CmdRequest) RecoverInfra() (Response, error) {
-	response := Response{
-		Status: false,
-		Message: "Not Implemented",
+	Name := ""
+	File := ""
+	Override := false
+	Force := false
+	ProjectName := ""
+	Threads := 1
+	Overclock := false
+	utils.NO_COLORS = false
+	for _,option := range request.Arguments.Options {
+		if "infra-name" == CorrectInput(option[0]) {
+			Name = option[1]
+		} else if "no-colors" == CorrectInput(option[0]) {
+			utils.NO_COLORS = GetBoolean(option[1])
+		} else if "file" == CorrectInput(option[0]) {
+			File = option[1]
+		} else if "override" == CorrectInput(option[0]) {
+			Override = GetBoolean(option[1])
+		} else if "force" == CorrectInput(option[0]) {
+			Force = GetBoolean(option[1])
+		} else if "project-name" == CorrectInput(option[0]) {
+			Name = option[1]
+		} else if "overclock" == CorrectInput(option[0]) {
+			Overclock = GetBoolean(option[1])
+		} else if "threads" == CorrectInput(option[0]) {
+			Threads = GetInteger(option[1], Threads)
+		}
 	}
-	return  response, errors.New("Unable to execute task")
+	if Name == "" {
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		return Response{
+			Message: "Infrastrcuture Name field not provided",
+			Status: false,},errors.New("Unable to execute task")
+	}
+	if File == "" {
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		return Response{
+			Message: "File Path field not provided",
+			Status: false,},errors.New("Unable to execute task")
+	}
+	
+	if ! strings.HasSuffix(strings.ToLower(File), ".vmkube") {
+		utils.PrintlnError("File extension wrong, it can cause panic in the system")
+		response := Response{
+			Status: false,
+			Message: fmt.Sprintf("Wrong file type for '%s', expected vmkube extension!!", File),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+
+	descriptor, err := vmio.GetInfrastructureProjectDescriptor(Name)
+
+	existsInfrastructure := err == nil && descriptor.InfraId == ""
+
+	if existsInfrastructure {
+		utils.PrintlnWarning(fmt.Sprintf("Infrastructure '%s' already exists ...", Name))
+	}
+	
+	DeleteFromDescriptor := false
+	
+	AllowOverride := false
+	
+	if existsInfrastructure && CorrectInput(ProjectName) != CorrectInput(descriptor.Name) {
+		if ! Override {
+			return Response{
+				Message: fmt.Sprintf("Project named %s already associated with infrastructure %s, and no override clause specified", descriptor.Name, descriptor.InfraName),
+				Status: false,
+			},errors.New("Unable to execute task")
+		} else {
+			if ! Force {
+				DeleteFromDescriptor = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with override of existing Project named '%s' and infrastructure '%s'?", descriptor.Name, descriptor.InfraName))
+				if ! DeleteFromDescriptor {
+					return Response{
+						Message: "User task interruption",
+						Status: false,
+					},errors.New("Unable to execute task")
+				}
+				AllowOverride = true
+			} else {
+				utils.PrintlnWarning(fmt.Sprintf("Project named '%s' and related existing '%s' infratructure will be removed ...", descriptor.Name, descriptor.InfraName))
+				DeleteFromDescriptor = true
+				AllowOverride = true
+			}
+		}
+	}
+	
+	if existsInfrastructure && !AllowOverride && CorrectInput(ProjectName) == CorrectInput(descriptor.Name) {
+		if !Override {
+			return Response{
+				Message: fmt.Sprintf("Infrastructure named %s already associated with project %s, and no override clause specified", descriptor.InfraName, descriptor.Name),
+				Status: false,
+			},errors.New("Unable to execute task")
+		} else {
+			if ! Force {
+				AllowOverride = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with override of existing Infrastructure named '%s' associated with project '%s'?", descriptor.InfraName, descriptor.Name))
+				if ! AllowOverride {
+					return Response{
+						Message: "User task interruption",
+						Status: false,
+					},errors.New("Unable to execute task")
+				}
+				DeleteFromDescriptor = true
+			} else {
+				utils.PrintlnWarning(fmt.Sprintf("Infrastructure named %s and Project %s will be replaced ...", descriptor.InfraName, descriptor.Name))
+				DeleteFromDescriptor = true
+				AllowOverride = true
+			}
+		}
+	}
+	
+	DeleteFromProjectDescriptor := false
+
+	var projectDescriptor model.ProjectsDescriptor
+
+	if ! existsInfrastructure {
+		projectDescriptor, err = vmio.GetProjectDescriptor(ProjectName)
+		if err != nil && projectDescriptor.InfraId != descriptor.InfraId {
+			if ! Override {
+				return Response{
+					Message: fmt.Sprintf("Selected Project Name %s is already associated with another infrastructure %s, and no override clause specified", projectDescriptor.Name, projectDescriptor.InfraName),
+					Status: false,
+				},errors.New("Unable to execute task")
+			} else {
+				if ! Force {
+					DeleteFromProjectDescriptor = utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with delete of existing Project named '%s' and related Infrastructure named '%s'?", projectDescriptor.Name, projectDescriptor.InfraName))
+					if !DeleteFromProjectDescriptor {
+						return Response{
+							Message: "User task interruption",
+							Status: false,
+						},errors.New("Unable to execute task")
+					}
+				} else {
+					utils.PrintlnWarning(fmt.Sprintf("Project named %s and related Infrastructure name '%s'  will be removed ...", projectDescriptor.Name, projectDescriptor.InfraName))
+					DeleteFromProjectDescriptor = true
+				}
+			}
+		}
+	}
+	
+	utils.PrintlnWarning(fmt.Sprintf("Loading Infrastructure '%s' from file '%s'...", Name, File))
+	
+	var infrastructure model.Infrastructure
+	err = infrastructure.Load(File)
+
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	utils.PrintlnWarning(fmt.Sprintf("Validating recovered Infrastructure '%s'...", Name))
+	
+	errorsList := infrastructure.Validate()
+	
+	if len(errorsList) > 0 {
+		utils.PrintlnError(fmt.Sprintf("Unable to complete Recover for Infrastructure '%s'!!", Name))
+		_, message := vmio.StripErrorMessages(fmt.Sprintf("Error validating infrastructure : %s", Name), errorsList)
+		response := Response{
+			Status: false,
+			Message: message,
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	
+	if DeleteFromDescriptor {
+		utils.PrintlnWarning(fmt.Sprintf("Removing Project %s and Infrastructure '%s'...", descriptor.Name, descriptor.InfraName))
+		request.Type = DeleteConfig
+		request.SubTypeStr = "delete=project"
+		FoundName := false
+		FoundForce := false
+		for i := 0; i < len(request.Arguments.Options); i++ {
+			if "force" == CorrectInput(request.Arguments.Options[i][0]) {
+				request.Arguments.Options[i][1] = "true"
+				FoundName = true
+			} else if "name" == CorrectInput(request.Arguments.Options[i][0]) {
+				request.Arguments.Options[i][1] = descriptor.Name
+				FoundForce = true
+			}
+		}
+		if ! FoundName {
+			request.Arguments.Options = append(request.Arguments.Options, []string{"name", descriptor.Name})
+		}
+		if ! FoundForce {
+			request.Arguments.Options = append(request.Arguments.Options, []string{"force", "true"})
+		}
+		request.DeleteProject()
+	}
+	
+	if DeleteFromProjectDescriptor {
+		utils.PrintlnWarning(fmt.Sprintf("Removing Project %s and Infrastructure '%s'...", projectDescriptor.Name, projectDescriptor.InfraName))
+		request.Type = DeleteConfig
+		request.SubTypeStr = "delete=project"
+		FoundName := false
+		FoundForce := false
+		for i := 0; i < len(request.Arguments.Options); i++ {
+			if "force" == CorrectInput(request.Arguments.Options[i][0]) {
+				request.Arguments.Options[i][1] = "true"
+				FoundName = true
+			} else if "name" == CorrectInput(request.Arguments.Options[i][0]) {
+				request.Arguments.Options[i][1] = projectDescriptor.Name
+				FoundForce = true
+			}
+		}
+		if ! FoundName {
+			request.Arguments.Options = append(request.Arguments.Options, []string{"name", projectDescriptor.Name})
+		}
+		if ! FoundForce {
+			request.Arguments.Options = append(request.Arguments.Options, []string{"force", "true"})
+		}
+		request.DeleteProject()
+	}
+	
+	utils.PrintlnWarning(fmt.Sprintf("Creating new Project %s from Infrastructure '%s'...", ProjectName, Name))
+	
+	newProject, err := InfrastructureToProject(infrastructure, ProjectName)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	newDescriptor := model.ProjectsDescriptor{
+		Id: newProject.Id,
+		Name: newProject.Name,
+		Open: false,
+		Active: false,
+		Synced: true,
+		InfraId: infrastructure.Id,
+		InfraName: infrastructure.Name,
+	}
+	
+	utils.PrintlnWarning(fmt.Sprintf("Defining new Indexes from new Project %s and Infrastructure '%s'...", ProjectName, Name))
+
+	err = UpdateIndexWithProjectsDescriptor(newDescriptor, true)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	utils.PrintlnWarning(fmt.Sprintf("Saving new Project %s...", ProjectName))
+
+	err = vmio.SaveProject(newProject)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	utils.PrintlnWarning(fmt.Sprintf("Saving recovered Infrastructure '%s'...", Name))
+	
+	err = vmio.SaveInfrastructure(infrastructure)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	utils.PrintlnWarning(fmt.Sprintf("Building new Project '%s'...", ProjectName))
+	creationCouples, err := make([]operations.ActivityCouple, 0), errors.New("Unknown Error")
+	creationCouples, err = operations.GetTaskActivities(newProject, infrastructure, operations.CreateMachine)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	utils.PrintlnImportant("Now Proceding with machine creation ...!!")
+	NumThreads := Threads
+	if runtime.NumCPU() - 1 < Threads && !Overclock {
+		NumThreads = runtime.NumCPU() - 1
+		utils.PrintlnWarning(fmt.Sprintf("Number of threads in order to available processors : %d", NumThreads))
+	}
+	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
+	
+	var fixInfraValue int = len(creationCouples)
+	errorsList = ExecuteInfrastructureActions(infrastructure, creationCouples, NumThreads,func(task scheduler.ScheduleTask){
+		go func(task scheduler.ScheduleTask) {
+			response := strings.Split(fmt.Sprintf("%s",task.Jobs[0].Runnable.Response()),"|")
+			if len(response) > 2 {
+				json := response[1]
+				ipAddress := response[2]
+				instanceId := response[0]
+				FixInfrastructureElementValue(infrastructure, instanceId, ipAddress, json)
+			}
+			fixInfraValue--
+		}(task)
+	})
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	
+	if len(errorsList) > 0 {
+		utils.PrintlnError(fmt.Sprintf("Unable to complete Build of project '%s' : Errors building Infrastructure : '%s'!!", ProjectName, Name))
+		_, message := vmio.StripErrorMessages(fmt.Sprintf("Error building infrastructure : '%s'", Name), errorsList)
+		response := Response{
+			Status: false,
+			Message: message,
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	
+	utils.PrintlnWarning(fmt.Sprintf("Waiting for Instance recovery information in Project '%s' Infrastrcucture '%s'", ProjectName, Name))
+	
+	for fixInfraValue > 0 {
+		time.Sleep(1*time.Second)
+	}
+	
+	
+	utils.PrintlnWarning(fmt.Sprintf("Updating recovered Infrastructure '%s' with new Instance data...", Name))
+	
+	err = vmio.SaveInfrastructure(infrastructure)
+	
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+	
+	utils.PrintlnSuccess(fmt.Sprintf("Recovery for Infrastructure named : %s completed successfully!!", Name))
+	
+	response := Response{
+		Status: true,
+		Message: "Success",
+	}
+	return  response, nil
 }
 
 func (request *CmdRequest) StartInfra() (Response, error) {
@@ -773,11 +1116,11 @@ func (request *CmdRequest) StatusInfra() (Response, error) {
 		for _,network := range domain.Networks {
 			num, options := vmio.StripOptions(network.Options)
 			fmt.Printf("   Network: %s (Id: %s) - Options [%d] :%s\n", network.Name, network.Id, num, options)
-			fmt.Printf("   Instances: %d\n", len(network.LocalInstances))
+			fmt.Printf("   Local Instances: %d\n", len(network.LocalInstances))
 			machinesMap := make(map[string]string)
 			for _,machine := range network.LocalInstances {
 				machinesMap[machine.Id] = machine.Name
-				fmt.Printf("      Instance: %s (Id: %s) - Driver: %s - OS : %s:%s - IP Address: %s\n", machine.Name, machine.Id, machine.Driver, machine.OSType, machine.OSVersion, machine.IPAddress)
+				fmt.Printf("      Local Instance: %s (Id: %s) - Driver: %s - OS : %s:%s - IP Address: %s\n", machine.Name, machine.Id, machine.Driver, machine.OSType, machine.OSVersion, machine.IPAddress)
 			}
 			fmt.Printf("   Cloud Instances: %d\n", len(network.CloudInstances))
 			for _,machine := range network.CloudInstances {

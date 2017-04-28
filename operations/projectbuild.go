@@ -155,7 +155,7 @@ type ActivityCouple struct {
 	IsInstance  bool
 	Machine      model.LocalMachine
 	CMachine     model.CloudMachine
-	Instance    model.Instance
+	Instance    model.LocalInstance
 	CInstance   model.CloudInstance
 	Plans       []model.InstallationPlan
 	Task        ActivityTask
@@ -172,8 +172,8 @@ func filterPlansByMachine(id string, isCloud bool, network model.MachineNetwork)
 	return selectedPlans
 }
 
-func filterInstanceByMachine(id string, infrastructure model.Infrastructure) (model.Instance, error) {
-	var Instance model.Instance
+func filterInstanceByMachine(id string, infrastructure model.Infrastructure) (model.LocalInstance, error) {
+	var Instance model.LocalInstance
 	for _,domain := range infrastructure.Domains {
 		for _,network := range domain.Networks {
 			for _,machine := range network.LocalInstances {

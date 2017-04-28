@@ -70,6 +70,20 @@ func ToInstanceSwarmOpt(opt ProjectSwarmOpt) SwarmOpt {
 		TLSSan: opt.TLSSan,
 	}
 }
+func ToMachineSwarmOpt(opt SwarmOpt) ProjectSwarmOpt {
+	return ProjectSwarmOpt{
+		Enabled: opt.Enabled,
+		Host: opt.Host,
+		UseAddress: opt.UseAddress,
+		DiscoveryToken: opt.DiscoveryToken,
+		UseExperimental: opt.UseExperimental,
+		IsMaster: opt.IsMaster,
+		Image: opt.Image,
+		JoinOpts: opt.JoinOpts,
+		Strategy: opt.Strategy,
+		TLSSan: opt.TLSSan,
+	}
+}
 
 /*
 Describe Docker Engine options, contains
@@ -100,6 +114,18 @@ type EngineOpt struct {
 
 func ToInstanceEngineOpt(opt ProjectEngineOpt) EngineOpt {
 	return EngineOpt{
+		Environment: opt.Environment,
+		InsecureRegistry: opt.InsecureRegistry,
+		InstallURL: opt.InstallURL,
+		Labels: opt.Labels,
+		Options: opt.Options,
+		RegistryMirror: opt.RegistryMirror,
+		StorageDriver: opt.StorageDriver,
+	}
+}
+
+func ToMachineEngineOpt(opt EngineOpt) ProjectEngineOpt {
+	return ProjectEngineOpt{
 		Environment: opt.Environment,
 		InsecureRegistry: opt.InsecureRegistry,
 		InstallURL: opt.InstallURL,
@@ -147,7 +173,7 @@ Describe Machine options, contains
 
   * Logs        (LogStorage) Log information data
 */
-type Instance struct {
+type LocalInstance struct {
 	Id          string      `json:"Id" xml:"Id"`
 	MachineId    string      `json:"MachineId" xml:"MachineId"`
 	Name        string      `json:"Name" xml:"Name"`
@@ -417,7 +443,7 @@ Describe Network options, contains
 type Network struct {
 	Id             string          `json:"Id" xml:"Id"`
 	Name           string          `json:"Name" xml:"Name"`
-	LocalInstances []Instance      `json:"LocalInstances" xml:"LocalInstances"`
+	LocalInstances []LocalInstance      `json:"LocalInstances" xml:"LocalInstances"`
 	CloudInstances []CloudInstance `json:"CloudInstances" xml:"CloudInstances"`
 	Installations  []Installation  `json:"Installations" xml:"Installations"`
 	Options        [][]string      `json:"Options" xml:"Options"`
