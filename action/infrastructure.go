@@ -1053,16 +1053,20 @@ func (request *CmdRequest) ListInfras() (Response, error) {
 		return  response, errors.New("Unable to execute task")
 	}
 	if len(indexes.Projects) > 0 {
-		utils.PrintlnImportant(fmt.Sprintf("%s  %s  %s", utils.StrPad("Infrastructure Id", 40), utils.StrPad("Infrastructure Name", 40), utils.StrPad("Active", 6)))
+		utils.PrintlnImportant(fmt.Sprintf("%s  %s  %s  %s", utils.StrPad("Infrastructure Id", 40), utils.StrPad("Infrastructure Name", 40), utils.StrPad("Active", 6), utils.StrPad("Synced", 6)))
 	} else {
 		utils.PrintlnImportant("No Infrastructures found")
 	}
 	for _,index := range indexes.Projects {
 		active := "no"
+		synced := "no"
 		if index.Active {
 			active = "yes"
 		}
-		fmt.Printf("%s  %s  %s\n", utils.StrPad(index.InfraId, 40), utils.StrPad(index.InfraName, 40), utils.StrPad("  "+active, 6))
+		if index.Synced {
+			synced = "yes"
+		}
+		fmt.Printf("%s  %s  %s  %s\n", utils.StrPad(index.InfraId, 40), utils.StrPad(index.InfraName, 40), utils.StrPad("  "+active, 6), utils.StrPad("  " + synced, 6))
 		
 	}
 	response := Response{
