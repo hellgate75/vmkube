@@ -908,6 +908,11 @@ func FindActivityById(activities []operations.ActivityCouple, id string) (operat
 	return operations.ActivityCouple{}, errors.New("Activity Not Found")
 }
 
+func SortActionsByRelevance(actions []operations.ActivityCouple) []operations.ActivityCouple {
+	//TODO: Implement Sort by ActivityTask Order: DestroyMachine, CreateMachine, StopMachine, StartMachine, RestartMachine, MachineStatus, MachineEnv, MachineInspect, MachineIPAddress,
+	return actions
+}
+
 func FilterCreationBasedOnProjectActions(actions ProjectActionIndex, activities []operations.ActivityCouple) []operations.ActivityCouple {
 	var outActivities []operations.ActivityCouple = make([]operations.ActivityCouple, 0)
 	for _,action := range actions.Actions {

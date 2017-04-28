@@ -1547,6 +1547,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
+		request.StopInfra()
 	}
 	
 	utils.PrintlnImportant("Now Proceding with machine creation ...!!")

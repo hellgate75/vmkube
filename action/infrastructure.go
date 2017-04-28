@@ -378,6 +378,7 @@ func (request *CmdRequest) BackupInfra() (Response, error) {
 }
 
 func (request *CmdRequest) RecoverInfra() (Response, error) {
+	//TODO: Test Beckup / Recovery commands
 	Name := ""
 	File := ""
 	Override := false
@@ -728,6 +729,8 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 }
 
 func (request *CmdRequest) StartInfra() (Response, error) {
+	//TODO: Check Each Existence (from new MachineExecutor function) and Check Status 'Running' Before Start Any Instance. Manage other error status ...
+	
 	Name := ""
 	Force := false
 	Threads := 1
@@ -824,6 +827,8 @@ func (request *CmdRequest) StartInfra() (Response, error) {
 }
 
 func (request *CmdRequest) StopInfra() (Response, error) {
+	//TODO: Check Each Existence (from new MachineExecutor function) and Check Status 'Stopped' Before Start Any Instance. Manage other error status ...
+
 	Name := ""
 	Force := false
 	Threads := 1
@@ -920,6 +925,8 @@ func (request *CmdRequest) StopInfra() (Response, error) {
 }
 
 func (request *CmdRequest) RestartInfra() (Response, error) {
+	//TODO: Check Each Existence (from new MachineExecutor function) and Check Status 'Running' Before Start Any Instance. Manage other error status ...
+
 	Name := ""
 	Force := false
 	Threads := 1

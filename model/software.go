@@ -67,7 +67,7 @@ func (isoTemplate *MachineISO)	Download(version string) bool {
 	fileName := folder + string(os.PathSeparator) + isoTemplate.FinalNamePrefix + version + isoTemplate.FinalNameSuffix
 	fmt.Printf("Downloading %s to %s\n", url, fileName)
 
-	// TODO: check file existence first with io.IsExist
+	// Check() for Download Prevent File Presence on the Disk
 	err := utils.CreateNewEmptyFile(fileName)
 	if err != nil {
 		fmt.Printf("Error while creating %s - %s\n", fileName, err)
