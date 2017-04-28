@@ -180,6 +180,10 @@ func (machine *DockerMachineExecutor)  CreateCloudMachine(commandPipe chan Machi
 		name, uuid= machine.CInstance.Name, machine.CInstance.MachineId
 	}
 	var command []string = DockerMachineDefineCloudMachineCommand(machine.CMachine)
+	if machine.Control.Interrupt {
+		DockerMachineInterruptSignal(machine, commandPipe,StartMachine,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
+		return
+	}
 	cmd := executeSyncCommand(command)
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
@@ -206,11 +210,11 @@ func (machine *DockerMachineExecutor)  CreateCloudMachine(commandPipe chan Machi
 		json = fmt.Sprintf("%s\n",bytes1)
 	}
 	machine.CInstance.InspectJSON = json
-	cmd2 := executeSyncCommand([]string{"docker-machine", "ip", machineName})
 	if machine.Control.Interrupt {
 		DockerMachineInterruptSignal(machine, commandPipe,StartMachine,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
 		return
 	}
+	cmd2 := executeSyncCommand([]string{"docker-machine", "ip", machineName})
 	commandChannel <- cmd2
 	bytes2, err2 := cmd2.CombinedOutput()
 	if err2 != nil {
@@ -219,11 +223,11 @@ func (machine *DockerMachineExecutor)  CreateCloudMachine(commandPipe chan Machi
 	} else {
 		ipAddress = fmt.Sprintf("%s\n",bytes2)
 	}
-	cmd3 := executeSyncCommand([]string{"docker-machine", "stop", machineName})
 	if machine.Control.Interrupt {
 		DockerMachineInterruptSignal(machine, commandPipe,StartMachine,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
 		return
 	}
+	cmd3 := executeSyncCommand([]string{"docker-machine", "stop", machineName})
 	commandChannel <- cmd1
 	message += fmt.Sprintf("Stopping docker machine : %s\n", machineName)
 	bytesArray, _ := cmd3.CombinedOutput()
@@ -271,6 +275,16 @@ func (machine *DockerMachineExecutor)  CreateMachine(commandPipe chan MachineMes
 	var command []string
 	var diskSize int
 	command, diskSize = DockerMachineDefineLocalMachineCommand(machine.Machine, path)
+	if machine.Control.Interrupt {
+		DockerMachineInterruptSignal(machine, commandPipe,StartMachine,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
+		return
+	}
+	// Simulate error with 20% probability of un-success ...
+	//if rand.Int() % 5 == 0 {
+	//	time.Sleep(3*time.Second)
+	//	DockerMachineInterruptSignal(machine, commandPipe,StartMachine,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
+	//	return
+	//}
 	cmd := executeSyncCommand(command)
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
@@ -292,13 +306,12 @@ func (machine *DockerMachineExecutor)  CreateMachine(commandPipe chan MachineMes
 	//if rand.Int() % 5 == 0 {
 	//	err = errors.New("Cazzo di errore ....")
 	//}
-	
-	cmd1 := executeSyncCommand([]string{"docker-machine", "inspect", machineName})
-	commandChannel <- cmd1
 	if machine.Control.Interrupt {
 		DockerMachineInterruptSignal(machine, commandPipe,StartMachine,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
 		return
 	}
+	cmd1 := executeSyncCommand([]string{"docker-machine", "inspect", machineName})
+	commandChannel <- cmd1
 	bytes1, err1 := cmd1.CombinedOutput()
 	if err1 != nil {
 		message += fmt.Sprintf("Inspecting docker machine : %s\n", machineName)
@@ -307,11 +320,11 @@ func (machine *DockerMachineExecutor)  CreateMachine(commandPipe chan MachineMes
 		json = fmt.Sprintf("%s\n",bytes1)
 	}
 	machine.Instance.InspectJSON = json
-	cmd2 := executeSyncCommand([]string{"docker-machine", "ip", machineName})
 	if machine.Control.Interrupt {
 		DockerMachineInterruptSignal(machine, commandPipe,StartMachine,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
 		return
 	}
+	cmd2 := executeSyncCommand([]string{"docker-machine", "ip", machineName})
 	commandChannel <- cmd2
 	bytes2, err2 := cmd2.CombinedOutput()
 	if err2 != nil {
@@ -329,15 +342,15 @@ func (machine *DockerMachineExecutor)  CreateMachine(commandPipe chan MachineMes
 	message += fmt.Sprintf("Stopping docker machine : %s\n", machineName)
 	bytesArray, _ := cmd3.CombinedOutput()
 	message += fmt.Sprintf("%s\n",bytesArray)
+	if machine.Control.Interrupt {
+		DockerMachineInterruptSignal(machine, commandPipe,StartMachine,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
+		return
+	}
 	if diskSize > 0 {
 		message += fmt.Sprintf("Resizing disk to %sGB", diskSize)
 		file := model.HomeFolder() + string(os.PathSeparator) + ".docker" + string(os.PathSeparator) + "machine" + string(os.PathSeparator) + "machines" +
 			string(os.PathSeparator) +  machineName + string(os.PathSeparator) + "disk.vmdk"
 		cmd4 := executeSyncCommand([]string{"vmware-vdiskmanager", "-x", fmt.Sprintf("%dGB", diskSize), file})
-		if machine.Control.Interrupt {
-			DockerMachineInterruptSignal(machine, commandPipe,StartMachine,Machine_State_Stopped,"Iterrupted",errors.New("Requested interruption"))
-			return
-		}
 		commandChannel <- cmd4
 		bytesArray, _ := cmd4.CombinedOutput()
 		message += fmt.Sprintf("%s\n",bytesArray)

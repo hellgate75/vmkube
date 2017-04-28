@@ -307,17 +307,15 @@ func UpdateIndexWithProject(project model.Project) error {
 	
 	InfraId := ""
 	InfraName := ""
-	Found := false
 	NewIndexes := make([]model.ProjectsDescriptor, 0)
 	for _,prj := range indexes.Projects {
 		if CorrectInput(prj.Name) != CorrectInput(project.Name) {
-			NewIndexes = append(NewIndexes, )
+			NewIndexes = append(NewIndexes, prj)
 		} else {
 			synced = prj.Synced
 			active = prj.InfraId != "" && !project.Open
 			InfraId = prj.InfraId
 			InfraName = prj.InfraName
-			Found = true
 		}
 	}
 	
@@ -333,9 +331,7 @@ func UpdateIndexWithProject(project model.Project) error {
 		InfraName: InfraName,
 	})
 	
-	if Found {
-		indexes.Projects = NewIndexes
-	}
+	indexes.Projects = NewIndexes
 	
 	err = vmio.SaveIndex(indexes)
 	
@@ -364,15 +360,13 @@ func UpdateIndexWithProjectStates(project model.Project, active bool, synced boo
 	
 	InfraId := ""
 	InfraName := ""
-	Found := false
 	NewIndexes := make([]model.ProjectsDescriptor, 0)
 	for _,prj := range indexes.Projects {
 		if CorrectInput(prj.Name) != CorrectInput(project.Name) {
-			NewIndexes = append(NewIndexes, )
+			NewIndexes = append(NewIndexes, prj)
 		} else {
 			InfraId = prj.InfraId
 			InfraName = prj.InfraName
-			Found = true
 		}
 	}
 	
@@ -388,9 +382,7 @@ func UpdateIndexWithProjectStates(project model.Project, active bool, synced boo
 		InfraName: InfraName,
 	})
 	
-	if Found {
-		indexes.Projects = NewIndexes
-	}
+	indexes.Projects = NewIndexes
 	
 	err = vmio.SaveIndex(indexes)
 	
@@ -417,13 +409,11 @@ func UpdateIndexWithProjectsDescriptor(project model.ProjectsDescriptor, addDesc
 		return err
 	}
 	
-	Found := false
 	NewIndexes := make([]model.ProjectsDescriptor, 0)
+	
 	for _,prj := range indexes.Projects {
 		if prj.Id != project.Id {
-			NewIndexes = append(NewIndexes, )
-		} else {
-			Found = true
+			NewIndexes = append(NewIndexes, prj)
 		}
 	}
 	
@@ -432,10 +422,9 @@ func UpdateIndexWithProjectsDescriptor(project model.ProjectsDescriptor, addDesc
 	if addDescriptor {
 		project.Active = !project.Open
 		NewIndexes = append(NewIndexes, project)
-		indexes.Projects = NewIndexes
-	} else if Found {
-		indexes.Projects = NewIndexes
 	}
+	
+	indexes.Projects = NewIndexes
 	
 	err = vmio.SaveIndex(indexes)
 	
@@ -800,14 +789,15 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 									for pool.IsWorking() {
 										time.Sleep(1*time.Second)
 									}
+									pending = pool.NumberOfWorkers() + 1
 									mutex.Unlock()
 								}
 								pending --
 							} else {
 								pending--
-								if pending == 0 {
-									close(MachineCreationAnswerChannel)
-								}
+							}
+							if pending == 0 {
+								close(MachineCreationAnswerChannel)
 							}
 						}
 					} else {
@@ -852,6 +842,7 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 										screenManager.CommChannel <- signal
 									}
 								}
+								pending = pool.NumberOfWorkers() + 1
 								mutex.Unlock()
 							}
 							pending --
@@ -859,9 +850,9 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 							if ! machineOpsJob.State {
 								pending--
 							}
-							if pending == 0 {
-								close(MachineCreationAnswerChannel)
-							}
+						}
+						if pending == 0 {
+							close(MachineCreationAnswerChannel)
 						}
 					}
 				}(machineOpsJob)
