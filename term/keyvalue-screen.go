@@ -40,6 +40,7 @@ type KeyValueScreenManager struct {
 	OffsetRows    int
 	Separator     string
 	BoldValue     bool
+	inited				bool
 }
 
 func (screenData *KeyValueScreenManager) getElementScreenColor(elem KeyValueElement) int {
@@ -111,17 +112,6 @@ func (screenData *KeyValueScreenManager) drawGrid() {
 			}
 		}
 	}(screenData)
-	go func(screenData *KeyValueScreenManager){
-		screenData.Active = <- screenData.CtrlChannel
-		if ! screenData.Active {
-			close(screenData.CtrlChannel)
-			close(screenData.CommChannel)
-			screenData.Stop()
-		} else {
-			screenData.Start()
-		}
-	}(screenData)
-	
 }
 
 func (screenData *KeyValueScreenManager) Init() {
@@ -130,6 +120,15 @@ func (screenData *KeyValueScreenManager) Init() {
 	if screenData.Separator == "" {
 		screenData.Separator = " "
 	}
+	go func(screenData *KeyValueScreenManager){
+		screenData.Active = <- screenData.CtrlChannel
+		if ! screenData.Active {
+			close(screenData.CtrlChannel)
+			close(screenData.CommChannel)
+		} else {
+			screenData.Start()
+		}
+	}(screenData)
 }
 
 func (screenData *KeyValueScreenManager) IndexOf(elem KeyValueElement) int {
@@ -158,16 +157,22 @@ func (screenData *KeyValueScreenManager) Remove(elem KeyValueElement) {
 }
 
 func (screenData *KeyValueScreenManager) Stop(clearScreen bool) {
-	time.Sleep(1 * time.Second)
-	screenData.CtrlChannel <- false
-	if clearScreen {
-		ScreenClear()
+	if screenData.Active {
+		time.Sleep(1 * time.Second)
+		screenData.CtrlChannel <- false
+		if clearScreen {
+			ScreenClear()
+		}
+		ScreenShowCursor()
 	}
-	ScreenShowCursor()
 }
 
 func (screenData *KeyValueScreenManager) Start() {
-	screenData.Active = true
-	screenData.drawGrid()
-	ScreenHideCursor()
+	if ! screenData.Active {
+		screenData.CtrlChannel <- true
+	} else  if ! screenData.inited {
+		screenData.Active = true
+		screenData.drawGrid()
+		ScreenHideCursor()
+	}
 }

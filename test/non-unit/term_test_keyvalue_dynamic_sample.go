@@ -47,6 +47,6 @@ func main() {
 			manager.CommChannel <- elems[i]
 		}
 	}
-	manager.Stop()
+	manager.Stop(false)
 }
 

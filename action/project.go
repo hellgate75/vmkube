@@ -1698,6 +1698,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	var errorsList []error = make([]error, 0)
 	var fixInfraValue int = len(actionCouples)
 	errorsList = ExecuteInfrastructureActions(Infrastructure, actionCouples, NumThreads,func(task scheduler.ScheduleTask){
+		println(task.Id)
 		go func(task scheduler.ScheduleTask) {
 			for i := 0; i < len(task.Jobs); i++ {
 				response := strings.Split(fmt.Sprintf("%s",task.Jobs[i].Runnable.Response()),"|")
