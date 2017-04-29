@@ -825,8 +825,8 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 						FixInfrastructureElementValue(infrastructure, instanceId, ipAddress, json, log)
 					}
 				}
+				fixInfraValue--
 			}
-			fixInfraValue--
 		}(task)
 	})
 	

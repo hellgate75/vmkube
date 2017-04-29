@@ -1697,8 +1697,9 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	
 	var errorsList []error = make([]error, 0)
 	var fixInfraValue int = len(actionCouples)
+	utils.PrintlnImportant(fmt.Sprintf("Number of scheduled processes : %d", fixInfraValue))
+
 	errorsList = ExecuteInfrastructureActions(Infrastructure, actionCouples, NumThreads,func(task scheduler.ScheduleTask){
-		println(task.Id)
 		go func(task scheduler.ScheduleTask) {
 			for i := 0; i < len(task.Jobs); i++ {
 				response := strings.Split(fmt.Sprintf("%s",task.Jobs[i].Runnable.Response()),"|")
@@ -1725,8 +1726,8 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 						FixInfrastructureElementValue(Infrastructure, instanceId, ipAddress, json, log)
 					}
 				}
+				fixInfraValue--
 			}
-			fixInfraValue--
 		}(task)
 	})
 	
@@ -1749,6 +1750,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	
 	for fixInfraValue > 0 {
 		time.Sleep(1*time.Second)
+		println(fmt.Sprintf("%d ", fixInfraValue))
 	}
 	
 	utils.PrintlnWarning(fmt.Sprintf("Update Project '%s' indexes linking New Infrastrcucture '%s'...", Name, InfraName))
