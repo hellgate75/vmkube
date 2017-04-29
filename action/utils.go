@@ -752,6 +752,7 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []operatio
 											fmt.Println(fmt.Sprintf(operation + "s interrupted, pending %d instance(s) will not be processed!!", (jobsArrayLen - answerCounter - pool.NumberOfWorkers() - 1)))
 											if pool.IsRunning() {
 												pool.Pause()
+												pool.Interrupt()
 											}
 											for pool.IsWorking() {
 												time.Sleep(1*time.Second)
@@ -760,14 +761,24 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []operatio
 											mutex.Unlock()
 										}
 										pending --
+										if pending <= 0 {
+											pending = 0
+											if channelOpen {
+												channelOpen = false
+												close(MachineAlterationAnswerChannel)
+											}
+										}
 									} else {
 										if machineOpsJob.Index == machineOpsJob.PartOf - 1 {
 											pending--
 										}
 									}
-									if pending <= 0 && channelOpen {
-										channelOpen = false
-										close(MachineAlterationAnswerChannel)
+									if pending <= 0 {
+										pending = 0
+										if channelOpen {
+											channelOpen = false
+											close(MachineAlterationAnswerChannel)
+										}
 									}
 								}
 							}
