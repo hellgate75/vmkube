@@ -1562,10 +1562,11 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			return response, err
 		}
 	}
+	
 	var actionIndex ProjectActionIndex
-	creationCouples, err := make([]operations.ActivityCouple, 0), errors.New("Unknown Error")
+	actionCouples, err := make([]operations.ActivityCouple, 0), errors.New("Unknown Error")
 	if ! existsInfrastructure {
-		creationCouples, err = operations.GetTaskActivities(project, Infrastructure, operations.CreateMachine)
+		creationCouples, err := operations.GetTaskActivities(project, Infrastructure, operations.CreateMachine)
 		if err != nil {
 			response := Response{
 				Status: false,
@@ -1573,8 +1574,47 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
+		
+		inspectCouples, err := operations.GetTaskActivities(project, Infrastructure, operations.MachineInspect)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		ipAddressCouples, err := operations.GetTaskActivities(project, Infrastructure, operations.MachineIPAddress)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		stopCouples, err := operations.GetTaskActivities(project, Infrastructure, operations.StopMachine)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		extendsDiskCouples, err := operations.GetTaskActivities(project, Infrastructure, operations.MachineExtendsDisk)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		actionCouples = append(actionCouples, creationCouples...)
+		actionCouples = append(actionCouples, inspectCouples...)
+		actionCouples = append(actionCouples, ipAddressCouples...)
+		actionCouples = append(actionCouples, stopCouples...)
+		actionCouples = append(actionCouples, extendsDiskCouples...)
 	} else {
-		creationCouples, err = operations.GetPostBuildTaskActivities(Infrastructure, operations.CreateMachine)
+		var exclusionIdList []string = make([]string, 0)
+		creationCouples, err := operations.GetPostBuildTaskActivities(Infrastructure, operations.CreateMachine, exclusionIdList)
 		if err != nil {
 			response := Response{
 				Status: false,
@@ -1598,7 +1638,6 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		creationCouples = FilterCreationBasedOnProjectActions(actionIndex, creationCouples)
 		// If no effective DDL into action logs nothing to do
 		if len(creationCouples) == 0 {
 			response := Response{
@@ -1607,6 +1646,44 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
+		exclusionIdList, creationCouples = FilterCreationBasedOnProjectActions(actionIndex, creationCouples)
+		inspectCouples, err := operations.GetPostBuildTaskActivities(Infrastructure, operations.MachineInspect, exclusionIdList)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		ipAddressCouples, err := operations.GetPostBuildTaskActivities(Infrastructure, operations.MachineIPAddress, exclusionIdList)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		stopCouples, err := operations.GetPostBuildTaskActivities(Infrastructure, operations.StopMachine, exclusionIdList)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		extendsDiskCouples, err := operations.GetPostBuildTaskActivities(Infrastructure, operations.MachineExtendsDisk, exclusionIdList)
+		if err != nil {
+			response := Response{
+				Status: false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		actionCouples = append(actionCouples, creationCouples...)
+		actionCouples = append(actionCouples, inspectCouples...)
+		actionCouples = append(actionCouples, ipAddressCouples...)
+		actionCouples = append(actionCouples, stopCouples...)
+		actionCouples = append(actionCouples, extendsDiskCouples...)
 		request.StopInfra()
 	}
 	
@@ -1619,15 +1696,32 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
 	
 	var errorsList []error = make([]error, 0)
-	var fixInfraValue int = len(creationCouples)
-	errorsList = ExecuteInfrastructureActions(Infrastructure, creationCouples, NumThreads,func(task scheduler.ScheduleTask){
+	var fixInfraValue int = len(actionCouples)
+	errorsList = ExecuteInfrastructureActions(Infrastructure, actionCouples, NumThreads,func(task scheduler.ScheduleTask){
 		go func(task scheduler.ScheduleTask) {
 			response := strings.Split(fmt.Sprintf("%s",task.Jobs[0].Runnable.Response()),"|")
-			if len(response) > 2 {
-				json := response[1]
-				ipAddress := response[2]
-				instanceId := response[0]
-				FixInfrastructureElementValue(Infrastructure, instanceId, ipAddress, json)
+			if len(response) > 3 {
+				if len(response) > 4 {
+					if response[0] == "ip" {
+						instanceId := response[1]
+						ipAddress := response[2]
+						json := ""
+						log := response[3] + response[4]
+						FixInfrastructureElementValue(Infrastructure, instanceId, ipAddress, json, log)
+					} else if response[0] == "json" {
+						instanceId := response[1]
+						ipAddress := ""
+						json := response[2]
+						log := response[3] + response[4]
+						FixInfrastructureElementValue(Infrastructure, instanceId, ipAddress, json, log)
+					}
+				} else {
+					instanceId := response[1]
+					ipAddress := ""
+					json := ""
+					log := response[2] + response[3]
+					FixInfrastructureElementValue(Infrastructure, instanceId, ipAddress, json, log)
+				}
 			}
 			fixInfraValue--
 		}(task)
@@ -1640,7 +1734,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 
 	if len(errorsList) > 0 {
 		utils.PrintlnError(fmt.Sprintf("Unable to complete %sBuild of project '%s' : Errors building Infrastructure : '%s'!!", reOpt, Name, InfraName))
-		_, message := vmio.StripErrorMessages(fmt.Sprintf("Error building infrastructure : '%s'", InfraName), errorsList)
+		_, message := vmio.StripErrorMessages(fmt.Sprintf("Error building infrastructure -> '%s' : ", InfraName), errorsList)
 		response := Response{
 			Status: false,
 			Message: message,

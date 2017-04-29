@@ -63,7 +63,9 @@ func StripOptions(options [][]string) (int, string) {
 func StripErrorMessages(description string, errorList []error) (int, string) {
 	errorsStripped := description
 	for _, singleError := range errorList {
-		errorsStripped += fmt.Sprintf("\n%s", singleError.Error())
+		if singleError != nil {
+			errorsStripped += fmt.Sprintf("\n%s", singleError.Error())
+		}
 	}
 	return len(errorList), errorsStripped
 }

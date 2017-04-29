@@ -3,6 +3,7 @@ package term
 import (
 	"fmt"
 	"time"
+	"sync"
 )
 
 type TextColorState int
@@ -20,11 +21,12 @@ const(
 )
 
 type KeyValueElement struct {
-	Id    string
-	Name  string
-	Value string
-	State TextColorState
-	Ref   interface{}
+	Id      string
+	Name    string
+	Value   string
+	State   TextColorState
+	Ref     interface{}
+	Actions int
 }
 
 type KeyValueScreenManager struct {
@@ -62,6 +64,7 @@ func (screenData *KeyValueScreenManager) getElementScreenColor(elem KeyValueElem
 	return WHITE
 }
 
+var mutex sync.Mutex
 
 func (screenData *KeyValueScreenManager) drawGrid() {
 	ScreenClear() // Clear current screen
@@ -72,7 +75,9 @@ func (screenData *KeyValueScreenManager) drawGrid() {
 			}
 		}
 	}
-	for i := 0; i< len(screenData.Elements); i++  {
+	screenHeight := ScreenHeight()
+	rows := len(screenData.Elements)
+	for i := 0; i< rows; i++  {
 		ScreenMoveCursor(i + screenData.OffsetCols + 1, screenData.OffsetRows + 1)
 		var text string
 		if screenData.BoldValue {
@@ -83,11 +88,15 @@ func (screenData *KeyValueScreenManager) drawGrid() {
 		ScreenPrintln(text)
 		ScreenFlush()
 	}
+	if rows > screenHeight {
+		screenData.OffsetRows = screenHeight - rows
+	}
 	go func(screenData *KeyValueScreenManager){
 		for screenData.Active {
 			update := <- screenData.CommChannel
 			index := screenData.IndexOf(update)
 			if index >= 0 {
+				mutex.Lock()
 				screenData.Elements[index] = update
 				ScreenMoveCursor(index + screenData.OffsetCols + 1, screenData.OffsetRows + 1)
 				var text string
@@ -98,6 +107,7 @@ func (screenData *KeyValueScreenManager) drawGrid() {
 				}
 				ScreenPrintln(text)
 				ScreenFlush()
+				mutex.Unlock()
 			}
 		}
 	}(screenData)
@@ -129,6 +139,22 @@ func (screenData *KeyValueScreenManager) IndexOf(elem KeyValueElement) int {
 		}
 	}
 	return -1
+}
+
+func (screenData *KeyValueScreenManager) Remove(elem KeyValueElement) {
+	index := screenData.IndexOf(elem)
+	if index >= 0 {
+		if len(screenData.Elements) == 1 {
+			screenData.Elements = make([]KeyValueElement, 0)
+		} else if index == 0 {
+			screenData.Elements = screenData.Elements[1:]
+		} else if index == len(screenData.Elements)-1 {
+			screenData.Elements = screenData.Elements[:index]
+		} else {
+			screenData.Elements = screenData.Elements[0:index]
+			screenData.Elements = append(screenData.Elements, screenData.Elements[(index+1):]...)
+		}
+	}
 }
 
 func (screenData *KeyValueScreenManager) Stop() {

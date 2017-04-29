@@ -584,44 +584,22 @@ func PrintCommandHelper(command	string, subCommand string) {
 	}
 }
 
-func ConvertActivityTaskInString(task operations.ActivityTask) string {
-	operation := "Create"
-	switch task {
-	case operations.DestroyMachine:
-		operation = "Destroy"
-		break
-	case operations.StartMachine:
-		operation = "Start"
-		break
-	case operations.StopMachine:
-		operation = "Stop"
-		break
-	case operations.RestartMachine:
-		operation = "Restart"
-		break
-	case operations.MachineStatus:
-		operation = "Get Status of"
-		break
-	case operations.MachineEnv:
-		operation = "Get Environment for"
-		break
-	case operations.MachineInspect:
-		operation = "Get Descriptor of"
-		break
-	case operations.MachineIPAddress:
-		operation = "Get IP Address of"
-		break
-	}
-	return operation
-}
+
 
 func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastructureActionCouples []operations.ActivityCouple, NumThreads int, postTaskCallback func(task scheduler.ScheduleTask)) []error {
+	return executeActions(infrastructure,operations.GroupActivitiesBySubject(infrastructureActionCouples), NumThreads, postTaskCallback)
+	
+}
+
+
+func executeActions(infrastructure model.Infrastructure, actionGroups []operations.ActivityGroup, NumThreads int, postTaskCallback func(task scheduler.ScheduleTask)) []error {
+	
 	var errorsList []error = make([]error, 0)
 	var maxJobNameLen int = 0
-	var MachineCreationAnswerChannel chan *operations.MachineOperationsJob = make(chan *operations.MachineOperationsJob)
+	var MachineAlterationAnswerChannel chan *operations.MachineOperationsJob = make(chan *operations.MachineOperationsJob)
 	var jobsArrayLen int = 0
 	var termElements []term.KeyValueElement = make([]term.KeyValueElement, 0)
-	jobsArrayLen += len(infrastructureActionCouples)
+	jobsArrayLen += len(actionGroups)
 	
 	pool := scheduler.SchedulerPool{
 		Id: NewUUIDString(),
@@ -638,15 +616,15 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 	for i := 0; i < jobsArrayLen; i++ {
 		var jobId = NewUUIDString()
 		jobIds = append(jobIds, jobId)
-		var name string
-		if infrastructureActionCouples[i].IsCloud {
-			name = fmt.Sprintf("%s Cloud Machine Instance: '%s'", ConvertActivityTaskInString(infrastructureActionCouples[i].Task), infrastructureActionCouples[i].CInstance.Name)
-		} else {
-			name = fmt.Sprintf("%s Machine Instance: '%s'", ConvertActivityTaskInString(infrastructureActionCouples[i].Task), infrastructureActionCouples[i].Instance.Name)
+		var Prefix string = ""
+		if actionGroups[i].IsCloud {
+			Prefix = "Cloud "
 		}
+		var name string = fmt.Sprintf("[%d/%d] %s %sMachine Instance: '%s'", 0,len(actionGroups[i].Activities),operations.ConvertActivityTaskInString(actionGroups[i].Task), Prefix,
+											actionGroups[i].Subject)
 		
 		if len(name) > maxJobNameLen {
-			maxJobNameLen = len(name)
+			maxJobNameLen = len(name) + len(strconv.Itoa(len(actionGroups[i].Activities))) - 1
 		}
 		termElem := term.KeyValueElement{
 			Id: NewUUIDString(),
@@ -654,6 +632,7 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 			State: term.StateColorWhite,
 			Value: "waiting...",
 			Ref: jobId,
+			Actions: len(actionGroups[i].Activities),
 		}
 		termElements = append(termElements, termElem)
 	}
@@ -663,47 +642,32 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 	})
 	go func(){
 		for i := 0; i < jobsArrayLen; i++ {
-			if ! infrastructureActionCouples[i].IsCloud {
-				pool.Tasks <- scheduler.ScheduleTask{
-					Id: NewUUIDString(),
-					Jobs: []scheduler.Job{
-						{
+				var jobs []scheduler.Job = make([]scheduler.Job, 0)
+				for j := 0; j < len(actionGroups[i].Activities); j++ {
+					jobs = append(jobs, scheduler.Job{
 							Id: jobIds[i],
-							Name: fmt.Sprintf("Process Instance from Project, Machine Id: %s", infrastructureActionCouples[i].Instance.MachineId),
+							Name: fmt.Sprintf("Process Instance from Project, Machine Group Name: %s Task : %d", actionGroups[i].Name, j),
 							Runnable: operations.RunnableStruct(&operations.MachineOperationsJob{
-								Name: fmt.Sprintf("Process Instance from Project, Machine Id: %s", infrastructureActionCouples[i].Instance.MachineId),
-								Infra: infrastructureActionCouples[i].Infra,
-								Project:infrastructureActionCouples[i].Project,
-								Activity: infrastructureActionCouples[i],
-								InstanceId: infrastructureActionCouples[i].Instance.Id,
-								OutChan: MachineCreationAnswerChannel,
+								Name: fmt.Sprintf("Process Instance from Project, Machine Group Name: %s Task : %d", actionGroups[i].Name, j),
+								Infra: actionGroups[i].Activities[j].Infra,
+								Project:actionGroups[i].Activities[j].Project,
+								Activity: actionGroups[i].Activities[j],
+								InstanceId: actionGroups[i].Activities[j].Instance.Id,
+								OutChan: MachineAlterationAnswerChannel,
 								OwnState: termElements[i],
 								SendStartMessage: true,
+								Index: j,
+								PartOf: len(actionGroups[i].Activities),
+								Command: operations.ConvertActivityTaskInString(actionGroups[i].Activities[0].Task),
+								ActivityGroup: actionGroups[i],
 							}),
-						},
-					},
+						})
 				}
-			} else {
 				pool.Tasks <- scheduler.ScheduleTask{
 					Id: NewUUIDString(),
-					Jobs: []scheduler.Job{
-						{
-							Id: jobIds[i],
-							Name: fmt.Sprintf("Process Instance from Project, Machine Id: %s", infrastructureActionCouples[i].CInstance.MachineId),
-							Runnable: operations.RunnableStruct(&operations.MachineOperationsJob{
-								Name: fmt.Sprintf("Process Instance from Project, Machine Id: %s", infrastructureActionCouples[i].CInstance.MachineId),
-								Infra: infrastructureActionCouples[i].Infra,
-								Project:infrastructureActionCouples[i].Project,
-								Activity: infrastructureActionCouples[i],
-								InstanceId: infrastructureActionCouples[i].Instance.Id,
-								OutChan: MachineCreationAnswerChannel,
-								OwnState: termElements[i],
-								SendStartMessage: true,
-							}),
-						},
-					},
+					Jobs: jobs,
+					
 				}
-			}
 		}
 	}()
 	var answerCounter int = 0
@@ -714,7 +678,7 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 		if ! utils.NO_COLORS {
 			screenManager = term.KeyValueScreenManager{
 				Elements: termElements,
-				MessageMaxLen: 25,
+				MessageMaxLen: 45,
 				Separator: resultsSeparator,
 				OffsetCols: 0,
 				OffsetRows: 0,
@@ -727,166 +691,217 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 		var pending int = jobsArrayLen
 		var answerScreenIds []string = make([]string, 0)
 		var errorsInProgress bool = false
+		var channelOpen bool = true
 		for pending > 0 {
-			machineOpsJob, ok := (<- MachineCreationAnswerChannel)
-			if ok && machineOpsJob != nil {
-				if ! machineOpsJob.State {
-					answerCounter++
-				}
-				go func(machineOpsJob *operations.MachineOperationsJob) {
-					machineMessage := machineOpsJob.MachineMessage
-					activity := machineOpsJob.Activity
-					
+			select {
+			case machineOpsJob, ok := (<-MachineAlterationAnswerChannel):
+				if ok && machineOpsJob != nil {
 					if ! machineOpsJob.State {
-						for _,domain := range infrastructure.Domains {
-							for _,network := range domain.Networks {
-								if activity.IsCloud {
-									for _,instance := range network.CloudInstances {
-										if instance.Id == activity.CInstance.Id {
-											instance.InspectJSON = machineMessage.InspectJSON
-											instance.IPAddress = machineMessage.IPAddress
-											break
+						answerCounter++
+					}
+					go func(machineOpsJob *operations.MachineOperationsJob) {
+						machineMessage := machineOpsJob.MachineMessage
+						activity := machineOpsJob.Activity
+						
+						if ! machineOpsJob.State {
+							for _,domain := range infrastructure.Domains {
+								for _,network := range domain.Networks {
+									if activity.IsCloud {
+										for _,instance := range network.CloudInstances {
+											if instance.Id == activity.CInstance.Id {
+												instance.InspectJSON = machineMessage.InspectJSON
+												instance.IPAddress = machineMessage.IPAddress
+												break
+											}
 										}
-									}
-								} else {
-									for _,instance := range network.LocalInstances {
-										if instance.Id == activity.Instance.Id {
-											instance.InspectJSON = machineMessage.InspectJSON
-											instance.IPAddress = machineMessage.IPAddress
-											break
+									} else {
+										for _,instance := range network.LocalInstances {
+											if instance.Id == activity.Instance.Id {
+												instance.InspectJSON = machineMessage.InspectJSON
+												instance.IPAddress = machineMessage.IPAddress
+												break
+											}
 										}
 									}
 								}
 							}
+							
 						}
 						
-					}
-					
-					if utils.NO_COLORS {
-						if ! machineOpsJob.State {
-							message := "success!!"
-							if machineMessage.Error != nil {
-								errorsList = append(errorsList, machineMessage.Error)
-								message = "failed!!"
+						if utils.NO_COLORS {
+							if ! machineOpsJob.State {
+								message := "success!!"
+								if machineMessage.Error != nil {
+									errorsList = append(errorsList, machineMessage.Error)
+									message = "failed!!"
+								}
+								if machineOpsJob.Index == machineOpsJob.PartOf - 1 || machineMessage.Error != nil {
+									operation := machineOpsJob.Command
+									if activity.IsCloud {
+										operation += " Cloud Machine Instance "
+										fmt.Println(fmt.Sprintf("%s%s%s", utils.StrPad(operation+"'"+machineOpsJob.Machine+"'",maxJobNameLen), resultsSeparator, message))
+									} else {
+										operation += " Machine Instance "
+										fmt.Println(fmt.Sprintf("%s%s%s", utils.StrPad(operation+"'"+machineOpsJob.Machine+"'",maxJobNameLen), resultsSeparator, message))
+									}
+									if machineMessage.Error != nil {
+										errorsList = append(errorsList, machineMessage.Error)
+										if ! errorsInProgress {
+											errorsInProgress = true
+											mutex.Lock()
+											fmt.Println(fmt.Sprintf(operation + "s interrupted, pending %d instance(s) will not be processed!!", (jobsArrayLen - answerCounter - pool.NumberOfWorkers() - 1)))
+											if pool.IsRunning() {
+												pool.Pause()
+											}
+											for pool.IsWorking() {
+												time.Sleep(1*time.Second)
+											}
+											pending = pool.NumberOfWorkers() + 1
+											mutex.Unlock()
+										}
+										pending --
+									} else {
+										if machineOpsJob.Index == machineOpsJob.PartOf - 1 {
+											pending--
+										}
+									}
+									if pending <= 0 && channelOpen {
+										channelOpen = false
+										close(MachineAlterationAnswerChannel)
+									}
+								}
 							}
-							operation := ConvertActivityTaskInString(activity.Task)
-							if activity.IsCloud {
-								operation += " Cloud Machine Instance "
-								fmt.Println(fmt.Sprintf("%s%s%s", utils.StrPad(operation+"'"+activity.CInstance.Name+"'",maxJobNameLen), resultsSeparator, message))
+						} else {
+							//Interactive ...
+							keyTerm := machineOpsJob.OwnState
+							mutex.Lock()
+							var Prefix string = ""
+							if machineOpsJob.ActivityGroup.IsCloud {
+								Prefix = "Cloud "
+							}
+							var keyName string = fmt.Sprintf("[%d/%d] %s %sMachine Instance: '%s'", (machineOpsJob.Index + 1),machineOpsJob.PartOf,operations.ConvertActivityTaskInString(machineOpsJob.ActivityGroup.Task), Prefix,
+								machineOpsJob.ActivityGroup.Subject)
+							keyTerm.Name = keyName
+							if machineOpsJob.State {
+								if machineMessage.Error != nil {
+										answerScreenIds = append(answerScreenIds, keyTerm.Id)
+										keyTerm.State = term.StateColorRed
+										keyTerm.Value = utils.StrPad(operations.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "... " + term.ScreenBold("failed!!"), 35)
+								} else {
+									keyTerm.State = term.StateColorYellow
+									keyTerm.Value = term.StrPad(operations.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "...in progress", 35)
+								}
 							} else {
-								operation += " Machine Instance "
-								fmt.Println(fmt.Sprintf("%s%s%s", utils.StrPad(operation+"'"+activity.Instance.Name+"'",maxJobNameLen), resultsSeparator, message))
+								if machineOpsJob.Index == machineOpsJob.PartOf - 1 {
+									answerScreenIds = append(answerScreenIds, keyTerm.Id)
+									if machineMessage.Error != nil {
+										keyTerm.State = term.StateColorRed
+										keyTerm.Value = term.ScreenBold(term.StrPad("process failed!!", 35))
+									} else {
+										keyTerm.State = term.StateColorGreen
+										keyTerm.Value = term.ScreenBold(term.StrPad("process success!!", 35))
+									}
+								} else {
+									if machineMessage.Error != nil {
+										answerScreenIds = append(answerScreenIds, keyTerm.Id)
+										keyTerm.State = term.StateColorRed
+										keyTerm.Value = term.StrPad(operations.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "... " + term.ScreenBold("failed!!"), 35)
+									} else {
+										keyTerm.State = term.StateColorYellow
+										keyTerm.Value = term.StrPad(operations.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "... " + term.ScreenBold("completed!!"), 35)
+									}
+								}
 							}
+							screenManager.CommChannel <- keyTerm
+							mutex.Unlock()
 							if machineMessage.Error != nil {
 								errorsList = append(errorsList, machineMessage.Error)
 								if ! errorsInProgress {
 									errorsInProgress = true
 									mutex.Lock()
-									fmt.Println(fmt.Sprintf(operation + "s interrupted, pending %d instance(s) will not be processed!!", (jobsArrayLen - answerCounter - pool.NumberOfWorkers() - 1)))
 									if pool.IsRunning() {
 										pool.Pause()
+										pool.Interrupt()
 									}
-									for pool.IsWorking() {
+									for pending > 1 && pool.IsWorking() {
 										time.Sleep(1*time.Second)
 									}
+									go func() {
+										for _,signal := range screenManager.Elements {
+											found := false
+											for _,done := range answerScreenIds {
+												if signal.Id == done {
+													found = true
+													break
+												}
+											}
+											if ! found  && !pool.IsJobActive(fmt.Sprintf("%s", signal.Ref)) {
+												signal.State = term.StateColorRed
+												signal.Value = "interrupted!!"
+												screenManager.CommChannel <- signal
+											}
+										}
+									}()
 									pending = pool.NumberOfWorkers() + 1
 									mutex.Unlock()
 								}
 								pending --
-							} else {
-								pending--
-							}
-							if pending == 0 {
-								close(MachineCreationAnswerChannel)
-							}
-						}
-					} else {
-						//Interactive ...
-						keyTerm := machineOpsJob.OwnState
-						if machineOpsJob.State {
-							keyTerm.State = term.StateColorYellow
-							keyTerm.Value = "processing..."
-						} else {
-							answerScreenIds = append(answerScreenIds, keyTerm.Id)
-							if machineMessage.Error != nil {
-								keyTerm.State = term.StateColorRed
-								keyTerm.Value = term.ScreenBold("failed!!")
-							} else {
-								keyTerm.State = term.StateColorGreen
-								keyTerm.Value = term.ScreenBold("success!!")
-							}
-						}
-						screenManager.CommChannel <- keyTerm
-						if machineMessage.Error != nil {
-							errorsList = append(errorsList, machineMessage.Error)
-							if ! errorsInProgress {
-								errorsInProgress = true
-								mutex.Lock()
-								if pool.IsRunning() {
-									pool.Pause()
-								}
-								for pool.IsWorking() {
-									time.Sleep(1*time.Second)
-								}
-								for _,signal := range screenManager.Elements {
-									found := false
-									for _,done := range answerScreenIds {
-										if signal.Id == done {
-											found = true
-											break
-										}
-									}
-									if ! found  && !pool.IsJobActive(fmt.Sprintf("%s", signal.Ref)) {
-										signal.State = term.StateColorRed
-										signal.Value = "interrupted!!"
-										screenManager.CommChannel <- signal
+								if pending <= 0 {
+									pending = 0
+									if channelOpen {
+										channelOpen = false
+										close(MachineAlterationAnswerChannel)
 									}
 								}
-								pending = pool.NumberOfWorkers() + 1
-								mutex.Unlock()
+							} else {
+								if machineOpsJob.Index == machineOpsJob.PartOf - 1 && ! machineOpsJob.State {
+									pending--
+								}
 							}
-							pending --
-						} else {
-							if ! machineOpsJob.State {
-								pending--
+							if pending <= 0 {
+								pending = 0
+								if channelOpen {
+									channelOpen = false
+									close(MachineAlterationAnswerChannel)
+								}
 							}
 						}
-						if pending == 0 {
-							close(MachineCreationAnswerChannel)
-						}
-					}
-				}(machineOpsJob)
-			} else {
-				pending = 0
-				if utils.NO_COLORS {
-					fmt.Println("Errors with legacy application ...")
+					}(machineOpsJob)
 				} else {
-					for _,signal := range screenManager.Elements {
-						found := false
-						for _,done := range answerScreenIds {
-							if signal.Id == done {
-								found = true
-								break
+					pending = 0
+						if utils.NO_COLORS {
+							fmt.Println("Errors with legacy application ...")
+						} else {
+							for _,signal := range screenManager.Elements {
+								found := false
+								for _,done := range answerScreenIds {
+									if signal.Id == done {
+										found = true
+										break
+									}
+								}
+								if ! found {
+									signal.State = term.StateColorRed
+									signal.Value = "interrupted!!"
+									screenManager.CommChannel <- signal
+								}
 							}
 						}
-						if ! found {
-							signal.State = term.StateColorRed
-							signal.Value = "interrupted!!"
-							screenManager.CommChannel <- signal
-						}
-					}
+						break
 				}
-				break
+			case <-time.After(time.Second * 60):
 			}
+			
+			//machineOpsJob, ok := (<- MachineCreationAnswerChannel)
 		}
 		if pool.IsRunning() {
 			pool.Pause()
 			for pool.IsWorking() || pending > 0 {
 				time.Sleep(1*time.Second)
 			}
-			pool.Interrupt()
-			pool.Stop()
 		}
+		pool.Interrupt()
+		pool.Stop()
 	}()
 	pool.WG.Wait()
 	time.Sleep(2*time.Second)
@@ -894,21 +909,37 @@ func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastruc
 	return errorsList
 }
 
-func FixInfrastructureElementValue(Infrastructure model.Infrastructure, instanceId string, ipAddress string, json string) bool {
-	for i := 0; i < len(Infrastructure.Domains); i++ {
-		for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
-			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].LocalInstances); k++ {
-				if Infrastructure.Domains[i].Networks[j].LocalInstances[k].Id == instanceId {
-					Infrastructure.Domains[i].Networks[j].LocalInstances[k].IPAddress = ipAddress
-					Infrastructure.Domains[i].Networks[j].LocalInstances[k].InspectJSON = json
-					return true
+func FixInfrastructureElementValue(Infrastructure model.Infrastructure, instanceId string, ipAddress string, json string, log string) bool {
+	if instanceId!= "" && (ipAddress != "" || json != "" || log != "") {
+		for i := 0; i < len(Infrastructure.Domains); i++ {
+			for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
+				for k := 0; k < len(Infrastructure.Domains[i].Networks[j].LocalInstances); k++ {
+					if Infrastructure.Domains[i].Networks[j].LocalInstances[k].Id == instanceId {
+						if ipAddress != "" {
+							Infrastructure.Domains[i].Networks[j].LocalInstances[k].IPAddress = ipAddress
+						}
+						if json != "" {
+							Infrastructure.Domains[i].Networks[j].LocalInstances[k].InspectJSON = json
+						}
+						//if log != "" {
+						//	Infrastructure.Domains[i].Networks[j].LocalInstances[k]. = json
+						//}
+						return true
+					}
 				}
-			}
-			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CloudInstances); k++ {
-				if Infrastructure.Domains[i].Networks[j].CloudInstances[k].Id == instanceId {
-					Infrastructure.Domains[i].Networks[j].CloudInstances[k].IPAddress = ipAddress
-					Infrastructure.Domains[i].Networks[j].CloudInstances[k].InspectJSON = json
-					return true
+				for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CloudInstances); k++ {
+					if Infrastructure.Domains[i].Networks[j].CloudInstances[k].Id == instanceId {
+						if ipAddress != "" {
+							Infrastructure.Domains[i].Networks[j].CloudInstances[k].IPAddress = ipAddress
+						}
+						if json != "" {
+							Infrastructure.Domains[i].Networks[j].CloudInstances[k].InspectJSON = json
+						}
+						//if log != "" {
+						//	Infrastructure.Domains[i].Networks[j].LocalInstances[k]. = json
+						//}
+						return true
+					}
 				}
 			}
 		}
@@ -932,11 +963,34 @@ func DefineDestroyActivityFromCreateOne(activity operations.ActivityCouple) oper
 	}
 }
 
-func DefineRebuildOfWholeInfrastructure(activities []operations.ActivityCouple) []operations.ActivityCouple {
+func IsActivitySelected(activity operations.ActivityCouple, id string) bool {
+		if activity.IsCloud {
+			if activity.CInstance.MachineId == id {
+				return true
+			}
+		} else {
+			if activity.CInstance.MachineId == id {
+				return true
+			}
+		}
+	return false
+}
+
+
+func DefineRebuildOfWholeInfrastructure(activities []operations.ActivityCouple, excludedIds []string) []operations.ActivityCouple {
 	var outActivities []operations.ActivityCouple = make([]operations.ActivityCouple, 0)
 	for _,activity := range activities {
 		outActivities = append(outActivities, DefineDestroyActivityFromCreateOne(activity))
-		outActivities = append(outActivities, activity)
+		Excluded := false
+		for _,id := range excludedIds {
+			if IsActivitySelected(activity, id) {
+				Excluded = true
+				break
+			}
+		}
+		if ! Excluded {
+			outActivities = append(outActivities, activity)
+		}
 	}
 	return outActivities
 }
@@ -961,28 +1015,49 @@ func SortActionsByRelevance(actions []operations.ActivityCouple) []operations.Ac
 	return actions
 }
 
-func FilterCreationBasedOnProjectActions(actions ProjectActionIndex, activities []operations.ActivityCouple) []operations.ActivityCouple {
+func FilterCreationBasedOnProjectActions(actions ProjectActionIndex, activities []operations.ActivityCouple) ([]string, []operations.ActivityCouple) {
 	var outActivities []operations.ActivityCouple = make([]operations.ActivityCouple, 0)
+	var removedIds []string = make([]string, 0)
+	var allActions bool = false
 	for _,action := range actions.Actions {
 		if action.FullProject {
-			return DefineRebuildOfWholeInfrastructure(activities)
-		} else {
-			var activity operations.ActivityCouple
-			var err error
-			if action.RelatedId == "" {
-				activity, err = FindActivityById(activities, action.ElementId)
-			} else {
-				activity, err = FindActivityById(activities, action.RelatedId)
-			}
-			if err != nil {
-				outActivities = append(outActivities, DefineDestroyActivityFromCreateOne(activity))
-				if ! action.DropAction {
-					outActivities = append(outActivities, activity)
+			allActions = true
+			//return DefineRebuildOfWholeInfrastructure(activities)
+		}
+	}
+	for _,activity := range activities {
+		for _,action := range actions.Actions {
+			DeleteAction := false
+			ElementId := ""
+			if ! action.FullProject {
+				if action.RelatedId == "" {
+					if IsActivitySelected(activity, action.ElementId) {
+						ElementId = action.ElementId
+						if action.DropAction {
+							DeleteAction = true
+						}
+					}
+				} else {
+					if IsActivitySelected(activity, action.RelatedId) {
+						ElementId = action.RelatedId
+						if action.DropAction {
+							DeleteAction = true
+						}
+					}
 				}
+			}
+			outActivities = append(outActivities, DefineDestroyActivityFromCreateOne(activity))
+			if ! DeleteAction {
+				outActivities = append(outActivities, activity)
+			} else {
+				removedIds = append(removedIds, ElementId)
 			}
 		}
 	}
-	return outActivities
+	if allActions {
+		return removedIds, DefineRebuildOfWholeInfrastructure(outActivities, removedIds)
+	}
+	return removedIds, outActivities
 }
 
 func MigrateProjectActionsToRollbackSegments(actions ProjectActionIndex) error {

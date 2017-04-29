@@ -15,16 +15,21 @@ type ScheduleTask struct {
 	Id      string
 	Jobs    []Job
 	Active  bool
+	Count    int
 }
 
 type Job struct {
 	Id       string
 	Name     string
 	Runnable operations.RunnableStruct
+	Async    bool
 }
 
 func (job *Job) Run() {
 	job.Runnable.Start()
+	if job.Async {
+		job.Runnable.WaitFor()
+	}
 }
 
 func (job *Job) IsRunning() bool {
@@ -38,31 +43,41 @@ type JobProcess interface {
 	Run()
 	IsRunning() bool
 	Abort()
+	Init()
+}
+
+
+func (task *ScheduleTask) Init() {
+	task.Count = 0
+}
+
+
+func (task *ScheduleTask) deactivate() {
+	task.Active = false
 }
 
 func (task *ScheduleTask) Execute() {
 	task.Active = true
-	for _,job := range task.Jobs {
-		go job.Run()
-		if ! task.Active {
+	defer task.deactivate()
+	for i := task.Count; i < len(task.Jobs); i++ {
+		task.Jobs[i].Run()
+		if ! task.Active || task.Jobs[i].Runnable.IsError() {
+			task.Abort()
 			break
+		}
+		task.Count++
+		if i < len(task.Jobs) - 1 {
+			time.Sleep(3*time.Second)
 		}
 	}
 }
 
 func (task *ScheduleTask) IsRunning() bool {
-	if task.Active {
-		running := false
-		for _,job := range task.Jobs {
-			if job.IsRunning() {
-				running = true
-			}
-		}
-		task.Active = running
-		return task.Active
+	if task.Active || task.Count < len(task.Jobs) {
+		return true
 	}
-	for _,job := range task.Jobs {
-		if job.IsRunning() {
+	for i := task.Count; i < len(task.Jobs); i++ {
+		if task.Jobs[i].IsRunning() {
 			return true
 		}
 	}
@@ -70,8 +85,10 @@ func (task *ScheduleTask) IsRunning() bool {
 }
 
 func (task *ScheduleTask) Abort() {
-	for _,job := range task.Jobs {
-		job.Abort()
+	task.Active = false
+	task.Count = len(task.Jobs)
+	for i := task.Count; i < len(task.Jobs); i++ {
+		task.Jobs[i].Abort()
 	}
 }
 
@@ -168,16 +185,16 @@ func (pool *SchedulerPool) Start(callback func()) {
 					time.Sleep(1500*time.Millisecond)
 				}
 			}
-			for _,task := range pool.State.Pool {
-				if task.IsRunning() {
-					task.Abort()
-					for task.IsRunning() {
+			for i :=0; i<len(pool.State.Pool); i++ {
+				if pool.State.Pool[i].IsRunning() {
+					pool.State.Pool[i].Abort()
+					for pool.State.Pool[i].IsRunning() {
 						time.Sleep(1000*time.Millisecond)
 					}
 				}
 				pool.WG.Done()
 				if pool.PostExecute {
-					go pool.Callback(task)
+					go pool.Callback(pool.State.Pool[i])
 				}
 			}
 			go callback()
@@ -190,7 +207,7 @@ func (pool *SchedulerPool) Start(callback func()) {
 }
 
 func (pool *SchedulerPool) IsRunning() bool {
-	if pool.State.Active {
+	if pool.State.Active && ! pool.State.Paused {
 		return true
 	}
 	for _,task := range pool.State.Pool {
@@ -253,8 +270,6 @@ func (pool *SchedulerPool) Resume() {
 
 func (pool *SchedulerPool) Interrupt() {
 	for i := 0; i < len(pool.State.Pool); i++ {
-		if pool.State.Pool[i].IsRunning() {
 			pool.State.Pool[i].Abort()
-		}
 	}
 }
