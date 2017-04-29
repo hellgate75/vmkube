@@ -913,10 +913,14 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []operatio
 		}
 		pool.Interrupt()
 		pool.Stop()
+		if ! utils.NO_COLORS {
+			screenManager.Stop(false)
+		}
 	}()
 	pool.WG.Wait()
 	time.Sleep(2*time.Second)
 	utils.PrintlnImportant(fmt.Sprintf("Task executed:  %d", answerCounter))
+	
 	return errorsList
 }
 

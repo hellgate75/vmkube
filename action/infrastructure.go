@@ -800,36 +800,32 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 	var fixInfraValue int = len(actionCouples)
 	errorsList = ExecuteInfrastructureActions(infrastructure, actionCouples, NumThreads,func(task scheduler.ScheduleTask){
 		go func(task scheduler.ScheduleTask) {
-			response := strings.Split(fmt.Sprintf("%s",task.Jobs[0].Runnable.Response()),"|")
-			if len(response) > 3 {
-				if len(response) > 4 {
-					if response[0] == "ip" {
-						instanceId := response[1]
-						ipAddress := response[2]
-						json := ""
-						log := response[3] + response[4]
-						FixInfrastructureElementValue(infrastructure, instanceId, ipAddress, json, log)
-					} else if response[0] == "json" {
+			for i := 0; i < len(task.Jobs); i++ {
+				response := strings.Split(fmt.Sprintf("%s",task.Jobs[i].Runnable.Response()),"|")
+				if len(response) > 3 {
+					if len(response) > 4 {
+						if response[0] == "ip" {
+							instanceId := response[1]
+							ipAddress := response[2]
+							json := ""
+							log := response[3] + response[4]
+							FixInfrastructureElementValue(infrastructure, instanceId, ipAddress, json, log)
+						} else if response[0] == "json" {
+							instanceId := response[1]
+							ipAddress := ""
+							json := response[2]
+							log := response[3] + response[4]
+							FixInfrastructureElementValue(infrastructure, instanceId, ipAddress, json, log)
+						}
+					} else {
 						instanceId := response[1]
 						ipAddress := ""
-						json := response[2]
-						log := response[3] + response[4]
+						json := ""
+						log := response[2] + response[3]
 						FixInfrastructureElementValue(infrastructure, instanceId, ipAddress, json, log)
 					}
-				} else {
-					instanceId := response[1]
-					ipAddress := ""
-					json := ""
-					log := response[2] + response[3]
-					FixInfrastructureElementValue(infrastructure, instanceId, ipAddress, json, log)
 				}
 			}
-			//if len(response) > 2 {
-			//	json := response[1]
-			//	ipAddress := response[2]
-			//	instanceId := response[0]
-			//	FixInfrastructureElementValue(infrastructure, instanceId, ipAddress, json)
-			//}
 			fixInfraValue--
 		}(task)
 	})

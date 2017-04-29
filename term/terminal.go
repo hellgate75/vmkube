@@ -276,6 +276,24 @@ func ScreenPrintln(a ...interface{}) {
 	fmt.Fprintln(Buffer, a...)
 }
 
+var cursorHidden bool = false
+
+func ScreenHideCursor() {
+	fmt.Print("\033[?25l")
+	cursorHidden = true
+}
+
+func ScreenShowCursor() {
+	if ScreenHasCursorHidden() {
+		fmt.Print("\033[?25l")
+		cursorHidden = false
+	}
+}
+
+func ScreenHasCursorHidden() bool {
+	return cursorHidden
+}
+
 func ScreenPrintf(format string, a ...interface{}) {
 	fmt.Fprintf(Buffer, format, a...)
 }

@@ -157,13 +157,17 @@ func (screenData *KeyValueScreenManager) Remove(elem KeyValueElement) {
 	}
 }
 
-func (screenData *KeyValueScreenManager) Stop() {
+func (screenData *KeyValueScreenManager) Stop(clearScreen bool) {
 	time.Sleep(1 * time.Second)
 	screenData.CtrlChannel <- false
-	ScreenClear()
+	if clearScreen {
+		ScreenClear()
+	}
+	ScreenShowCursor()
 }
 
 func (screenData *KeyValueScreenManager) Start() {
 	screenData.Active = true
 	screenData.drawGrid()
+	ScreenHideCursor()
 }
