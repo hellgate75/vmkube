@@ -8,7 +8,7 @@ import (
 	"vmkube/model"
 )
 
-func dumpData(file string, data interface{}, overwrite bool) {
+func DumpData(file string, data interface{}, overwrite bool) {
 	text := ""
 	if !overwrite {
 		if strings.Index(file, string(os.PathSeparator)) < 0  {

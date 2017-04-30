@@ -917,7 +917,8 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []operatio
 	}()
 	pool.WG.Wait()
 	time.Sleep(2*time.Second)
-	utils.PrintlnImportant(fmt.Sprintf("Task executed:  %d", answerCounter))
+	term.ScreenMoveCursor(len(actionGroups)+1, 0)
+	utils.PrintlnImportant(fmt.Sprintf("Number of executed processes :  %d", answerCounter))
 	
 	return errorsList
 }

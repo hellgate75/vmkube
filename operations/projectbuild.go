@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sort"
 	"time"
+	"vmkube/utils"
 )
 
 
@@ -23,7 +24,7 @@ type RunnableStruct interface {
 	WaitFor()
 }
 
-const MachineReadOperationTimeout = 600
+const MachineReadOperationTimeout = 1200
 
 type MachineOperationsJob struct {
 	Name             string
@@ -141,7 +142,7 @@ func (job *MachineOperationsJob) Start() {
 				job.MachineMessage.Complete = true
 			case <-time.After(time.Second * MachineReadOperationTimeout):
 				job.MachineMessage.Complete = true
-				job.MachineMessage.Error = errors.New(fmt.Sprintf("Timeout for Machine %s Command %s reachged", name,ConvertActivityTaskInString(job.Activity.Task)))
+				job.MachineMessage.Error = errors.New(fmt.Sprintf("Timeout for Machine %s Command %s reached", name,ConvertActivityTaskInString(job.Activity.Task)))
 			}
 		}
 		if ! job.control.Interrupt {
@@ -253,6 +254,18 @@ func filterPlansByMachine(id string, isCloud bool, network model.MachineNetwork)
 	return selectedPlans
 }
 
+func filterPlansByInstance(id string, isCloud bool, network model.Network) []model.InstallationPlan {
+	var selectedPlans []model.InstallationPlan = make([]model.InstallationPlan, 0)
+	for _,plan := range network.Installations {
+		if plan.IsCloud == isCloud && plan.InstanceId == id {
+			if ! plan.Success {
+				selectedPlans = append(selectedPlans, plan.Plan)
+			}
+		}
+	}
+	return selectedPlans
+}
+
 func filterInstanceByMachine(id string, infrastructure model.Infrastructure) (model.LocalInstance, error) {
 	var Instance model.LocalInstance
 	for _,domain := range infrastructure.Domains {
@@ -291,6 +304,9 @@ func GetTaskActivities(project model.Project, infrastructure model.Infrastructur
 				if err != nil {
 					return taskList, err
 				}
+				if  task == MachineExtendsDisk && utils.CorrectInput(machine.Driver) != "virtualbox" && utils.CorrectInput(machine.Driver) != "vmwarefusion"  && utils.CorrectInput(machine.Driver) != "vmwarevsphere" {
+					continue
+				}
 				taskList = append(taskList, ActivityCouple{
 					IsCloud: false,
 					Machine: machine,
@@ -303,6 +319,9 @@ func GetTaskActivities(project model.Project, infrastructure model.Infrastructur
 				})
 			}
 			for _,machine := range network.CloudMachines {
+				if  task == MachineExtendsDisk {
+					continue
+				}
 				instance, err := filterCloudInstanceByMachine(machine.Id, infrastructure)
 				if err != nil {
 					return taskList, err
@@ -322,6 +341,7 @@ func GetTaskActivities(project model.Project, infrastructure model.Infrastructur
 	}
 	return taskList, nil
 }
+
 func FilterByInstanceState(activities []ActivityCouple, isNew bool) []ActivityCouple {
 	var outActivities []ActivityCouple = make([]ActivityCouple, 0)
 	for _,activity := range activities {
@@ -358,6 +378,7 @@ func FilterByInstanceState(activities []ActivityCouple, isNew bool) []ActivityCo
 	}
 	return outActivities
 }
+
 
 func containsString(intSlice []string, searchInt string) bool {
 	for _, value := range intSlice {
@@ -421,25 +442,31 @@ func GetPostBuildTaskActivities(infrastructure model.Infrastructure, task Activi
 	var taskList []ActivityCouple = make([]ActivityCouple, 0)
 	for _,domain := range infrastructure.Domains {
 		for _,network := range domain.Networks {
-			for _,machine := range network.LocalInstances {
-				if ! containsString(exclusionList, machine.Id) {
+			for _, instance := range network.LocalInstances {
+				if ! containsString(exclusionList, instance.Id) {
+					if  task == MachineExtendsDisk && utils.CorrectInput(instance.Driver) != "virtualbox" && utils.CorrectInput(instance.Driver) != "vmwarefusion"  && utils.CorrectInput(instance.Driver) != "vmwarevsphere" {
+						continue
+					}
 					taskList = append(taskList, ActivityCouple{
 						IsCloud: false,
-						Instance: machine,
+						Instance: instance,
 						Task: task,
-						Plans: []model.InstallationPlan{},
+						Plans: filterPlansByInstance(instance.Id, false, network),
 						Infra: infrastructure,
 						NewInfra: false,
 					})
 				}
 			}
-			for _,machine := range network.CloudInstances {
-				if ! containsString(exclusionList, machine.Id) {
+			for _, instance := range network.CloudInstances {
+				if ! containsString(exclusionList, instance.Id) {
+					if  task == MachineExtendsDisk {
+						continue
+					}
 					taskList = append(taskList, ActivityCouple{
 						IsCloud: true,
-						CInstance: machine,
+						CInstance: instance,
 						Task: task,
-						Plans: []model.InstallationPlan{},
+						Plans: filterPlansByInstance(instance.Id, true, network),
 						Infra: infrastructure,
 						NewInfra: false,
 					})

@@ -5,9 +5,6 @@ import (
 	"runtime"
 	"time"
 	"sync"
-	//"log"
-	//"strconv"
-	//"fmt"
 	"vmkube/operations"
 	"fmt"
 )
@@ -16,7 +13,7 @@ type ScheduleTask struct {
 	Id      string
 	Jobs    []Job
 	Active  bool
-	Count    int
+	Count   int
 }
 
 type Job struct {
@@ -28,13 +25,15 @@ type Job struct {
 
 func (job *Job) Run() {
 	job.Runnable.Start()
-	//if job.Async {
-	//	job.Runnable.WaitFor()
-	//}
 }
 
 func (job *Job) IsRunning() bool {
 	return job.Runnable.Status()
+}
+
+
+func (job *Job) WaitFor()  {
+	job.Runnable.WaitFor()
 }
 func (job *Job) Abort() {
 	job.Runnable.Stop()
@@ -45,8 +44,16 @@ type JobProcess interface {
 	IsRunning() bool
 	Abort()
 	Init()
+	WaitFor()
 }
 
+type TaskProcess interface {
+	Run()
+	IsRunning() bool
+	Abort()
+	Init()
+	Wait()
+}
 
 func (task *ScheduleTask) Init() {
 	task.Count = 0
@@ -55,25 +62,41 @@ func (task *ScheduleTask) Init() {
 
 func (task *ScheduleTask) deactivate() {
 	task.Active = false
+	task.Count = len(task.Jobs)
 }
 
 func (task *ScheduleTask) Execute() {
 	task.Active = true
-	defer task.deactivate()
-	for i := task.Count; i < len(task.Jobs); i++ {
-		task.Jobs[i].Run()
-		task.Count++
+	var index int = task.Count
+	for i := index; i < len(task.Jobs); i++ {
+		//DumpData("threads-task.txt", fmt.Sprintf("Start Id : %s Job: %s Sequence: %d Async: %t", task.Id, task.Jobs[i].Id, i, task.Jobs[i].Async), false)
+		if task.Jobs[i].Async {
+			go task.Jobs[i].Run()
+			task.Jobs[i].WaitFor()
+		} else {
+			task.Jobs[i].Run()
+		}
+		//DumpData("threads-task.txt", fmt.Sprintf("Complete Id : %s Job: %s Sequence: %d Async: %t", task.Id, task.Jobs[i].Id, i, task.Jobs[i].Async), false)
 		if ! task.Active || task.Jobs[i].Runnable.IsError() {
 			task.Abort()
 			task.Wait()
 			break
 		}
-		if i < len(task.Jobs) - 1 {
-			time.Sleep(3*time.Second)
+		if task.Jobs[i].IsRunning() {
+			task.Jobs[i].Abort()
 		}
+		if i < len(task.Jobs) - 1 {
+			time.Sleep(1*time.Second)
+		}
+		task.Count=i+1
+		if i < len(task.Jobs) - 1 {
+			time.Sleep(1*time.Second)
+		}
+		//DumpData("threads-task.txt", fmt.Sprintf("Post Release Id : %s Job: %s Sequence: %d Count: %d", task.Id, task.Jobs[i].Id, i, task.Count), false)
 	}
-	task.Count = len(task.Jobs)
-	task.Active = false
+	task.Wait()
+	task.deactivate()
+	//DumpData("threads-complete.txt", fmt.Sprintf("Id : %s Count: %d Active: %t", task.Id, task.Count, task.Active), false)
 }
 
 func (task *ScheduleTask) IsRunning() bool {
@@ -138,69 +161,70 @@ func (pool *SchedulerPool) Init() {
 func (pool *SchedulerPool) Start(callback func()) {
 	if ! pool.State.Active {
 		pool.State.Active = true
-		//start jobs
+		var threads = pool.MaxParallel
+		if threads == 0 {
+			threads = runtime.NumCPU()
+		}
+		var Buffer []ScheduleTask = make([]ScheduleTask, 0)
+		pumperExited := false
+		// start Pool enqueue manager
 		go func() {
-			var mutex sync.Mutex
-			var threads = pool.MaxParallel
-			if threads == 0 {
-				threads = runtime.NumCPU() - 1
+			for pool.State.Active {
+				if  ! pool.State.Paused {
+					// Try add jobs from Buffer
+					for threads > len(pool.State.Pool) && len(Buffer) > 0 {
+						Task := Buffer[0]
+						Buffer = Buffer[1:]
+						pool.WG.Add(1)
+						pool.State.Pool = append(pool.State.Pool, Task)
+						pool.State.Pool[len(pool.State.Pool)-1].Init()
+						go pool.State.Pool[len(pool.State.Pool)-1].Execute()
+					}
+					// Look for completed jobs to remove from Pool
+					var i int = 0
+					for len(pool.State.Pool) > 0 && i < len(pool.State.Pool) {
+						if ! pool.State.Pool[i].IsRunning() {
+							if pool.PostExecute {
+								go pool.Callback(pool.State.Pool[i])
+							}
+							if i > 0 && i < len(pool.State.Pool) - 2 {
+								pool.State.Pool = pool.State.Pool[:i]
+								pool.State.Pool = append(pool.State.Pool, pool.State.Pool[i+1:]...)
+							} else if i == 0 {
+								pool.State.Pool = pool.State.Pool[i+1:]
+							}  else {
+								pool.State.Pool = pool.State.Pool[:i]
+							}
+							pool.WG.Done()
+						} else {
+							i++
+						}
+					}
+				}
 			}
+			pumperExited = true
+		}()
+		// start jobs
+		go func() {
 			//if runtime.NumCPU() < threads + 1 {
 			//	runtime.GOMAXPROCS(threads + 1)
 			//}
 			for pool.State.Active {
 				if ! pool.State.Paused {
-					if threads > len(pool.State.Pool) {
 						Task := <- pool.Tasks
 						if Task.Id != "" {
 							if Task.Id == "<close>" {
 								break
 							} else {
-								mutex.Lock()
-								pool.WG.Add(1)
-								pool.State.Pool = append(pool.State.Pool, Task)
-								go pool.State.Pool[len(pool.State.Pool)-1].Execute()
-								dumpData("threads-on.txt", fmt.Sprintf("%d - ", len(pool.State.Pool)-1) + pool.State.Pool[len(pool.State.Pool)-1].Id, false)
-								mutex.Unlock()
-							}
-						} else {
-							time.Sleep(500*time.Millisecond)
-						}
-					} else {
-						//Thread Pool Full
-						time.Sleep(1000*time.Millisecond)
-						i := 0
-						count := 0
-						mutex.Lock()
-						for i < len(pool.State.Pool) {
-							if ! pool.State.Pool[i].IsRunning() {
-								count ++
-								dumpData("threads-off.txt", fmt.Sprintf("%d - ", i) + pool.State.Pool[i].Id, false)
-								if pool.PostExecute {
-									go pool.Callback(pool.State.Pool[i])
-								}
-								if i > 0 && i < len(pool.State.Pool) - 2 {
-									pool.State.Pool = pool.State.Pool[:i]
-									pool.State.Pool = append(pool.State.Pool, pool.State.Pool[i+1:]...)
-								} else if i == 0 {
-									pool.State.Pool = pool.State.Pool[i+1:]
-								}  else {
-									pool.State.Pool = pool.State.Pool[:i]
-								}
-								pool.WG.Done()
-							} else {
-								dumpData("threads-still.txt", fmt.Sprintf("%d - ", i) + pool.State.Pool[i].Id, false)
-								dumpData("threads-still.txt", fmt.Sprintf("%d - ", i)+ fmt.Sprintf("Count : %d - ", pool.State.Pool[i].Count), false)
-								dumpData("threads-still.txt", fmt.Sprintf("%d - ", i)+ fmt.Sprintf("Threads : %d - ", len(pool.State.Pool[i].Jobs)), false)
-								dumpData("threads-still.txt", fmt.Sprintf("%d - ", i) + fmt.Sprintf("Active : %t - ", pool.State.Pool[i].Active), false)
-								i++
+								Buffer = append(Buffer, Task)
 							}
 						}
-						mutex.Unlock()
-					}
 				} else {
 					time.Sleep(1500*time.Millisecond)
 				}
+			}
+			for ! pumperExited {
+				time.Sleep(500*time.Millisecond)
 			}
 			for i :=0; i<len(pool.State.Pool); i++ {
 				if pool.State.Pool[i].IsRunning() {
