@@ -1,7 +1,6 @@
 package tasks
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -67,12 +66,12 @@ func (task *ScheduleTask) Init() {
 
 
 func (task *ScheduleTask) Deactivate() {
-	DumpData("threads-request.txt", fmt.Sprintf("Request Deactivate for Task Id : %s [Sequece : %d] Job: %s Running : %t Last Index : %d Task Len : %d", task.Id, task.LastIndex, task.Jobs[task.LastIndex].Id, task.Jobs[task.LastIndex].IsRunning(), task.LastIndex,len(task.Jobs)), false)
+	//DumpData("threads-request.txt", fmt.Sprintf("Request Deactivate for Task Id : %s [Sequece : %d] Job: %s Running : %t Last Index : %d Task Len : %d", task.Id, task.LastIndex, task.Jobs[task.LastIndex].Id, task.Jobs[task.LastIndex].IsRunning(), task.LastIndex,len(task.Jobs)), false)
 	task.Active = false
 	task.Working = false
 	task.LastIndex = len(task.Jobs)
 	task.Abort()
-	DumpData("threads-request.txt", fmt.Sprintf("Post Deactivate for Task Id : %s [Sequece : %d] Last Index : %d Task Len : %d", task.Id, task.LastIndex, task.LastIndex,len(task.Jobs)), false)
+	//DumpData("threads-request.txt", fmt.Sprintf("Post Deactivate for Task Id : %s [Sequece : %d] Last Index : %d Task Len : %d", task.Id, task.LastIndex, task.LastIndex,len(task.Jobs)), false)
 }
 
 func (task *ScheduleTask) Execute() {
@@ -115,7 +114,7 @@ func (task *ScheduleTask) Execute() {
 func (task *ScheduleTask) IsRunning() bool {
 
 	//DumpData("threads-request.txt", fmt.Sprintf("Request IsRunning for Task Id : %s  Last Index : %d  Len : %d  Active : %t", task.Id,task.LastIndex, len(task.Jobs), task.Active), false)
-	if task.Active || (task.Working && task.LastIndex < len(task.Jobs)) {
+	if task.LastIndex < len(task.Jobs) {
 		return true
 	}
 	if task.LastIndex < len(task.Jobs)  {
