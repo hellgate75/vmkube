@@ -1750,7 +1750,6 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	
 	for fixInfraValue > 0 {
 		time.Sleep(1*time.Second)
-		println(fmt.Sprintf("%d ", fixInfraValue))
 	}
 	
 	utils.PrintlnWarning(fmt.Sprintf("Update Project '%s' indexes linking New Infrastrcucture '%s'...", Name, InfraName))

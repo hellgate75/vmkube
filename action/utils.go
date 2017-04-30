@@ -797,7 +797,7 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []operatio
 								if machineMessage.Error != nil {
 										answerScreenIds = append(answerScreenIds, keyTerm.Id)
 										keyTerm.State = term.StateColorRed
-										keyTerm.Value = utils.StrPad(operations.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "... " + term.ScreenBold("failed!!"), 35)
+										keyTerm.Value = utils.StrPad(operations.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "..." + term.ScreenBold("failed!!"), 35)
 								} else {
 									keyTerm.State = term.StateColorYellow
 									keyTerm.Value = term.StrPad(operations.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "...in progress", 35)
@@ -816,10 +816,10 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []operatio
 									if machineMessage.Error != nil {
 										answerScreenIds = append(answerScreenIds, keyTerm.Id)
 										keyTerm.State = term.StateColorRed
-										keyTerm.Value = term.StrPad(operations.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "... " + term.ScreenBold("failed!!"), 35)
+										keyTerm.Value = term.StrPad(operations.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "..." + term.ScreenBold("failed!!"), 35)
 									} else {
 										keyTerm.State = term.StateColorYellow
-										keyTerm.Value = term.StrPad(operations.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "... " + term.ScreenBold("completed!!"), 35)
+										keyTerm.Value = term.StrPad(operations.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "..." + term.ScreenBold("completed!!"), 35)
 									}
 								}
 							}
@@ -902,16 +902,14 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []operatio
 				}
 			case <-time.After(time.Second * 60):
 			}
-			
-			//machineOpsJob, ok := (<- MachineCreationAnswerChannel)
 		}
 		if pool.IsRunning() {
 			pool.Pause()
+			pool.Interrupt()
 			for pool.IsWorking() || pending > 0 {
 				time.Sleep(1*time.Second)
 			}
 		}
-		pool.Interrupt()
 		pool.Stop()
 		if ! utils.NO_COLORS {
 			screenManager.Stop(false)

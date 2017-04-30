@@ -109,7 +109,7 @@ func (element *RollBackSegment) Import(file string, format string) error {
 			return err
 		}
 	}
-	println(element)
+	
 	return err
 }
 

@@ -285,7 +285,7 @@ func ScreenHideCursor() {
 
 func ScreenShowCursor() {
 	if ScreenHasCursorHidden() {
-		fmt.Print("\033[?25l")
+		fmt.Print("\033[?25h")
 		cursorHidden = false
 	}
 }

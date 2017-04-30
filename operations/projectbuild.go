@@ -43,27 +43,7 @@ type MachineOperationsJob struct {
 	Machine          string
 	commandPipe      chan procedures.MachineMessage
 	commandChannel   chan *exec.Cmd
-	threadSafeCmd    bool
 	control          procedures.MachineControlStructure
-}
-
-func (job *MachineOperationsJob) Response() interface{} {
-	if job.MachineMessage.InspectJSON != "" {
-		return fmt.Sprintf("%s|%s|%s|%s|%s","json", job.MachineMessage.InstanceId, job.MachineMessage.InspectJSON, job.MachineMessage.Supply, job.MachineMessage.Result)
-	} else if job.MachineMessage.IPAddress != "" {
-		return fmt.Sprintf("%s|%s|%s|%s|%s","ip",job.MachineMessage.InstanceId, job.MachineMessage.IPAddress, job.MachineMessage.Supply, job.MachineMessage.Result)
-	}
-	return fmt.Sprintf("%s|%s|%s|%s","message",job.MachineMessage.InstanceId, job.MachineMessage.Supply, job.MachineMessage.Result)
-}
-
-func (job *MachineOperationsJob) WaitFor() {
-	for job.State {
-		time.Sleep(1*time.Second)
-	}
-}
-
-func (job *MachineOperationsJob) IsError() bool {
-	return job.MachineMessage.Error != nil
 }
 
 func (job *MachineOperationsJob) Start() {
@@ -95,7 +75,6 @@ func (job *MachineOperationsJob) Start() {
 		}
 		job.commandPipe = make(chan procedures.MachineMessage)
 		machineAdapter := procedures.GetCurrentMachineExecutor(job.Project, job.Infra, job.Activity.Machine, job.Activity.CMachine, job.Activity.Instance, job.Activity.CInstance, job.Activity.Instance.Id, job.Activity.IsCloud, job.Activity.NewInfra)
-		job.threadSafeCmd = machineAdapter.IsThreadSafeCommand()
 		machineAdapter.SetControlStructure(&job.control)
 		job.commandChannel = make(chan *exec.Cmd)
 		go func(){
@@ -165,28 +144,52 @@ func (job *MachineOperationsJob) Start() {
 				job.MachineMessage.Error = errors.New(fmt.Sprintf("Timeout for Machine %s Command %s reachged", name,ConvertActivityTaskInString(job.Activity.Task)))
 			}
 		}
-		job.State = false
 		if ! job.control.Interrupt {
+			defer func() {
+				// recover from panic caused by writing to a closed channel
+				if r := recover(); r != nil {
+				}
+			}()
 			job.OutChan <-job
 		}
+		job.State = false
 	}
 }
 
+
+func (job *MachineOperationsJob) Response() interface{} {
+	if job.MachineMessage.InspectJSON != "" {
+		return fmt.Sprintf("%s|%s|%s|%s|%s","json", job.MachineMessage.InstanceId, job.MachineMessage.InspectJSON, job.MachineMessage.Supply, job.MachineMessage.Result)
+	} else if job.MachineMessage.IPAddress != "" {
+		return fmt.Sprintf("%s|%s|%s|%s|%s","ip",job.MachineMessage.InstanceId, job.MachineMessage.IPAddress, job.MachineMessage.Supply, job.MachineMessage.Result)
+	}
+	return fmt.Sprintf("%s|%s|%s|%s","message",job.MachineMessage.InstanceId, job.MachineMessage.Supply, job.MachineMessage.Result)
+}
+
+func (job *MachineOperationsJob) WaitFor() {
+	for job.State {
+		time.Sleep(1*time.Second)
+	}
+}
+
+func (job *MachineOperationsJob) IsError() bool {
+	return job.MachineMessage.Error != nil
+}
+
 func (job *MachineOperationsJob) Stop() {
-	if job.threadSafeCmd {
-		job.control.Interrupt = true
+	job.control.Interrupt = true
+	if job.control.CurrentCommand != nil {
 		if job.control.CurrentCommand.Process.Pid > 0 {
 			job.control.CurrentCommand.Process.Kill()
 		}
-		close(job.commandChannel)
+	}
+	if job.commandPipe != nil {
 		close(job.commandPipe)
-	} else {
-		job.control.Interrupt = true
-		if job.control.CurrentCommand.Process.Pid > 0 {
-			job.control.CurrentCommand.Wait()
-		}
+		job.commandPipe = nil
+	}
+	if job.commandChannel != nil {
 		close(job.commandChannel)
-		close(job.commandPipe)
+		job.commandChannel = nil
 	}
 	job.State = false
 }

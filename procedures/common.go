@@ -44,7 +44,6 @@ type MachineActions interface {
 	MachineInspect(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
 	MachineIPAddress(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
 	ExtendsDisk(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
-	IsThreadSafeCommand() bool
 	SetControlStructure(Control *MachineControlStructure)
 }
 

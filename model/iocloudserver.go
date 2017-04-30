@@ -63,14 +63,12 @@ func (element *CloudInstance) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	println(element)
 	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
 		}
 	}
-	println(element)
 	return err
 }
 

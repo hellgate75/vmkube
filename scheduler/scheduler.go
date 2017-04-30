@@ -9,6 +9,7 @@ import (
 	//"strconv"
 	//"fmt"
 	"vmkube/operations"
+	"fmt"
 )
 
 type ScheduleTask struct {
@@ -27,9 +28,9 @@ type Job struct {
 
 func (job *Job) Run() {
 	job.Runnable.Start()
-	if job.Async {
-		job.Runnable.WaitFor()
-	}
+	//if job.Async {
+	//	job.Runnable.WaitFor()
+	//}
 }
 
 func (job *Job) IsRunning() bool {
@@ -61,15 +62,18 @@ func (task *ScheduleTask) Execute() {
 	defer task.deactivate()
 	for i := task.Count; i < len(task.Jobs); i++ {
 		task.Jobs[i].Run()
+		task.Count++
 		if ! task.Active || task.Jobs[i].Runnable.IsError() {
 			task.Abort()
+			task.Wait()
 			break
 		}
-		task.Count++
 		if i < len(task.Jobs) - 1 {
 			time.Sleep(3*time.Second)
 		}
 	}
+	task.Count = len(task.Jobs)
+	task.Active = false
 }
 
 func (task *ScheduleTask) IsRunning() bool {
@@ -85,10 +89,17 @@ func (task *ScheduleTask) IsRunning() bool {
 }
 
 func (task *ScheduleTask) Abort() {
-	task.Active = false
-	task.Count = len(task.Jobs)
 	for i := task.Count; i < len(task.Jobs); i++ {
 		task.Jobs[i].Abort()
+	}
+	task.Active = false
+	task.Count = len(task.Jobs)
+}
+func (task *ScheduleTask) Wait() {
+	for i := task.Count; i < len(task.Jobs); i++ {
+		for task.Jobs[i].IsRunning() {
+			time.Sleep(1*time.Second)
+		}
 	}
 }
 
@@ -134,9 +145,9 @@ func (pool *SchedulerPool) Start(callback func()) {
 			if threads == 0 {
 				threads = runtime.NumCPU() - 1
 			}
-			if runtime.NumCPU() < threads + 1 {
-				runtime.GOMAXPROCS(threads + 1)
-			}
+			//if runtime.NumCPU() < threads + 1 {
+			//	runtime.GOMAXPROCS(threads + 1)
+			//}
 			for pool.State.Active {
 				if ! pool.State.Paused {
 					if threads > len(pool.State.Pool) {
@@ -149,6 +160,7 @@ func (pool *SchedulerPool) Start(callback func()) {
 								pool.WG.Add(1)
 								pool.State.Pool = append(pool.State.Pool, Task)
 								go pool.State.Pool[len(pool.State.Pool)-1].Execute()
+								dumpData("threads-on.txt", fmt.Sprintf("%d - ", len(pool.State.Pool)-1) + pool.State.Pool[len(pool.State.Pool)-1].Id, false)
 								mutex.Unlock()
 							}
 						} else {
@@ -163,6 +175,7 @@ func (pool *SchedulerPool) Start(callback func()) {
 						for i < len(pool.State.Pool) {
 							if ! pool.State.Pool[i].IsRunning() {
 								count ++
+								dumpData("threads-off.txt", fmt.Sprintf("%d - ", i) + pool.State.Pool[i].Id, false)
 								if pool.PostExecute {
 									go pool.Callback(pool.State.Pool[i])
 								}
@@ -176,6 +189,10 @@ func (pool *SchedulerPool) Start(callback func()) {
 								}
 								pool.WG.Done()
 							} else {
+								dumpData("threads-still.txt", fmt.Sprintf("%d - ", i) + pool.State.Pool[i].Id, false)
+								dumpData("threads-still.txt", fmt.Sprintf("%d - ", i)+ fmt.Sprintf("Count : %d - ", pool.State.Pool[i].Count), false)
+								dumpData("threads-still.txt", fmt.Sprintf("%d - ", i)+ fmt.Sprintf("Threads : %d - ", len(pool.State.Pool[i].Jobs)), false)
+								dumpData("threads-still.txt", fmt.Sprintf("%d - ", i) + fmt.Sprintf("Active : %t - ", pool.State.Pool[i].Active), false)
 								i++
 							}
 						}

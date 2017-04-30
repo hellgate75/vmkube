@@ -13,7 +13,7 @@ Go-Lang Virtual Machine environment manager. This package allow to define projec
 One of following :
 * [VMWare Fusion](https://my.vmware.com/en/web/vmware/info/slug/desktop_end_user_computing/vmware_fusion/8_0)
 * [VMWare Workstation Player](https://my.vmware.com/en/web/vmware/free#desktop_end_user_computing/vmware_workstation_player/12_0)
-* [Virtual Box](https://www.virtualbox.org/wiki/Downloads) (VMWare Utilities on mac : `brew install vagrant-vmware-fusion`) 
+* [Virtual Box](https://www.virtualbox.org/wiki/Downloads) (VMWare Utilities on mac : `brew install vagrant-vmware-fusion`, on windows/linux: [VDDK65](https://my.vmware.com/group/vmware/get-download?downloadGroup=VDDK65)) 
 * Microsoft [Hyper-V](https://www.manageengine.com/free-hyper-v-configuration/documents.html)
 * Any of the cloud provider [supported by docker](https://docs.docker.com/machine/drivers/)
 
