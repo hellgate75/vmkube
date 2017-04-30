@@ -6,7 +6,6 @@ import (
 	"time"
 	"sync"
 	"vmkube/operations"
-	"fmt"
 )
 
 type ScheduleTask struct {
