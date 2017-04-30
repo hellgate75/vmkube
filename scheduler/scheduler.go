@@ -5,153 +5,32 @@ import (
 	"runtime"
 	"time"
 	"sync"
-	"vmkube/operations"
+	"vmkube/tasks"
 )
 
-type ScheduleTask struct {
-	Id      string
-	Jobs    []Job
-	Active  bool
-	Count   int
-}
 
-type Job struct {
-	Id       string
-	Name     string
-	Runnable operations.RunnableStruct
-	Async    bool
-}
-
-func (job *Job) Run() {
-	job.Runnable.Start()
-}
-
-func (job *Job) IsRunning() bool {
-	return job.Runnable.Status()
-}
-
-
-func (job *Job) WaitFor()  {
-	job.Runnable.WaitFor()
-}
-func (job *Job) Abort() {
-	job.Runnable.Stop()
-}
-
-type JobProcess interface {
-	Run()
-	IsRunning() bool
-	Abort()
-	Init()
-	WaitFor()
-}
-
-type TaskProcess interface {
-	Run()
-	IsRunning() bool
-	Abort()
-	Init()
-	Wait()
-}
-
-func (task *ScheduleTask) Init() {
-	task.Count = 0
-}
-
-
-func (task *ScheduleTask) deactivate() {
-	task.Active = false
-	task.Count = len(task.Jobs)
-}
-
-func (task *ScheduleTask) Execute() {
-	task.Active = true
-	var index int = task.Count
-	for i := index; i < len(task.Jobs); i++ {
-		//DumpData("threads-task.txt", fmt.Sprintf("Start Id : %s Job: %s Sequence: %d Async: %t", task.Id, task.Jobs[i].Id, i, task.Jobs[i].Async), false)
-		if task.Jobs[i].Async {
-			go task.Jobs[i].Run()
-			task.Jobs[i].WaitFor()
-		} else {
-			task.Jobs[i].Run()
-		}
-		//DumpData("threads-task.txt", fmt.Sprintf("Complete Id : %s Job: %s Sequence: %d Async: %t", task.Id, task.Jobs[i].Id, i, task.Jobs[i].Async), false)
-		if ! task.Active || task.Jobs[i].Runnable.IsError() {
-			task.Abort()
-			task.Wait()
-			break
-		}
-		if task.Jobs[i].IsRunning() {
-			task.Jobs[i].Abort()
-		}
-		if i < len(task.Jobs) - 1 {
-			time.Sleep(1*time.Second)
-		}
-		task.Count=i+1
-		if i < len(task.Jobs) - 1 {
-			time.Sleep(1*time.Second)
-		}
-		//DumpData("threads-task.txt", fmt.Sprintf("Post Release Id : %s Job: %s Sequence: %d Count: %d", task.Id, task.Jobs[i].Id, i, task.Count), false)
-	}
-	task.Wait()
-	task.deactivate()
-	//DumpData("threads-complete.txt", fmt.Sprintf("Id : %s Count: %d Active: %t", task.Id, task.Count, task.Active), false)
-}
-
-func (task *ScheduleTask) IsRunning() bool {
-	if task.Active || task.Count < len(task.Jobs) {
-		return true
-	}
-	for i := task.Count; i < len(task.Jobs); i++ {
-		if task.Jobs[i].IsRunning() {
-			return true
-		}
-	}
-	return false
-}
-
-func (task *ScheduleTask) Abort() {
-	for i := task.Count; i < len(task.Jobs); i++ {
-		task.Jobs[i].Abort()
-	}
-	task.Active = false
-	task.Count = len(task.Jobs)
-}
-func (task *ScheduleTask) Wait() {
-	for i := task.Count; i < len(task.Jobs); i++ {
-		for task.Jobs[i].IsRunning() {
-			time.Sleep(1*time.Second)
-		}
-	}
-}
-
-type SchedulerState struct {
-	Active        bool
-	Paused        bool
-	Pool          []ScheduleTask
-}
 
 type SchedulerPool struct {
-	Id            string
-	Tasks         chan ScheduleTask
-	MaxParallel   int
-	WG            sync.WaitGroup
-	KeepAlive     bool
-	PostExecute   bool
-	Callback      func(task ScheduleTask)
-	State         SchedulerState
+	Id          string
+	Tasks       chan tasks.ScheduleTask
+	MaxParallel int
+	WG          sync.WaitGroup
+	KeepAlive   bool
+	PostExecute bool
+	Callback    func(task tasks.ScheduleTask)
+	State       tasks.SchedulerState
 }
 
 func (pool *SchedulerPool) RegisterWaitGroup(wg sync.WaitGroup) {
 	pool.WG = wg
 	pool.State.Active = false
-	pool.State.Pool = []ScheduleTask {}
+	pool.State.Pool = []tasks.ScheduleTask {}
 }
 
 func (pool *SchedulerPool) Init() {
 	pool.State.Paused = false
 	pool.State.Active = false
-	pool.Tasks = make(chan ScheduleTask)
+	pool.Tasks = make(chan tasks.ScheduleTask)
 	if pool.KeepAlive {
 		pool.WG.Add(1)
 	}
@@ -164,7 +43,7 @@ func (pool *SchedulerPool) Start(callback func()) {
 		if threads == 0 {
 			threads = runtime.NumCPU()
 		}
-		var Buffer []ScheduleTask = make([]ScheduleTask, 0)
+		var Buffer []tasks.ScheduleTask = make([]tasks.ScheduleTask, 0)
 		pumperExited := false
 		// start Pool enqueue manager
 		go func() {
@@ -288,9 +167,9 @@ func (pool *SchedulerPool) IsJobActive(id string) bool {
 
 func (pool *SchedulerPool) Stop() {
 	pool.State.Active = false
-	pool.Tasks <- ScheduleTask{
+	pool.Tasks <- tasks.ScheduleTask{
 		Id: "<close>",
-		Jobs: []Job{},
+		Jobs: []tasks.Job{},
 	}
 	close(pool.Tasks)
 	

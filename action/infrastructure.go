@@ -6,12 +6,11 @@ import (
 	"vmkube/utils"
 	"vmkube/vmio"
 	"vmkube/model"
-	"vmkube/operations"
-	"vmkube/scheduler"
 	"runtime"
 	"strings"
 	"time"
 	"os"
+	"vmkube/tasks"
 )
 
 type InfrastructureActions interface {
@@ -145,7 +144,7 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 	}
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
 	
-	deleteActivities, err := operations.GetPostBuildTaskActivities(infrastructure, operations.DestroyMachine, []string{})
+	deleteActivities, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.DestroyMachine, []string{})
 	
 	if err != nil {
 		response := Response{
@@ -154,7 +153,7 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
-	errorsList := ExecuteInfrastructureActions(infrastructure, deleteActivities, NumThreads,func(task scheduler.ScheduleTask) {
+	errorsList := ExecuteInfrastructureActions(infrastructure, deleteActivities, NumThreads,func(task tasks.ScheduleTask) {
 	})
 	if len(errorsList) > 0 {
 		utils.PrintlnError(fmt.Sprintf("Unable to complete Destroy machines process : Errors deleting Infrastructure : %s!!",  Name))
@@ -740,9 +739,9 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 	}
 	
 	utils.PrintlnWarning(fmt.Sprintf("Building new Project '%s'...", ProjectName))
-	actionCouples, err := make([]operations.ActivityCouple, 0), errors.New("Unknown Error")
+	actionCouples, err := make([]tasks.ActivityCouple, 0), errors.New("Unknown Error")
 	if ! existsInfrastructure {
-		creationCouples, err := operations.GetTaskActivities(newProject, infrastructure, operations.CreateMachine)
+		creationCouples, err := tasks.GetTaskActivities(newProject, infrastructure, tasks.CreateMachine)
 		if err != nil {
 			response := Response{
 				Status: false,
@@ -751,7 +750,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 			return response, errors.New("Unable to execute task")
 		}
 		
-		inspectCouples, err := operations.GetTaskActivities(newProject, infrastructure, operations.MachineInspect)
+		inspectCouples, err := tasks.GetTaskActivities(newProject, infrastructure, tasks.MachineInspect)
 		if err != nil {
 			response := Response{
 				Status: false,
@@ -759,7 +758,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		ipAddressCouples, err := operations.GetTaskActivities(newProject, infrastructure, operations.MachineIPAddress)
+		ipAddressCouples, err := tasks.GetTaskActivities(newProject, infrastructure, tasks.MachineIPAddress)
 		if err != nil {
 			response := Response{
 				Status: false,
@@ -767,7 +766,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		stopCouples, err := operations.GetTaskActivities(newProject, infrastructure, operations.StopMachine)
+		stopCouples, err := tasks.GetTaskActivities(newProject, infrastructure, tasks.StopMachine)
 		if err != nil {
 			response := Response{
 				Status: false,
@@ -775,7 +774,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		extendsDiskCouples, err := operations.GetTaskActivities(newProject, infrastructure, operations.MachineExtendsDisk)
+		extendsDiskCouples, err := tasks.GetTaskActivities(newProject, infrastructure, tasks.MachineExtendsDisk)
 		if err != nil {
 			response := Response{
 				Status: false,
@@ -798,8 +797,8 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
 	
 	var fixInfraValue int = len(actionCouples)
-	errorsList = ExecuteInfrastructureActions(infrastructure, actionCouples, NumThreads,func(task scheduler.ScheduleTask){
-		go func(task scheduler.ScheduleTask) {
+	errorsList = ExecuteInfrastructureActions(infrastructure, actionCouples, NumThreads,func(task tasks.ScheduleTask){
+		go func(task tasks.ScheduleTask) {
 			for i := 0; i < len(task.Jobs); i++ {
 				response := strings.Split(fmt.Sprintf("%s",task.Jobs[i].Runnable.Response()),"|")
 				if len(response) > 3 {
@@ -951,9 +950,9 @@ func (request *CmdRequest) StartInfra() (Response, error) {
 	}
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
 	
-	startMachineActivities, err := operations.GetPostBuildTaskActivities(infrastructure, operations.StartMachine, []string{})
+	startMachineActivities, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.StartMachine, []string{})
 	
-	startMachineActivities = operations.FilterByInstanceState(startMachineActivities, false)
+	startMachineActivities = tasks.FilterByInstanceState(startMachineActivities, false)
 	
 	if len(startMachineActivities) == 0 {
 		utils.PrintlnImportant("No machine to start ...")
@@ -971,7 +970,7 @@ func (request *CmdRequest) StartInfra() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
-	errorsList := ExecuteInfrastructureActions(infrastructure, startMachineActivities, NumThreads,func(task scheduler.ScheduleTask) {
+	errorsList := ExecuteInfrastructureActions(infrastructure, startMachineActivities, NumThreads,func(task tasks.ScheduleTask) {
 	})
 	if len(errorsList) > 0 {
 		utils.PrintlnError(fmt.Sprintf("Unable to complete start machines process : Errors starting Infrastructure : %s!!",  Name))
@@ -1060,9 +1059,9 @@ func (request *CmdRequest) StopInfra() (Response, error) {
 	}
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
 	
-	stopMachineActivities, err := operations.GetPostBuildTaskActivities(infrastructure, operations.StopMachine, []string{})
+	stopMachineActivities, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.StopMachine, []string{})
 	
-	stopMachineActivities = operations.FilterByInstanceState(stopMachineActivities, false)
+	stopMachineActivities = tasks.FilterByInstanceState(stopMachineActivities, false)
 	
 	if len(stopMachineActivities) == 0 {
 		utils.PrintlnImportant("No machine to stop ...")
@@ -1080,7 +1079,7 @@ func (request *CmdRequest) StopInfra() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
-	errorsList := ExecuteInfrastructureActions(infrastructure, stopMachineActivities, NumThreads,func(task scheduler.ScheduleTask) {
+	errorsList := ExecuteInfrastructureActions(infrastructure, stopMachineActivities, NumThreads,func(task tasks.ScheduleTask) {
 	})
 	if len(errorsList) > 0 {
 		utils.PrintlnError(fmt.Sprintf("Unable to complete stop machines process : Errors stopping Infrastructure : %s!!",  Name))
@@ -1176,9 +1175,9 @@ func (request *CmdRequest) RestartInfra() (Response, error) {
 	}
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
 	
-	restartMachineActivities, err := operations.GetPostBuildTaskActivities(infrastructure, operations.RestartMachine, []string{})
+	restartMachineActivities, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.RestartMachine, []string{})
 	
-	restartMachineActivities = operations.FilterByInstanceState(restartMachineActivities, false)
+	restartMachineActivities = tasks.FilterByInstanceState(restartMachineActivities, false)
 	
 	if len(restartMachineActivities) == 0 {
 		utils.PrintlnImportant("No machine to restart ...")
@@ -1196,7 +1195,7 @@ func (request *CmdRequest) RestartInfra() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
-	errorsList := ExecuteInfrastructureActions(infrastructure, restartMachineActivities, NumThreads,func(task scheduler.ScheduleTask) {
+	errorsList := ExecuteInfrastructureActions(infrastructure, restartMachineActivities, NumThreads,func(task tasks.ScheduleTask) {
 	})
 	if len(errorsList) > 0 {
 		utils.PrintlnError(fmt.Sprintf("Unable to complete restart machines process : Errors restarting Infrastructure : %s!!",  Name))

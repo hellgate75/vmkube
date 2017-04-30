@@ -1,4 +1,4 @@
-package operations
+package tasks
 
 import (
 	"vmkube/term"
@@ -24,7 +24,7 @@ type RunnableStruct interface {
 	WaitFor()
 }
 
-const MachineReadOperationTimeout = 1200
+const MachineReadOperationTimeout = 900
 
 type MachineOperationsJob struct {
 	Name             string
@@ -69,6 +69,11 @@ func (job *MachineOperationsJob) Start() {
 				job.MachineMessage.Complete = true
 				job.MachineMessage.Error = errors.New(fmt.Sprintf("Interrupted Machine %s Command %s", name,ConvertActivityTaskInString(job.Activity.Task)))
 			}
+			defer func() {
+				// recover from panic caused by writing to a closed channel
+				if r := recover(); r != nil {
+				}
+			}()
 			job.OutChan <- job
 		}
 		if job.control.Interrupt {
@@ -151,7 +156,7 @@ func (job *MachineOperationsJob) Start() {
 				if r := recover(); r != nil {
 				}
 			}()
-			job.OutChan <-job
+			job.OutChan <- job
 		}
 		job.State = false
 	}

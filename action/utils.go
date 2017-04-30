@@ -13,9 +13,9 @@ import (
 	"time"
 	"vmkube/term"
 	"vmkube/scheduler"
-	"vmkube/operations"
 	"reflect"
 	"sync"
+	"vmkube/tasks"
 )
 
 
@@ -586,17 +586,17 @@ func PrintCommandHelper(command	string, subCommand string) {
 
 
 
-func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastructureActionCouples []operations.ActivityCouple, NumThreads int, postTaskCallback func(task scheduler.ScheduleTask)) []error {
-	return executeActions(infrastructure,operations.GroupActivitiesBySubject(infrastructureActionCouples), NumThreads, postTaskCallback)
+func ExecuteInfrastructureActions(infrastructure model.Infrastructure,infrastructureActionCouples []tasks.ActivityCouple, NumThreads int, postTaskCallback func(task tasks.ScheduleTask)) []error {
+	return executeActions(infrastructure,tasks.GroupActivitiesBySubject(infrastructureActionCouples), NumThreads, postTaskCallback)
 	
 }
 
 
-func executeActions(infrastructure model.Infrastructure, actionGroups []operations.ActivityGroup, NumThreads int, postTaskCallback func(task scheduler.ScheduleTask)) []error {
+func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.ActivityGroup, NumThreads int, postTaskCallback func(task tasks.ScheduleTask)) []error {
 	
 	var errorsList []error = make([]error, 0)
 	var maxJobNameLen int = 0
-	var MachineAlterationAnswerChannel chan *operations.MachineOperationsJob = make(chan *operations.MachineOperationsJob)
+	var MachineAlterationAnswerChannel chan *tasks.MachineOperationsJob = make(chan *tasks.MachineOperationsJob)
 	var jobsArrayLen int = 0
 	var termElements []term.KeyValueElement = make([]term.KeyValueElement, 0)
 	jobsArrayLen += len(actionGroups)
@@ -606,7 +606,7 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []operatio
 		MaxParallel: NumThreads,
 		KeepAlive: true,
 		PostExecute: true,
-		Callback: func(task scheduler.ScheduleTask) {
+		Callback: func(task tasks.ScheduleTask) {
 			//Any completed task come here ....
 			postTaskCallback(task)
 		},
@@ -620,7 +620,7 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []operatio
 		if actionGroups[i].IsCloud {
 			Prefix = "Cloud "
 		}
-		var name string = fmt.Sprintf("[%d/%d] %s %sMachine Instance: '%s'", 0,len(actionGroups[i].Activities),operations.ConvertActivityTaskInString(actionGroups[i].Task), Prefix,
+		var name string = fmt.Sprintf("[%d/%d] %s %sMachine Instance: '%s'", 0,len(actionGroups[i].Activities),tasks.ConvertActivityTaskInString(actionGroups[i].Task), Prefix,
 											actionGroups[i].Subject)
 		
 		if len(name) > maxJobNameLen {
@@ -642,12 +642,12 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []operatio
 	})
 	go func(){
 		for i := 0; i < jobsArrayLen; i++ {
-				var jobs []scheduler.Job = make([]scheduler.Job, 0)
+				var jobs []tasks.Job = make([]tasks.Job, 0)
 				for j := 0; j < len(actionGroups[i].Activities); j++ {
-					jobs = append(jobs, scheduler.Job{
+					jobs = append(jobs, tasks.Job{
 							Id: jobIds[i],
 							Name: fmt.Sprintf("Process Instance from Project, Machine Group Name: %s Task : %d", actionGroups[i].Name, j),
-							Runnable: operations.RunnableStruct(&operations.MachineOperationsJob{
+							Runnable: tasks.MachineOperationsJob(tasks.MachineOperationsJob{
 								Name: fmt.Sprintf("Process Instance from Project, Machine Group Name: %s Task : %d", actionGroups[i].Name, j),
 								Infra: actionGroups[i].Activities[j].Infra,
 								Project:actionGroups[i].Activities[j].Project,
@@ -658,12 +658,12 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []operatio
 								SendStartMessage: true,
 								Index: j,
 								PartOf: len(actionGroups[i].Activities),
-								Command: operations.ConvertActivityTaskInString(actionGroups[i].Activities[0].Task),
+								Command: tasks.ConvertActivityTaskInString(actionGroups[i].Activities[0].Task),
 								ActivityGroup: actionGroups[i],
 							}),
 						})
 				}
-				pool.Tasks <- scheduler.ScheduleTask{
+				pool.Tasks <- tasks.ScheduleTask{
 					Id: NewUUIDString(),
 					Jobs: jobs,
 					
@@ -699,7 +699,7 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []operatio
 					if ! machineOpsJob.State {
 						answerCounter++
 					}
-					go func(machineOpsJob *operations.MachineOperationsJob) {
+					go func(machineOpsJob *tasks.MachineOperationsJob) {
 						machineMessage := machineOpsJob.MachineMessage
 						activity := machineOpsJob.Activity
 						
@@ -790,17 +790,17 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []operatio
 							if machineOpsJob.ActivityGroup.IsCloud {
 								Prefix = "Cloud "
 							}
-							var keyName string = fmt.Sprintf("[%d/%d] %s %sMachine Instance: '%s'", (machineOpsJob.Index + 1),machineOpsJob.PartOf,operations.ConvertActivityTaskInString(machineOpsJob.ActivityGroup.Task), Prefix,
+							var keyName string = fmt.Sprintf("[%d/%d] %s %sMachine Instance: '%s'", (machineOpsJob.Index + 1),machineOpsJob.PartOf,tasks.ConvertActivityTaskInString(machineOpsJob.ActivityGroup.Task), Prefix,
 								machineOpsJob.ActivityGroup.Subject)
 							keyTerm.Name = keyName
 							if machineOpsJob.State {
 								if machineMessage.Error != nil {
 										answerScreenIds = append(answerScreenIds, keyTerm.Id)
 										keyTerm.State = term.StateColorRed
-										keyTerm.Value = utils.StrPad(operations.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "..." + term.ScreenBold("failed!!"), 35)
+										keyTerm.Value = utils.StrPad(tasks.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "..." + term.ScreenBold("failed!!"), 35)
 								} else {
 									keyTerm.State = term.StateColorYellow
-									keyTerm.Value = term.StrPad(operations.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "...in progress", 35)
+									keyTerm.Value = term.StrPad(tasks.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "...in progress", 35)
 								}
 							} else {
 								if machineOpsJob.Index == machineOpsJob.PartOf - 1 {
@@ -816,10 +816,10 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []operatio
 									if machineMessage.Error != nil {
 										answerScreenIds = append(answerScreenIds, keyTerm.Id)
 										keyTerm.State = term.StateColorRed
-										keyTerm.Value = term.StrPad(operations.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "..." + term.ScreenBold("failed!!"), 35)
+										keyTerm.Value = term.StrPad(tasks.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "..." + term.ScreenBold("failed!!"), 35)
 									} else {
 										keyTerm.State = term.StateColorYellow
-										keyTerm.Value = term.StrPad(operations.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "..." + term.ScreenBold("completed!!"), 35)
+										keyTerm.Value = term.StrPad(tasks.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "..." + term.ScreenBold("completed!!"), 35)
 									}
 								}
 							}
@@ -961,8 +961,8 @@ func FixInfrastructureElementValue(Infrastructure model.Infrastructure, instance
 	return false
 }
 
-func DefineDestroyActivityFromCreateOne(activity operations.ActivityCouple) operations.ActivityCouple {
-	return operations.ActivityCouple{
+func DefineDestroyActivityFromCreateOne(activity tasks.ActivityCouple) tasks.ActivityCouple {
+	return tasks.ActivityCouple{
 		CInstance: activity.CInstance,
 		CMachine: activity.CMachine,
 		Infra: activity.Infra,
@@ -973,11 +973,11 @@ func DefineDestroyActivityFromCreateOne(activity operations.ActivityCouple) oper
 		Plans: activity.Plans,
 		Project: activity.Project,
 		Machine: activity.Machine,
-		Task: operations.DestroyMachine,
+		Task: tasks.DestroyMachine,
 	}
 }
 
-func IsActivitySelected(activity operations.ActivityCouple, id string) bool {
+func IsActivitySelected(activity tasks.ActivityCouple, id string) bool {
 		if activity.IsCloud {
 			if activity.CInstance.MachineId == id {
 				return true
@@ -991,8 +991,8 @@ func IsActivitySelected(activity operations.ActivityCouple, id string) bool {
 }
 
 
-func DefineRebuildOfWholeInfrastructure(activities []operations.ActivityCouple, excludedIds []string) []operations.ActivityCouple {
-	var outActivities []operations.ActivityCouple = make([]operations.ActivityCouple, 0)
+func DefineRebuildOfWholeInfrastructure(activities []tasks.ActivityCouple, excludedIds []string) []tasks.ActivityCouple {
+	var outActivities []tasks.ActivityCouple = make([]tasks.ActivityCouple, 0)
 	for _,activity := range activities {
 		outActivities = append(outActivities, DefineDestroyActivityFromCreateOne(activity))
 		Excluded := false
@@ -1009,7 +1009,7 @@ func DefineRebuildOfWholeInfrastructure(activities []operations.ActivityCouple, 
 	return outActivities
 }
 
-func FindActivityById(activities []operations.ActivityCouple, id string) (operations.ActivityCouple, error) {
+func FindActivityById(activities []tasks.ActivityCouple, id string) (tasks.ActivityCouple, error) {
 	for _, activity := range activities {
 		if activity.IsCloud {
 			if activity.CInstance.MachineId == id {
@@ -1021,16 +1021,11 @@ func FindActivityById(activities []operations.ActivityCouple, id string) (operat
 			}
 		}
 	}
-	return operations.ActivityCouple{}, errors.New("Activity Not Found")
+	return tasks.ActivityCouple{}, errors.New("Activity Not Found")
 }
 
-func SortActionsByRelevance(actions []operations.ActivityCouple) []operations.ActivityCouple {
-	//TODO: Implement Sort by ActivityTask Order: DestroyMachine, CreateMachine, StopMachine, StartMachine, RestartMachine, MachineStatus, MachineEnv, MachineInspect, MachineIPAddress,
-	return actions
-}
-
-func FilterCreationBasedOnProjectActions(actions ProjectActionIndex, activities []operations.ActivityCouple) ([]string, []operations.ActivityCouple) {
-	var outActivities []operations.ActivityCouple = make([]operations.ActivityCouple, 0)
+func FilterCreationBasedOnProjectActions(actions ProjectActionIndex, activities []tasks.ActivityCouple) ([]string, []tasks.ActivityCouple) {
+	var outActivities []tasks.ActivityCouple = make([]tasks.ActivityCouple, 0)
 	var removedIds []string = make([]string, 0)
 	var allActions bool = false
 	for _,action := range actions.Actions {
