@@ -11,6 +11,7 @@ import (
 	"time"
 	"os"
 	"vmkube/tasks"
+	"vmkube/procedures"
 )
 
 type InfrastructureActions interface {
@@ -143,8 +144,10 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		utils.PrintlnWarning(fmt.Sprintf("Number of threads in order to available processors : %d", NumThreads))
 	}
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
-	
-	deleteActivities, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.DestroyMachine, []string{})
+
+	exclusionList, _ := FilterForExistState(infrastructure)
+
+	deleteActivities, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.DestroyMachine, exclusionList)
 	
 	if err != nil {
 		response := Response{
@@ -641,11 +644,9 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 			}
 		}
 		if ! FoundName {
-			println("Name")
 			request.Arguments.Options = append(request.Arguments.Options, []string{"name", descriptor.Name})
 		}
 		if ! FoundForce {
-			println("Force")
 			request.Arguments.Options = append(request.Arguments.Options, []string{"force", "true"})
 		}
 		resp, err := request.DeleteProject()
@@ -992,11 +993,11 @@ func (request *CmdRequest) StartInfra() (Response, error) {
 		utils.PrintlnWarning(fmt.Sprintf("Number of threads in order to available processors : %d", NumThreads))
 	}
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
-	
-	startMachineActivities, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.StartMachine, []string{})
-	
-	startMachineActivities = tasks.FilterByInstanceState(startMachineActivities, false)
-	
+
+	exclusionList, _ := FilterForExistAndNotRunningState(infrastructure, procedures.Machine_State_Running)
+
+	startMachineActivities, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.StartMachine, exclusionList)
+
 	if len(startMachineActivities) == 0 {
 		utils.PrintlnImportant("No machine to start ...")
 		response := Response{
@@ -1101,11 +1102,11 @@ func (request *CmdRequest) StopInfra() (Response, error) {
 		utils.PrintlnWarning(fmt.Sprintf("Number of threads in order to available processors : %d", NumThreads))
 	}
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
-	
-	stopMachineActivities, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.StopMachine, []string{})
-	
-	stopMachineActivities = tasks.FilterByInstanceState(stopMachineActivities, false)
-	
+
+	exclusionList, _ := FilterForExistAndRunningState(infrastructure, procedures.Machine_State_Running)
+
+	stopMachineActivities, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.StopMachine, exclusionList)
+
 	if len(stopMachineActivities) == 0 {
 		utils.PrintlnImportant("No machine to stop ...")
 		response := Response{
@@ -1217,11 +1218,11 @@ func (request *CmdRequest) RestartInfra() (Response, error) {
 		utils.PrintlnWarning(fmt.Sprintf("Number of threads in order to available processors : %d", NumThreads))
 	}
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
-	
-	restartMachineActivities, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.RestartMachine, []string{})
-	
-	restartMachineActivities = tasks.FilterByInstanceState(restartMachineActivities, false)
-	
+
+	exclusionList, _ := FilterForExistAndRunningState(infrastructure, procedures.Machine_State_Running)
+
+	restartMachineActivities, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.RestartMachine, exclusionList)
+
 	if len(restartMachineActivities) == 0 {
 		utils.PrintlnImportant("No machine to restart ...")
 		response := Response{

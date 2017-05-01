@@ -102,7 +102,6 @@ func (element *RollBackSegment) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	println(element)
 	if err == nil {
 		err := element.PostImport()
 		if err != nil {
@@ -221,14 +220,12 @@ func (element *RollBackIndex) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	println(element)
 	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
 		}
 	}
-	println(element)
 	return err
 }
 
@@ -310,14 +307,12 @@ func (element *ActionDescriptor) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	println(element)
 	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
 		}
 	}
-	println(element)
 	return err
 }
 
@@ -393,14 +388,12 @@ func (element *ProjectActionIndex) Import(file string, format string) error {
 	} else  {
 		err = xml.Unmarshal(byteArray, &element)
 	}
-	println(element)
 	if err == nil {
 		err := element.PostImport()
 		if err != nil {
 			return err
 		}
 	}
-	println(element)
 	return err
 }
 

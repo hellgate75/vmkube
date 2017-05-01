@@ -16,6 +16,8 @@ import (
 	"reflect"
 	"sync"
 	"vmkube/tasks"
+	"vmkube/procedures"
+	"os/exec"
 )
 
 
@@ -1029,6 +1031,109 @@ func FindActivityById(activities []tasks.ActivityCouple, id string) (tasks.Activ
 		}
 	}
 	return tasks.ActivityCouple{}, errors.New("Activity Not Found")
+}
+
+const MachineReadOperationTimeout = 900
+
+func FilterForExistState(infrastructure model.Infrastructure) ([]string, error) {
+	return  filterForExistStateAndCondState(infrastructure, procedures.Machine_State_None, false, false)
+}
+
+func FilterForExistAndRunningState(infrastructure model.Infrastructure, state procedures.MachineState) ([]string, error) {
+	return  filterForExistStateAndCondState(infrastructure, state, true, false)
+}
+
+func FilterForExistAndNotRunningState(infrastructure model.Infrastructure, state procedures.MachineState) ([]string, error) {
+	return  filterForExistStateAndCondState(infrastructure, state, true, true)
+}
+
+func filterForExistStateAndCondState(infrastructure model.Infrastructure, state procedures.MachineState, checkState bool, notState bool) ([]string, error) {
+	var inactiveMachines []string = make([]string, 0)
+	var  err error
+	for _,domain := range infrastructure.Domains {
+		for _,network := range domain.Networks {
+			for _,instance := range network.LocalInstances {
+				procedureExecutor := procedures.GetCurrentMachineExecutor(model.Project{},
+					infrastructure,
+					model.LocalMachine{},
+					model.CloudMachine{},
+					instance,
+					model.CloudInstance{},
+					instance.Id,
+					false,
+					false)
+				var commandPipe chan procedures.MachineMessage = make(chan procedures.MachineMessage, 1)
+				var commandChannel chan *exec.Cmd = make(chan *exec.Cmd, 1)
+				procedureExecutor.MachineStatus(commandPipe, commandChannel)
+				select {
+					case answer, ok := <- commandPipe:
+						if ok {
+							if answer.Error == nil {
+								if answer.State == procedures.Machine_State_None {
+									inactiveMachines = append(inactiveMachines, instance.Id)
+								} else if checkState {
+									if (!notState && answer.State != state) || (notState && answer.State == state) {
+										inactiveMachines = append(inactiveMachines, instance.Id)
+									}
+								}
+							} else {
+								err = answer.Error
+								inactiveMachines = append(inactiveMachines, instance.Id)
+							}
+						} else {
+							inactiveMachines = append(inactiveMachines, instance.Id)
+						}
+						close(commandPipe)
+						close(commandChannel)
+					case <-time.After(time.Second * MachineReadOperationTimeout):
+						inactiveMachines = append(inactiveMachines, instance.Id)
+						close(commandPipe)
+						close(commandChannel)
+				}
+
+			}
+			for _,instance := range network.CloudInstances {
+				procedureExecutor := procedures.GetCurrentMachineExecutor(model.Project{},
+					infrastructure,
+					model.LocalMachine{},
+					model.CloudMachine{},
+					model.LocalInstance{},
+					instance,
+					instance.Id,
+					true,
+					false)
+				var commandPipe chan procedures.MachineMessage = make(chan procedures.MachineMessage, 1)
+				var commandChannel chan *exec.Cmd = make(chan *exec.Cmd, 1)
+				procedureExecutor.MachineStatus(commandPipe, commandChannel)
+				select {
+					case answer, ok := <- commandPipe:
+						if ok {
+							if answer.Error == nil {
+								if answer.State == procedures.Machine_State_None {
+									inactiveMachines = append(inactiveMachines, instance.Id)
+								} else if checkState {
+									if (!notState && answer.State != state) || (notState && answer.State == state) {
+										inactiveMachines = append(inactiveMachines, instance.Id)
+									}
+								}
+							} else {
+								err = answer.Error
+								inactiveMachines = append(inactiveMachines, instance.Id)
+							}
+						} else {
+							inactiveMachines = append(inactiveMachines, instance.Id)
+						}
+						close(commandPipe)
+						close(commandChannel)
+					case <-time.After(time.Second * MachineReadOperationTimeout):
+						inactiveMachines = append(inactiveMachines, instance.Id)
+						close(commandPipe)
+						close(commandChannel)
+				}
+			}
+		}
+	}
+	return inactiveMachines, err
 }
 
 func FilterCreationBasedOnProjectActions(actions ProjectActionIndex, activities []tasks.ActivityCouple) ([]string, []tasks.ActivityCouple) {

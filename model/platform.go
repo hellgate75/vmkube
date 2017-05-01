@@ -221,7 +221,7 @@ Describe Cloud Machine options, contains
 */
 type CloudInstance struct {
 	Id          string      `json:"Id" xml:"Id"`
-	MachineId    string      `json:"MachineId" xml:"MachineId"`
+	MachineId    string     `json:"MachineId" xml:"MachineId"`
 	Name        string      `json:"Name" xml:"Name"`
 	Driver      string      `json:"Driver" xml:"Driver"`
 	Hostname    string      `json:"Hostname" xml:"Hostname"`

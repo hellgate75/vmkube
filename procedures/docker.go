@@ -178,6 +178,11 @@ func DockerMachineInterruptSignal(machine *DockerMachineExecutor, commandPipe ch
 func (machine *DockerMachineExecutor)  CreateCloudMachine(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
 	var command []string = DockerMachineDefineCloudMachineCommand(machine.CMachine)
 	cmd := executeSyncCommand(command)
+	defer func() {
+		// recover from panic caused by writing to a closed channel
+		if r := recover(); r != nil {
+		}
+	}()
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
 	state := Machine_State_Running
@@ -241,6 +246,11 @@ func (machine *DockerMachineExecutor)  CreateMachine(commandPipe chan MachineMes
 	//	return
 	//}
 	cmd := executeSyncCommand(command)
+	defer func() {
+		// recover from panic caused by writing to a closed channel
+		if r := recover(); r != nil {
+		}
+	}()
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
 	state := Machine_State_Running
@@ -291,6 +301,11 @@ func (machine *DockerMachineExecutor)  ExtendsDisk(commandPipe chan MachineMessa
 	if diskSize > 0 {
 		message += fmt.Sprintf("Resizing disk to %sGB", diskSize)
 		cmd := executeSyncCommand(command)
+		defer func() {
+			// recover from panic caused by writing to a closed channel
+			if r := recover(); r != nil {
+			}
+		}()
 		commandChannel <- cmd
 		bytesArray, _ := cmd.CombinedOutput()
 		message += fmt.Sprintf("%s\n",bytesArray)
@@ -338,6 +353,11 @@ func (machine *DockerMachineExecutor)  RemoveMachine(commandPipe chan MachineMes
 	command = append( command,  "-f")
 	command = append( command,  name + "-" + id)
 	cmd := executeSyncCommand(command)
+	defer func() {
+		// recover from panic caused by writing to a closed channel
+		if r := recover(); r != nil {
+		}
+	}()
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
 	state := Machine_State_Running
@@ -383,6 +403,11 @@ func (machine *DockerMachineExecutor)  StopMachine(commandPipe chan MachineMessa
 	command = append( command,  "stop")
 	command = append( command,  name + "-" + id)
 	cmd := executeSyncCommand(command)
+	defer func() {
+		// recover from panic caused by writing to a closed channel
+		if r := recover(); r != nil {
+		}
+	}()
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
 	state := Machine_State_Running
@@ -428,6 +453,11 @@ func (machine *DockerMachineExecutor)  StartMachine(commandPipe chan MachineMess
 	command = append( command,  "start")
 	command = append( command,  name + "-" + id)
 	cmd := executeSyncCommand(command)
+	defer func() {
+		// recover from panic caused by writing to a closed channel
+		if r := recover(); r != nil {
+		}
+	}()
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
 	state := Machine_State_Running
@@ -473,6 +503,11 @@ func (machine *DockerMachineExecutor)  RestartMachine(commandPipe chan MachineMe
 	command = append( command,  "restart")
 	command = append( command,  name + "-" + id)
 	cmd := executeSyncCommand(command)
+	defer func() {
+		// recover from panic caused by writing to a closed channel
+		if r := recover(); r != nil {
+		}
+	}()
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
 	state := Machine_State_Running
@@ -517,9 +552,9 @@ func (machine *DockerMachineExecutor)  MachineStatus(commandPipe chan MachineMes
 	command = append( command,  "docker-machine")
 	command = append( command,  "status")
 	command = append( command,  name + "-" + id)
-	cmd := executeSyncCommand(command)
-	commandChannel <- cmd
-	bytesArray, err := cmd.CombinedOutput()
+	bytesArray, err := executeSyncCommand(command).Output()
+	commandChannel <- nil
+	//bytesArray, err := cmd.CombinedOutput()
 	state := Machine_State_None
 	state = GetStateFromMachineAnswer(string(bytesArray))
 	defer func() {
@@ -561,6 +596,11 @@ func (machine *DockerMachineExecutor)  MachineEnv(commandPipe chan MachineMessag
 	command = append( command,  "env")
 	command = append( command,  name + "-" + id)
 	cmd := executeSyncCommand(command)
+	defer func() {
+		// recover from panic caused by writing to a closed channel
+		if r := recover(); r != nil {
+		}
+	}()
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
 	state := Machine_State_Running
@@ -607,6 +647,11 @@ func (machine *DockerMachineExecutor)  MachineInspect(commandPipe chan MachineMe
 	command = append( command,  "inspect")
 	command = append( command,  machineName)
 	cmd := executeSyncCommand(command)
+	defer func() {
+		// recover from panic caused by writing to a closed channel
+		if r := recover(); r != nil {
+		}
+	}()
 	commandChannel <- cmd
 	bytes, err := cmd.CombinedOutput()
 	state := Machine_State_Running
@@ -697,6 +742,75 @@ func (machine *DockerMachineExecutor)  MachineIPAddress(commandPipe chan Machine
 		IPAddress: ipAddress,
 	}
 }
+
+func (machine *DockerMachineExecutor) MachineExists(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd) {
+	var name, id string
+	if machine.IsCloud {
+		if machine.NewInfra {
+			name, id= machine.CMachine.Name, machine.CMachine.Id
+		} else {
+			name, id= machine.CInstance.Name, machine.CInstance.MachineId
+		}
+	} else {
+		if machine.NewInfra {
+			name, id = machine.Machine.Name, machine.Machine.Id
+		} else {
+			name, id = machine.Instance.Name, machine.Instance.MachineId
+		}
+	}
+	machineName := name + "-" + id
+	var command []string = make([]string, 0)
+	command = append( command,  "docker-machine")
+	command = append( command,  "ls")
+	bytes, err := executeSyncCommand(command).Output()
+	commandChannel <- nil
+
+	var state MachineState = Machine_State_None
+	var existState MachineExist = Machine_Missing
+	message := ""
+	ipAddress := ""
+	if err != nil {
+		message += fmt.Sprintf("Getting IPAddress from docker machine : %s\n", machineName)
+		message += err.Error() + "\n"
+	} else {
+		var machineList []string = strings.Split(string(bytes), "\n")
+		for _,machineLine := range machineList {
+			if strings.Index(machineLine, name) == 0 {
+				existState = Machine_Exists
+				var tokens []string = strings.Split(machineLine, "  ")
+				for _,token := range tokens {
+					if runState := GetStateFromMachineAnswer(token); runState != Machine_State_None {
+						state = runState
+						break
+					}
+				}
+				break
+			}
+		}
+	}
+
+	defer func() {
+		// recover from panic caused by writing to a closed channel
+		if r := recover(); r != nil {
+		}
+	}()
+	commandPipe <- MachineMessage{
+		Complete: true,
+		Cmd: command,
+		Project: machine.Project,
+		Infra: machine.Infra,
+		Operation: MachineExists,
+		Error: err,
+		Result: existState.String(),
+		Supply: message,
+		State: state,
+		InstanceId: machine.InstanceId,
+		IsCloud: machine.IsCloud,
+		IPAddress: ipAddress,
+	}
+
+}
+
 func (machine *DockerMachineExecutor) SetControlStructure(Control *MachineControlStructure) {
 	machine.Control = Control
 }

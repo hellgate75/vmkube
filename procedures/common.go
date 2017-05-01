@@ -43,6 +43,7 @@ type MachineActions interface {
 	MachineEnv(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
 	MachineInspect(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
 	MachineIPAddress(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
+	MachineExists(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
 	ExtendsDisk(commandPipe chan MachineMessage, commandChannel chan *exec.Cmd)
 	SetControlStructure(Control *MachineControlStructure)
 }
@@ -78,6 +79,7 @@ const(
 	MachineEnvironment
 	MachineInspect
 	MachineIPAddress
+	MachineExists
 	ExtendsDisk
 )
 
