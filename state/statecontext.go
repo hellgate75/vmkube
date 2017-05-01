@@ -5,9 +5,7 @@ import (
 	"time"
 )
 
-const RESPONSE_TIMEOUT = 900
-
-type ContextStateData map[string]bool
+type StateContextData map[string]bool
 
 type StateReferenceData struct {
 	Id			string
@@ -22,7 +20,7 @@ type StateContext interface {
 
 type stateCtxData struct {
 	mutex     sync.RWMutex
-	Responses ContextStateData
+	Responses StateContextData
 }
 
 func (data stateCtxData) Collect(RequestId string) chan StateReferenceData {
@@ -64,6 +62,6 @@ func (data stateCtxData) HasValue(RequestId string) bool {
 
 func NewStateContext() StateContext {
 	return  StateContext(stateCtxData{
-		Responses: make(ContextStateData),
+		Responses: make(StateContextData),
 	})
 }
