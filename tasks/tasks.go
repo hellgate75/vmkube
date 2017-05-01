@@ -15,7 +15,7 @@ type ScheduleTask struct {
 type Job struct {
 	Id       	string
 	Name     	string
-	Runnable 	MachineOperationsJob
+	Runnable 	RunnableStruct
 	Async    	bool
 	Sequence	int
 	Of				int

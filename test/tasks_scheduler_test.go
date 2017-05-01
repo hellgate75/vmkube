@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"vmkube/scheduler"
 	"bytes"
+	"vmkube/tasks"
 )
 
 /*
@@ -41,6 +42,20 @@ func (job TestJob) Status() bool {
 	return job.State
 }
 
+func (job TestJob) IsInterrupted() bool {
+	return  false
+}
+func (job TestJob) IsError() bool {
+	return  false
+}
+func (job TestJob) Response() interface{} {
+	return  ""
+}
+func (job TestJob) WaitFor() {
+
+}
+
+
 func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 	pool := scheduler.SchedulerPool{
 		Id: action.NewUUIDString(),
@@ -51,9 +66,9 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 	go pool.Start(func(){
 		pool.WG.Done()
 	})
-	task1 := scheduler.ScheduleTask{
+	task1 := tasks.ScheduleTask{
 		Id: action.NewUUIDString(),
-		Jobs: []scheduler.Job{
+		Jobs: []tasks.Job{
 			{
 				Id: action.NewUUIDString(),
 				Name: "TestJob1",
@@ -74,9 +89,9 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 			},
 		},
 	}
-	task2 := scheduler.ScheduleTask{
+	task2 := tasks.ScheduleTask{
 		Id: action.NewUUIDString(),
-		Jobs: []scheduler.Job{
+		Jobs: []tasks.Job{
 			{
 				Id: action.NewUUIDString(),
 				Name: "TestJob1",
@@ -97,9 +112,9 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 			},
 		},
 	}
-	task3 := scheduler.ScheduleTask{
+	task3 := tasks.ScheduleTask{
 		Id: action.NewUUIDString(),
-		Jobs: []scheduler.Job{
+		Jobs: []tasks.Job{
 			{
 				Id: action.NewUUIDString(),
 				Name: "TestJob1",

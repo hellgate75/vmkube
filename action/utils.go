@@ -647,7 +647,7 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 					jobs = append(jobs, tasks.Job{
 							Id: jobIds[i],
 							Name: fmt.Sprintf("Process Instance from Project, Machine Group Name: %s Task : %d", actionGroups[i].Name, j),
-							Runnable: tasks.MachineOperationsJob(tasks.MachineOperationsJob{
+							Runnable: tasks.RunnableStruct(&tasks.MachineOperationsJob{
 								Name: fmt.Sprintf("Process Instance from Project, Machine Group Name: %s Task : %d", actionGroups[i].Name, j),
 								Infra: actionGroups[i].Activities[j].Infra,
 								Project:actionGroups[i].Activities[j].Project,
