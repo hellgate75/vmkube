@@ -25,7 +25,7 @@ type genericCtxData struct {
 	Entries GenericContextData
 }
 
-func (data genericCtxData) Collect(RequestId string) chan ReferenceEntry {
+func (data *genericCtxData) Collect(RequestId string) chan ReferenceEntry {
 	var Channel chan ReferenceEntry = make(chan ReferenceEntry, 1)
 	go func(data *genericCtxData, Channel chan ReferenceEntry, RequestId string) {
 		select {
@@ -39,11 +39,11 @@ func (data genericCtxData) Collect(RequestId string) chan ReferenceEntry {
 			break
 		}
 		close(Channel)
-	}(&data, Channel, RequestId)
+	}(data, Channel, RequestId)
 	return  Channel
 }
 
-func (data genericCtxData) Value(RequestId string) *interface{} {
+func (data *genericCtxData) Value(RequestId string) *interface{} {
 	defer  data.mutex.RUnlock()
 	data.mutex.RLock()
 	val, ok := data.Entries[RequestId]
@@ -53,7 +53,7 @@ func (data genericCtxData) Value(RequestId string) *interface{} {
 	return nil
 }
 
-func (data genericCtxData) HasKey(RequestId string) bool {
+func (data *genericCtxData) HasKey(RequestId string) bool {
 	defer  data.mutex.RUnlock()
 	data.mutex.RLock()
 	_,ok := data.Entries[RequestId]
@@ -61,7 +61,7 @@ func (data genericCtxData) HasKey(RequestId string) bool {
 }
 
 func NewGenericContext() GenericContext {
-	return  GenericContext(genericCtxData{
+	return  GenericContext(&genericCtxData{
 		Entries: make(GenericContextData),
 	})
 }

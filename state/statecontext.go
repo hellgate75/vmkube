@@ -23,7 +23,7 @@ type stateCtxData struct {
 	Responses StateContextData
 }
 
-func (data stateCtxData) Collect(RequestId string) chan StateReferenceData {
+func (data *stateCtxData) Collect(RequestId string) chan StateReferenceData {
 	var Channel chan StateReferenceData = make(chan StateReferenceData, 1)
 	go func(data *stateCtxData, Channel chan StateReferenceData, RequestId string) {
 		select {
@@ -39,11 +39,11 @@ func (data stateCtxData) Collect(RequestId string) chan StateReferenceData {
 				data.mutex.Unlock()
 		}
 		close(Channel)
-	}(&data, Channel, RequestId)
+	}(data, Channel, RequestId)
 	return  Channel
 }
 
-func (data stateCtxData) State(RequestId string) bool {
+func (data *stateCtxData) State(RequestId string) bool {
 	defer  data.mutex.RUnlock()
 	data.mutex.RLock()
 	val, ok := data.Responses[RequestId]
@@ -53,7 +53,7 @@ func (data stateCtxData) State(RequestId string) bool {
 	return false
 }
 
-func (data stateCtxData) HasValue(RequestId string) bool {
+func (data *stateCtxData) HasValue(RequestId string) bool {
 	defer  data.mutex.RUnlock()
 	data.mutex.RLock()
 	_,ok := data.Responses[RequestId]
@@ -61,7 +61,7 @@ func (data stateCtxData) HasValue(RequestId string) bool {
 }
 
 func NewStateContext() StateContext {
-	return  StateContext(stateCtxData{
+	return  StateContext(&stateCtxData{
 		Responses: make(StateContextData),
 	})
 }

@@ -645,9 +645,9 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 	})
 	go func(){
 		for i := 0; i < jobsArrayLen; i++ {
-				var jobs []tasks.Job = make([]tasks.Job, 0)
+				var jobs []tasks.JobProcess = make([]tasks.JobProcess, 0)
 				for j := 0; j < len(actionGroups[i].Activities); j++ {
-					jobs = append(jobs, tasks.Job{
+					jobs = append(jobs, tasks.JobProcess(&tasks.Job{
 							Id: jobIds[i],
 							Name: fmt.Sprintf("Process Instance from Project, Machine Group Name: %s Task : %d", actionGroups[i].Name, j),
 							Runnable: tasks.RunnableStruct(&tasks.MachineOperationsJob{
@@ -664,7 +664,7 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 								Command: tasks.ConvertActivityTaskInString(actionGroups[i].Activities[0].Task),
 								ActivityGroup: actionGroups[i],
 							}),
-						})
+						}))
 				}
 				pool.Tasks <- tasks.ScheduleTask{
 					Id: NewUUIDString(),
@@ -1095,4 +1095,11 @@ func CopyStructure(origin interface{}, target interface{}) bool {
 func ExtractStructureValue(origin interface{}, field string) interface{} {
 	valueOfOrigin := reflect.ValueOf(origin)
 	return valueOfOrigin.FieldByName(field).Interface()
+}
+
+func GetDefault(value interface{}, nilVal interface{}, dafaultVal interface{}) interface{} {
+	if value == nilVal {
+		return  dafaultVal
+	}
+	return value
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 	"sync"
 	"vmkube/tasks"
+	"vmkube/state"
 )
 
 
@@ -45,6 +46,8 @@ func (pool *SchedulerPool) Start(callback func()) {
 		}
 		var Buffer []tasks.ScheduleTask = make([]tasks.ScheduleTask, 0)
 		pumperExited := false
+		var state state.StateContext = state.NewStateContext()
+
 		// start Pool enqueue manager
 		go func() {
 			for pool.State.Active {
@@ -55,7 +58,7 @@ func (pool *SchedulerPool) Start(callback func()) {
 						Buffer = Buffer[1:]
 						pool.WG.Add(1)
 						pool.State.Pool = append(pool.State.Pool, Task)
-						pool.State.Pool[len(pool.State.Pool)-1].Init()
+						pool.State.Pool[len(pool.State.Pool)-1].Init(&state)
 						go pool.State.Pool[len(pool.State.Pool)-1].Execute()
 					}
 					// Look for completed jobs to remove from Pool
@@ -169,7 +172,7 @@ func (pool *SchedulerPool) Stop() {
 	pool.State.Active = false
 	pool.Tasks <- tasks.ScheduleTask{
 		Id: "<close>",
-		Jobs: []tasks.Job{},
+		Jobs: []tasks.JobProcess{},
 	}
 	close(pool.Tasks)
 	

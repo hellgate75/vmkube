@@ -586,7 +586,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 	}
 
 	if DeleteFromDescriptor {
-		utils.PrintlnWarning(fmt.Sprintf("Removing Project %s and Infrastructure '%s'...", descriptor.Name, descriptor.InfraName))
+		utils.PrintlnWarning(fmt.Sprintf("Removing Project '%s' and Infrastructure '%s'...", descriptor.Name, descriptor.InfraName))
 		if Backup {
 			AllowBackup := Force
 			if ! AllowBackup {
@@ -634,23 +634,29 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 		for i := 0; i < len(request.Arguments.Options); i++ {
 			if "force" == CorrectInput(request.Arguments.Options[i][0]) {
 				request.Arguments.Options[i][1] = "true"
-				FoundName = true
+				FoundForce = true
 			} else if "name" == CorrectInput(request.Arguments.Options[i][0]) {
 				request.Arguments.Options[i][1] = descriptor.Name
-				FoundForce = true
+				FoundName = true
 			}
 		}
 		if ! FoundName {
+			println("Name")
 			request.Arguments.Options = append(request.Arguments.Options, []string{"name", descriptor.Name})
 		}
 		if ! FoundForce {
+			println("Force")
 			request.Arguments.Options = append(request.Arguments.Options, []string{"force", "true"})
 		}
-		request.DeleteProject()
+		resp, err := request.DeleteProject()
+		if err != nil {
+			return resp, err
+		}
+		time.Sleep(time.Second * 2)
 	}
 	
 	if DeleteFromProjectDescriptor {
-		utils.PrintlnWarning(fmt.Sprintf("Removing Project %s and Infrastructure '%s'...", projectDescriptor.Name, projectDescriptor.InfraName))
+		utils.PrintlnWarning(fmt.Sprintf("Removing Project '%s' and Infrastructure '%s'...", projectDescriptor.Name, projectDescriptor.InfraName))
 		if Backup {
 			AllowBackup := Force
 			if ! AllowBackup {
@@ -699,10 +705,10 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 		for i := 0; i < len(request.Arguments.Options); i++ {
 			if "force" == CorrectInput(request.Arguments.Options[i][0]) {
 				request.Arguments.Options[i][1] = "true"
-				FoundName = true
+				FoundForce = true
 			} else if "name" == CorrectInput(request.Arguments.Options[i][0]) {
 				request.Arguments.Options[i][1] = projectDescriptor.Name
-				FoundForce = true
+				FoundName = true
 			}
 		}
 		if ! FoundName {
@@ -711,32 +717,13 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 		if ! FoundForce {
 			request.Arguments.Options = append(request.Arguments.Options, []string{"force", "true"})
 		}
-		request.DeleteProject()
-	}
-
-	newDescriptor := model.ProjectsDescriptor{
-		Id: newProject.Id,
-		Name: newProject.Name,
-		Open: false,
-		Active: false,
-		Synced: true,
-		InfraId: infrastructure.Id,
-		InfraName: infrastructure.Name,
-	}
-
-	utils.PrintlnWarning(fmt.Sprintf("Defining new Indexes from new Project %s and Infrastructure '%s'...", ProjectName, Name))
-
-	err = UpdateIndexWithProjectsDescriptor(newDescriptor, true)
-	
-	if err != nil {
-		response := Response{
-			Status: false,
-			Message: err.Error(),
+		resp, err := request.DeleteProject()
+		if err != nil {
+			return resp, err
 		}
-		return  response, errors.New("Unable to execute task")
+		time.Sleep(time.Second * 2)
 	}
-	
-	utils.PrintlnWarning(fmt.Sprintf("Saving new Project %s...", ProjectName))
+	utils.PrintlnWarning(fmt.Sprintf("Saving new Project '%s'...", ProjectName))
 
 	err = vmio.SaveProject(newProject)
 	
@@ -759,60 +746,81 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
-	
-	utils.PrintlnWarning(fmt.Sprintf("Building new Project '%s'...", ProjectName))
-	actionCouples, err := make([]tasks.ActivityCouple, 0), errors.New("Unknown Error")
-	if ! existsInfrastructure {
-		creationCouples, err := tasks.GetTaskActivities(newProject, infrastructure, tasks.CreateMachine)
-		if err != nil {
-			response := Response{
-				Status: false,
-				Message: err.Error(),
-			}
-			return response, errors.New("Unable to execute task")
-		}
-		
-		inspectCouples, err := tasks.GetTaskActivities(newProject, infrastructure, tasks.MachineInspect)
-		if err != nil {
-			response := Response{
-				Status: false,
-				Message: err.Error(),
-			}
-			return response, errors.New("Unable to execute task")
-		}
-		ipAddressCouples, err := tasks.GetTaskActivities(newProject, infrastructure, tasks.MachineIPAddress)
-		if err != nil {
-			response := Response{
-				Status: false,
-				Message: err.Error(),
-			}
-			return response, errors.New("Unable to execute task")
-		}
-		stopCouples, err := tasks.GetTaskActivities(newProject, infrastructure, tasks.StopMachine)
-		if err != nil {
-			response := Response{
-				Status: false,
-				Message: err.Error(),
-			}
-			return response, errors.New("Unable to execute task")
-		}
-		extendsDiskCouples, err := tasks.GetTaskActivities(newProject, infrastructure, tasks.MachineExtendsDisk)
-		if err != nil {
-			response := Response{
-				Status: false,
-				Message: err.Error(),
-			}
-			return response, errors.New("Unable to execute task")
-		}
-		actionCouples = append(actionCouples, creationCouples...)
-		actionCouples = append(actionCouples, inspectCouples...)
-		actionCouples = append(actionCouples, ipAddressCouples...)
-		actionCouples = append(actionCouples, stopCouples...)
-		actionCouples = append(actionCouples, extendsDiskCouples...)
+
+	newDescriptor := model.ProjectsDescriptor{
+		Id: newProject.Id,
+		Name: newProject.Name,
+		Open: false,
+		Active: false,
+		Synced: true,
+		InfraId: "",
+		InfraName: "",
 	}
+
+	utils.PrintlnWarning(fmt.Sprintf("Defining new Indexes from new Project %s ...", ProjectName))
+
+	err = UpdateIndexWithProjectsDescriptor(newDescriptor, true)
+
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+
+	utils.PrintlnWarning(fmt.Sprintf("Building new Project '%s'...", ProjectName))
+	actionCouples := make([]tasks.ActivityCouple, 0)
+	creationCouples, err := tasks.GetTaskActivities(newProject, infrastructure, tasks.CreateMachine)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+
+	inspectCouples, err := tasks.GetTaskActivities(newProject, infrastructure, tasks.MachineInspect)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	ipAddressCouples, err := tasks.GetTaskActivities(newProject, infrastructure, tasks.MachineIPAddress)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	stopCouples, err := tasks.GetTaskActivities(newProject, infrastructure, tasks.StopMachine)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	extendsDiskCouples, err := tasks.GetTaskActivities(newProject, infrastructure, tasks.MachineExtendsDisk)
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	actionCouples = append(actionCouples, creationCouples...)
+	actionCouples = append(actionCouples, inspectCouples...)
+	actionCouples = append(actionCouples, ipAddressCouples...)
+	actionCouples = append(actionCouples, stopCouples...)
+	actionCouples = append(actionCouples, extendsDiskCouples...)
+
 	utils.PrintlnImportant("Now Proceding with machine creation ...!!")
 	NumThreads := Threads
-	if runtime.NumCPU() - 1 < Threads && !Overclock {
+	if runtime.NumCPU() - 1 < Threads && ! Overclock {
 		NumThreads = runtime.NumCPU() - 1
 		utils.PrintlnWarning(fmt.Sprintf("Number of threads in order to available processors : %d", NumThreads))
 	}
@@ -822,7 +830,9 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 	errorsList = ExecuteInfrastructureActions(infrastructure, actionCouples, NumThreads,func(task tasks.ScheduleTask){
 		go func(task tasks.ScheduleTask) {
 			for i := 0; i < len(task.Jobs); i++ {
-				response := strings.Split(fmt.Sprintf("%s",task.Jobs[i].Runnable.Response()),"|")
+				response := strings.Split(fmt.Sprintf("%s",task.Jobs[i].GetRunnable().Response()),"|")
+				//scheduler.DumpData("response.txt",[]byte(fmt.Sprintf("Task Id : %s Response : %s" , task.Id, task.Jobs[i].Runnable.Response())), false)
+				//scheduler.DumpData("response.txt",[]byte(fmt.Sprintf("Task Id : %s Tokens : %d" , task.Id, len(response))), false)
 				if len(response) > 3 {
 					if len(response) > 4 {
 						if response[0] == "ip" {
@@ -830,12 +840,14 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 							ipAddress := response[2]
 							json := ""
 							log := response[3] + response[4]
+							//scheduler.DumpData("response.txt",[]byte("Task Id : "+task.Id+" IP : " + ipAddress), false)
 							FixInfrastructureElementValue(infrastructure, instanceId, ipAddress, json, log)
 						} else if response[0] == "json" {
 							instanceId := response[1]
 							ipAddress := ""
 							json := response[2]
 							log := response[3] + response[4]
+							//scheduler.DumpData("response.txt",[]byte("Task Id : "+task.Id+" JSON : " + json), false)
 							FixInfrastructureElementValue(infrastructure, instanceId, ipAddress, json, log)
 						}
 					} else {
@@ -850,15 +862,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 			}
 		}(task)
 	})
-	
-	if err != nil {
-		response := Response{
-			Status: false,
-			Message: err.Error(),
-		}
-		return response, errors.New("Unable to execute task")
-	}
-	
+
 	if len(errorsList) > 0 {
 		utils.PrintlnError(fmt.Sprintf("Unable to complete Build of project '%s' : Errors building Infrastructure : '%s'!!", ProjectName, Name))
 		_, message := vmio.StripErrorMessages(fmt.Sprintf("Error building Infrastructure -> '%s' : ", Name), errorsList)
@@ -887,7 +891,28 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
-	
+	newDescriptor = model.ProjectsDescriptor{
+		Id: newProject.Id,
+		Name: newProject.Name,
+		Open: false,
+		Active: false,
+		Synced: true,
+		InfraId: infrastructure.Id,
+		InfraName: infrastructure.Name,
+	}
+
+	utils.PrintlnWarning(fmt.Sprintf("Defining new Indexes for new Project %s with recovered Infrastructure '%s'...", ProjectName, Name))
+
+	err = UpdateIndexWithProjectsDescriptor(newDescriptor, true)
+
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+
 	utils.PrintlnSuccess(fmt.Sprintf("Recovery for Infrastructure named : %s completed successfully!!", Name))
 	
 	response := Response{

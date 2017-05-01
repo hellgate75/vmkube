@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"vmkube/operations"
 	"vmkube/tasks"
+	"vmkube/scheduler"
 )
 
 type ProjectActions interface {
@@ -1702,7 +1703,9 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	errorsList = ExecuteInfrastructureActions(Infrastructure, actionCouples, NumThreads,func(task tasks.ScheduleTask){
 		go func(task tasks.ScheduleTask) {
 			for i := 0; i < len(task.Jobs); i++ {
-				response := strings.Split(fmt.Sprintf("%s",task.Jobs[i].Runnable.Response()),"|")
+				response := strings.Split(fmt.Sprintf("%s",task.Jobs[i].GetRunnable().Response()),"|")
+				scheduler.DumpData("response.txt",[]byte(fmt.Sprintf("Task Id : %s Response : %s" , task.Id, task.Jobs[i].GetRunnable().Response())), false)
+				scheduler.DumpData("response.txt",[]byte(fmt.Sprintf("Task Id : %s Tokens : %d" , task.Id, len(response))), false)
 				if len(response) > 3 {
 					if len(response) > 4 {
 						if response[0] == "ip" {
@@ -1710,19 +1713,24 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 							ipAddress := response[2]
 							json := ""
 							log := response[3] + response[4]
+							scheduler.DumpData("response.txt",[]byte("Task Id : "+task.Id+" IP : " + ipAddress), false)
 							FixInfrastructureElementValue(Infrastructure, instanceId, ipAddress, json, log)
 						} else if response[0] == "json" {
 							instanceId := response[1]
 							ipAddress := ""
 							json := response[2]
 							log := response[3] + response[4]
+							scheduler.DumpData("response.txt",[]byte("Task Id : "+task.Id+" JSON : " + json), false)
 							FixInfrastructureElementValue(Infrastructure, instanceId, ipAddress, json, log)
+						} else {
+
 						}
 					} else {
 						instanceId := response[1]
 						ipAddress := ""
 						json := ""
 						log := response[2] + response[3]
+						scheduler.DumpData("response.txt",[]byte("Task Id : "+task.Id+" Instance : " + instanceId), false)
 						FixInfrastructureElementValue(Infrastructure, instanceId, ipAddress, json, log)
 					}
 				}

@@ -162,14 +162,20 @@ func (job *MachineOperationsJob) Start() {
 	}
 }
 
+func (job *MachineOperationsJob) getInstanceId() string {
+	if job.Activity.IsCloud {
+		return  job.Activity.CInstance.Id
+	}
+	return  job.Activity.Instance.Id
+}
 
 func (job *MachineOperationsJob) Response() interface{} {
 	if job.MachineMessage.InspectJSON != "" {
-		return fmt.Sprintf("%s|%s|%s|%s|%s","json", job.MachineMessage.InstanceId, job.MachineMessage.InspectJSON, job.MachineMessage.Supply, job.MachineMessage.Result)
+		return fmt.Sprintf("%s|%s|%s|%s|%s","json", job.getInstanceId(), job.MachineMessage.InspectJSON, job.MachineMessage.Supply, job.MachineMessage.Result)
 	} else if job.MachineMessage.IPAddress != "" {
-		return fmt.Sprintf("%s|%s|%s|%s|%s","ip",job.MachineMessage.InstanceId, job.MachineMessage.IPAddress, job.MachineMessage.Supply, job.MachineMessage.Result)
+		return fmt.Sprintf("%s|%s|%s|%s|%s","ip",job.getInstanceId(), job.MachineMessage.IPAddress, job.MachineMessage.Supply, job.MachineMessage.Result)
 	}
-	return fmt.Sprintf("%s|%s|%s|%s","message",job.MachineMessage.InstanceId, job.MachineMessage.Supply, job.MachineMessage.Result)
+	return fmt.Sprintf("%s|%s|%s|%s","message",job.getInstanceId(), job.MachineMessage.Supply, job.MachineMessage.Result)
 }
 
 func (job *MachineOperationsJob) WaitFor() {
