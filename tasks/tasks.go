@@ -115,13 +115,14 @@ func writeTaskContextState(state state.StateContext, taskId string, status state
 
 
 func (task *ScheduleTask) Deactivate() {
+	task.Active = false
+	task.Working = false
+	task.LastIndex = len(task.Jobs)
+	time.Sleep(1*time.Second)
 	writeTaskContextState(*(task.State), task.Id, state.StateReferenceData{
 		Id: task.Id,
 		Status: false,
 	})
-	task.Active = false
-	task.Working = false
-	task.LastIndex = len(task.Jobs)
 }
 
 func (task *ScheduleTask) Execute() {
