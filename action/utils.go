@@ -926,16 +926,20 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 	return errorsList
 }
 
-func FixInfrastructureElementValue(Infrastructure model.Infrastructure, instanceId string, ipAddress string, json string, log string) bool {
+var FixInfrastructureElementMutex sync.Mutex
+
+func FixInfrastructureElementValue(Infrastructure *model.Infrastructure, instanceId string, ipAddress string, json string, log string) bool {
+	defer  FixInfrastructureElementMutex.Unlock()
+	FixInfrastructureElementMutex.Lock()
 	if instanceId!= "" && (ipAddress != "" || json != "" || log != "") {
 		for i := 0; i < len(Infrastructure.Domains); i++ {
 			for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
 				for k := 0; k < len(Infrastructure.Domains[i].Networks[j].LocalInstances); k++ {
 					if Infrastructure.Domains[i].Networks[j].LocalInstances[k].Id == instanceId {
-						if ipAddress != "" {
+						if strings.TrimSpace(ipAddress) != "" {
 							Infrastructure.Domains[i].Networks[j].LocalInstances[k].IPAddress = ipAddress
 						}
-						if json != "" {
+						if strings.TrimSpace(json) != "" {
 							Infrastructure.Domains[i].Networks[j].LocalInstances[k].InspectJSON = json
 						}
 						//if log != "" {
@@ -947,10 +951,10 @@ func FixInfrastructureElementValue(Infrastructure model.Infrastructure, instance
 				for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CloudInstances); k++ {
 					if Infrastructure.Domains[i].Networks[j].CloudInstances[k].Id == instanceId {
 						if ipAddress != "" {
-							Infrastructure.Domains[i].Networks[j].CloudInstances[k].IPAddress = ipAddress
+							Infrastructure.Domains[i].Networks[j].LocalInstances[k].IPAddress = ipAddress
 						}
 						if json != "" {
-							Infrastructure.Domains[i].Networks[j].CloudInstances[k].InspectJSON = json
+							Infrastructure.Domains[i].Networks[j].LocalInstances[k].InspectJSON = json
 						}
 						//if log != "" {
 						//	Infrastructure.Domains[i].Networks[j].LocalInstances[k]. = json

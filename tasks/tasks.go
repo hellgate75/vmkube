@@ -163,6 +163,7 @@ func (task *ScheduleTask) IsRunning() bool {
 }
 
 func (task *ScheduleTask) Abort() {
+	time.Sleep(1*time.Second)
 	if task.LastIndex < len(task.Jobs)  {
 		for i := task.LastIndex; i < len(task.Jobs); i++ {
 			task.Jobs[i].Abort()

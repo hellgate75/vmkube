@@ -190,7 +190,7 @@ type LocalInstance struct {
 	Options     [][]string  `json:"Options" xml:"Options"`
 	Hostname    string      `json:"Hostname" xml:"Hostname"`
 	IPAddress   string      `json:"IPAddress" xml:"IPAddress"`
-	InspectJSON string      `json:"IPAddress" xml:"IPAddress"`
+	InspectJSON string      `json:"InspectJSON" xml:"InspectJSON"`
 	Logs     		LogStorage  `json:"Logs" xml:"Logs"`
 }
 
@@ -228,7 +228,7 @@ type CloudInstance struct {
 	Roles   	  []string    `json:"Roles" xml:"Roles"`
 	Options     [][]string  `json:"Options" xml:"Options"`
 	IPAddress   string      `json:"IPAddress" xml:"IPAddress"`
-	InspectJSON string      `json:"IPAddress" xml:"IPAddress"`
+	InspectJSON string      `json:"InspectJSON" xml:"InspectJSON"`
 	Logs     		LogStorage  `json:"Logs" xml:"Logs"`
 }
 

@@ -189,21 +189,23 @@ func (job *MachineOperationsJob) IsError() bool {
 }
 
 func (job *MachineOperationsJob) Stop() {
-	job.control.Interrupt = true
-	if job.control.CurrentCommand != nil {
-		if job.control.CurrentCommand!=nil && job.control.CurrentCommand.Process.Pid > 0 {
-			job.control.CurrentCommand.Process.Kill()
+	if job.State {
+		job.control.Interrupt = true
+		if job.control.CurrentCommand != nil {
+			if job.control.CurrentCommand!=nil && job.control.CurrentCommand.Process.Pid > 0 {
+				job.control.CurrentCommand.Process.Kill()
+			}
 		}
+		if job.commandPipe != nil {
+			close(job.commandPipe)
+			job.commandPipe = nil
+		}
+		if job.commandChannel != nil {
+			close(job.commandChannel)
+			job.commandChannel = nil
+		}
+		job.State = false
 	}
-	if job.commandPipe != nil {
-		close(job.commandPipe)
-		job.commandPipe = nil
-	}
-	if job.commandChannel != nil {
-		close(job.commandChannel)
-		job.commandChannel = nil
-	}
-	job.State = false
 }
 
 
