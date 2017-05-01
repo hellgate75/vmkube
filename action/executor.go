@@ -3,6 +3,7 @@ package action
 import (
 	"fmt"
 	"vmkube/term"
+	"vmkube/utils"
 )
 
 func ExecuteRequest(request CmdRequest) bool{
@@ -10,6 +11,9 @@ func ExecuteRequest(request CmdRequest) bool{
 		case NoCommand: {
 			if request.HelpType != NoCommand  {
 				PrintCommandHelper(request.SubTypeStr, "")
+				if ! utils.NO_COLORS {
+					term.ScreenShowCursor()
+				}
 			} else {
 				PrintCommandHelper("", "")
 			}
@@ -25,6 +29,9 @@ func ExecuteRequest(request CmdRequest) bool{
 				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 				term.ScreenFlush()
 			}
+			if ! utils.NO_COLORS {
+				term.ScreenShowCursor()
+			}
 			return  error == nil
 		}
 	}
@@ -37,6 +44,9 @@ func ExecuteRequest(request CmdRequest) bool{
 			if ! response.Status {
 				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 				term.ScreenFlush()
+			}
+			if ! utils.NO_COLORS {
+				term.ScreenShowCursor()
 			}
 			return  error == nil
 		}
@@ -51,6 +61,9 @@ func ExecuteRequest(request CmdRequest) bool{
 				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 				term.ScreenFlush()
 		}
+			if ! utils.NO_COLORS {
+				term.ScreenShowCursor()
+			}
 			return  error == nil
 		}
 	}
@@ -63,6 +76,9 @@ func ExecuteRequest(request CmdRequest) bool{
 			if ! response.Status {
 				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 				term.ScreenFlush()
+			}
+			if ! utils.NO_COLORS {
+				term.ScreenShowCursor()
 			}
 			return  error == nil
 		}
@@ -77,6 +93,9 @@ func ExecuteRequest(request CmdRequest) bool{
 				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 				term.ScreenFlush()
 			}
+			if ! utils.NO_COLORS {
+				term.ScreenShowCursor()
+			}
 			return  error == nil
 		}
 	}
@@ -89,6 +108,9 @@ func ExecuteRequest(request CmdRequest) bool{
 			if ! response.Status {
 				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 				term.ScreenFlush()
+			}
+			if ! utils.NO_COLORS {
+				term.ScreenShowCursor()
 			}
 			return  error == nil
 		}
@@ -103,6 +125,9 @@ func ExecuteRequest(request CmdRequest) bool{
 				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 				term.ScreenFlush()
 			}
+			if ! utils.NO_COLORS {
+				term.ScreenShowCursor()
+			}
 			return  error == nil
 		}
 	}
@@ -115,6 +140,9 @@ func ExecuteRequest(request CmdRequest) bool{
 			if ! response.Status {
 				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 				term.ScreenFlush()
+			}
+			if ! utils.NO_COLORS {
+				term.ScreenShowCursor()
 			}
 			return  error == nil
 		}
@@ -129,6 +157,9 @@ func ExecuteRequest(request CmdRequest) bool{
 				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 				term.ScreenFlush()
 			}
+			if ! utils.NO_COLORS {
+				term.ScreenShowCursor()
+			}
 			return  error == nil
 		}
 	}
@@ -141,6 +172,9 @@ func ExecuteRequest(request CmdRequest) bool{
 			if ! response.Status {
 				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 				term.ScreenFlush()
+			}
+			if ! utils.NO_COLORS {
+				term.ScreenShowCursor()
 			}
 			return  error == nil
 		}
@@ -155,6 +189,9 @@ func ExecuteRequest(request CmdRequest) bool{
 				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 				term.ScreenFlush()
 			}
+			if ! utils.NO_COLORS {
+				term.ScreenShowCursor()
+			}
 			return  error == nil
 		}
 	}
@@ -167,6 +204,9 @@ func ExecuteRequest(request CmdRequest) bool{
 			if ! response.Status {
 				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 				term.ScreenFlush()
+			}
+			if ! utils.NO_COLORS {
+				term.ScreenShowCursor()
 			}
 			return  error == nil
 		}
@@ -181,6 +221,9 @@ func ExecuteRequest(request CmdRequest) bool{
 				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 				term.ScreenFlush()
 			}
+			if ! utils.NO_COLORS {
+				term.ScreenShowCursor()
+			}
 			return  error == nil
 		}
 	}
@@ -193,6 +236,9 @@ func ExecuteRequest(request CmdRequest) bool{
 			if ! response.Status {
 				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 				term.ScreenFlush()
+			}
+			if ! utils.NO_COLORS {
+				term.ScreenShowCursor()
 			}
 			return  error == nil
 		}
@@ -207,6 +253,9 @@ func ExecuteRequest(request CmdRequest) bool{
 				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 				term.ScreenFlush()
 			}
+			if ! utils.NO_COLORS {
+				term.ScreenShowCursor()
+			}
 			return  error == nil
 		}
 	}
@@ -220,6 +269,9 @@ func ExecuteRequest(request CmdRequest) bool{
 				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 				term.ScreenFlush()
 			}
+			if ! utils.NO_COLORS {
+				term.ScreenShowCursor()
+			}
 			return  error == nil
 		}
 	}
@@ -229,6 +281,9 @@ func ExecuteRequest(request CmdRequest) bool{
 			return  false
 		} else  {
 			request.InfoProject()
+		}
+		if ! utils.NO_COLORS {
+			term.ScreenShowCursor()
 		}
 		return  true
 	}

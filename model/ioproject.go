@@ -159,10 +159,10 @@ func (element *Infrastructure) Validate() []error {
 	if len(element.Domains) == 0 {
 		errorList = append(errorList, errors.New("Unassigned Domains List fields"))
 	}
-	for _,network := range element.Domains {
-		errorList = append(errorList, network.Validate()...)
+	for _, domain := range element.Domains {
+		errorList = append(errorList, domain.Validate()...)
 	}
-	errorList = append(errorList, element.State.Validate()...)
+	//errorList = append(errorList, element.State.Validate()...)
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
 		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)

@@ -152,9 +152,9 @@ func (element *MachineNetwork) Validate() []error {
 		errorList = append(errorList, errors.New("Unassigned Name field"))
 	}
 	// Permissive approach for empty projects in development
-	//if len(element.CMachines) == 0 && len(element.Machines) == 0 {
-	//	errorList = append(errorList, errors.New("Unassigned Cloud Machines or Machines List fields"))
-	//}
+	if len(element.CloudMachines) == 0 && len(element.LocalMachines) == 0 {
+		errorList = append(errorList, errors.New("Unassigned Cloud Machines or Machines List fields"))
+	}
 	for _,machine := range element.LocalMachines {
 		errorList = append(errorList, machine.Validate()...)
 	}

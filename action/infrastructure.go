@@ -402,7 +402,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 		} else if "force" == CorrectInput(option[0]) {
 			Force = GetBoolean(option[1])
 		} else if "project-name" == CorrectInput(option[0]) {
-			Name = option[1]
+			ProjectName = option[1]
 		} else if "overclock" == CorrectInput(option[0]) {
 			Overclock = GetBoolean(option[1])
 		} else if "threads" == CorrectInput(option[0]) {
@@ -437,12 +437,14 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 
 	descriptor, err := vmio.GetInfrastructureProjectDescriptor(Name)
 
-	existsInfrastructure := err == nil && descriptor.InfraId == ""
+	existsInfrastructure := (err == nil) && descriptor.InfraId != ""
 
 	if existsInfrastructure {
 		utils.PrintlnWarning(fmt.Sprintf("Infrastructure '%s' already exists ...", Name))
+	} else {
+		utils.PrintlnInfo(fmt.Sprintf("Infrastructure '%s' doesn't exists ... Creating from scratch", Name))
 	}
-	
+
 	DeleteFromDescriptor := false
 	
 	AllowOverride := false
@@ -496,12 +498,20 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 	}
 	
 	DeleteFromProjectDescriptor := false
-
 	var projectDescriptor model.ProjectsDescriptor
+	projectDescriptor, err = vmio.GetProjectDescriptor(ProjectName)
+	existsProject := (err == nil) && projectDescriptor.Id != ""
 
-	if ! existsInfrastructure {
-		projectDescriptor, err = vmio.GetProjectDescriptor(ProjectName)
-		if err != nil && projectDescriptor.InfraId != descriptor.InfraId {
+	if existsProject {
+		if ProjectName == "" {
+			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			return Response{
+				Message: "Project Name field not provided, mandatory when we have an exiting one with same name",
+				Status: false,
+			},errors.New("Unable to execute task")
+		}
+
+		if projectDescriptor.InfraId != descriptor.InfraId {
 			if ! Override {
 				return Response{
 					Message: fmt.Sprintf("Selected Project Name %s is already associated with another infrastructure %s, and no override clause specified", projectDescriptor.Name, projectDescriptor.InfraName),
@@ -523,7 +533,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 			}
 		}
 	}
-	
+
 	utils.PrintlnWarning(fmt.Sprintf("Loading Infrastructure '%s' from file '%s'...", Name, File))
 	
 	var infrastructure model.Infrastructure
@@ -536,7 +546,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 		}
 		return  response, errors.New("Unable to execute task")
 	}
-	
+	//utils.PrintlnInfo(fmt.Sprintf("Infrastructure : %s", utils.GetJSONFromObj(infrastructure, true)))
 	utils.PrintlnWarning(fmt.Sprintf("Validating recovered Infrastructure '%s'...", Name))
 	
 	errorsList := infrastructure.Validate()
@@ -550,7 +560,31 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 		}
 		return response, errors.New("Unable to execute task")
 	}
-	
+
+	utils.PrintlnWarning(fmt.Sprintf("Creating new Project %s from Infrastructure '%s'...", ProjectName, Name))
+
+	newProject, err := InfrastructureToProject(infrastructure, ProjectName)
+
+	if err != nil {
+		response := Response{
+			Status: false,
+			Message: err.Error(),
+		}
+		return  response, errors.New("Unable to execute task")
+	}
+
+	errorsList = newProject.Validate()
+
+	if len(errorsList) > 0 {
+		utils.PrintlnError(fmt.Sprintf("Unable to complete Project Re-create '%s' from Infrastructure '%s'!!", ProjectName,Name))
+		_, message := vmio.StripErrorMessages(fmt.Sprintf("Error bulding project '%s' infrastructure -> '%s' : ", ProjectName, Name), errorsList)
+		response := Response{
+			Status: false,
+			Message: message,
+		}
+		return response, errors.New("Unable to execute task")
+	}
+
 	if DeleteFromDescriptor {
 		utils.PrintlnWarning(fmt.Sprintf("Removing Project %s and Infrastructure '%s'...", descriptor.Name, descriptor.InfraName))
 		if Backup {
@@ -679,19 +713,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 		}
 		request.DeleteProject()
 	}
-	
-	utils.PrintlnWarning(fmt.Sprintf("Creating new Project %s from Infrastructure '%s'...", ProjectName, Name))
-	
-	newProject, err := InfrastructureToProject(infrastructure, ProjectName)
-	
-	if err != nil {
-		response := Response{
-			Status: false,
-			Message: err.Error(),
-		}
-		return  response, errors.New("Unable to execute task")
-	}
-	
+
 	newDescriptor := model.ProjectsDescriptor{
 		Id: newProject.Id,
 		Name: newProject.Name,
@@ -701,7 +723,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 		InfraId: infrastructure.Id,
 		InfraName: infrastructure.Name,
 	}
-	
+
 	utils.PrintlnWarning(fmt.Sprintf("Defining new Indexes from new Project %s and Infrastructure '%s'...", ProjectName, Name))
 
 	err = UpdateIndexWithProjectsDescriptor(newDescriptor, true)

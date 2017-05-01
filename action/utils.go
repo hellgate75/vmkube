@@ -101,7 +101,7 @@ func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error
 				CloudInstances: []model.CloudInstance{},
 				Installations: []model.Installation{},
 			}
-			machineConvertionMap := make(map[string]string)
+			machineRecogniseMap := make(map[string]string)
 			for _,machine := range network.LocalMachines {
 				var disks []model.Disk = make([]model.Disk,0)
 				disks = append(disks, model.Disk{
@@ -135,10 +135,10 @@ func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error
 						LogLines: []string{},
 					},
 				}
-				if _,ok := machineConvertionMap[machine.Id]; ok {
+				if _,ok := machineRecogniseMap[machine.Id]; ok {
 					return infrastructure, errors.New("Duplicate Machine Id in Project : " + machine.Id)
 				}
-				machineConvertionMap[machine.Id] = instance.Id
+				machineRecogniseMap[machine.Id] = instance.Id
 				newNetwork.LocalInstances = append(newNetwork.LocalInstances, instance)
 			}
 			for _,machine := range network.CloudMachines {
@@ -159,17 +159,17 @@ func ProjectToInfrastructure(project model.Project) (model.Infrastructure, error
 						LogLines: []string{},
 					},
 				}
-				if _,ok := machineConvertionMap[machine.Id]; ok {
+				if _,ok := machineRecogniseMap[machine.Id]; ok {
 					return infrastructure, errors.New("Duplicate Machine Id in Project : " + machine.Id)
 				}
-				machineConvertionMap[machine.Id] = instance.Id
+				machineRecogniseMap[machine.Id] = instance.Id
 				newNetwork.CloudInstances = append(newNetwork.CloudInstances, instance)
 			}
 			for _,plan := range network.Installations {
-				if _,ok := machineConvertionMap[plan.MachineId]; ! ok {
+				if _,ok := machineRecogniseMap[plan.MachineId]; ! ok {
 					return infrastructure, errors.New("Invalid machine reference in plan : " + plan.MachineId)
 				}
-				instanceId, _  := machineConvertionMap[plan.MachineId]
+				instanceId, _  := machineRecogniseMap[plan.MachineId]
 				installationId := NewUUIDString()
 				installation := model.Installation{
 					Id: installationId,
@@ -207,72 +207,74 @@ func InfrastructureToProject(infrastructure model.Infrastructure, projectName st
 	newProject.Modified = time.Now()
 	newProject.Errors = false
 	newProject.LastMessage = fmt.Sprintf("Imported from infrastructure %s", infrastructure.Name)
-	for _,domain := range infrastructure.Domains {
+	for i := 0; i < len(infrastructure.Domains); i++ {
 		newDomain := model.MachineDomain{
 			Id: NewUUIDString(),
-			Name: domain.Name,
-			Options: domain.Options,
+			Name: infrastructure.Domains[i].Name,
+			Options: infrastructure.Domains[i].Options,
 			Networks: []model.MachineNetwork{},
 		}
-		for _,network := range domain.Networks {
+		for j := 0; j < len(infrastructure.Domains[i].Networks); j++ {
 			newNetwork := model.MachineNetwork{
 				Id: NewUUIDString(),
-				Name: network.Name,
-				Options: network.Options,
+				Name: infrastructure.Domains[i].Networks[j].Name,
+				Options: infrastructure.Domains[i].Networks[j].Options,
 				LocalMachines: []model.LocalMachine{},
 				CloudMachines: []model.CloudMachine{},
 				Installations: []model.InstallationPlan{},
 			}
-			machineConvertionMap := make(map[string]string)
-			for _,machine := range network.LocalInstances {
-				instanceId := NewUUIDString()
-				instance := model.LocalMachine{
-					Id: instanceId,
-					Name: machine.Name,
-					Options: machine.Options,
-					Cpus: machine.Cpus,
-					Memory: machine.Memory,
-					DiskSize: machine.Disks[0].Size,
-					Driver: machine.Driver,
-					Engine: model.ToMachineEngineOpt(machine.Engine),
-					Swarm: model.ToMachineSwarmOpt(machine.Swarm),
-					Hostname: machine.Hostname,
-					NoShare: machine.NoShare,
-					OSType: machine.OSType,
-					OSVersion: machine.OSVersion,
-					Roles: machine.Roles,
+			machineRecogniseMap := make(map[string]string)
+			for k := 0; k < len(infrastructure.Domains[i].Networks[j].LocalInstances); k++ {
+				machineId := NewUUIDString()
+				infrastructure.Domains[i].Networks[j].LocalInstances[k].MachineId = machineId
+				machine := model.LocalMachine{
+					Id: machineId,
+					Name: infrastructure.Domains[i].Networks[j].LocalInstances[k].Name,
+					Options: infrastructure.Domains[i].Networks[j].LocalInstances[k].Options,
+					Cpus: infrastructure.Domains[i].Networks[j].LocalInstances[k].Cpus,
+					Memory: infrastructure.Domains[i].Networks[j].LocalInstances[k].Memory,
+					DiskSize: infrastructure.Domains[i].Networks[j].LocalInstances[k].Disks[0].Size,
+					Driver: infrastructure.Domains[i].Networks[j].LocalInstances[k].Driver,
+					Engine: model.ToMachineEngineOpt(infrastructure.Domains[i].Networks[j].LocalInstances[k].Engine),
+					Swarm: model.ToMachineSwarmOpt(infrastructure.Domains[i].Networks[j].LocalInstances[k].Swarm),
+					Hostname: infrastructure.Domains[i].Networks[j].LocalInstances[k].Hostname,
+					NoShare: infrastructure.Domains[i].Networks[j].LocalInstances[k].NoShare,
+					OSType: infrastructure.Domains[i].Networks[j].LocalInstances[k].OSType,
+					OSVersion: infrastructure.Domains[i].Networks[j].LocalInstances[k].OSVersion,
+					Roles: infrastructure.Domains[i].Networks[j].LocalInstances[k].Roles,
 				}
-				if _,ok := machineConvertionMap[machine.Id]; ok {
-					return newProject, errors.New("Duplicate Instance Id in Project : " + machine.Id)
+				if _,ok := machineRecogniseMap[infrastructure.Domains[i].Networks[j].LocalInstances[k].Id]; ok {
+					return newProject, errors.New("Duplicate Instance Id in Project : " + infrastructure.Domains[i].Networks[j].LocalInstances[k].Id)
 				}
-				machineConvertionMap[machine.Id] = instance.Id
-				newNetwork.LocalMachines = append(newNetwork.LocalMachines, instance)
+				machineRecogniseMap[infrastructure.Domains[i].Networks[j].LocalInstances[k].Id] = machineId
+				newNetwork.LocalMachines = append(newNetwork.LocalMachines, machine)
 			}
-			for _,machine := range network.CloudInstances {
-				instanceId := NewUUIDString()
-				instance := model.CloudMachine{
-					Id: instanceId,
-					Name: machine.Name,
-					Driver: machine.Driver,
-					Hostname: machine.Hostname,
-					Options: machine.Options,
-					Roles: machine.Roles,
+			for k := 0; k < len(infrastructure.Domains[i].Networks[j].CloudInstances); k++ {
+				machineId := NewUUIDString()
+				infrastructure.Domains[i].Networks[j].CloudInstances[k].MachineId = machineId
+				machine := model.CloudMachine{
+					Id: machineId,
+					Name: infrastructure.Domains[i].Networks[j].CloudInstances[k].Name,
+					Driver: infrastructure.Domains[i].Networks[j].CloudInstances[k].Driver,
+					Hostname: infrastructure.Domains[i].Networks[j].CloudInstances[k].Hostname,
+					Options: infrastructure.Domains[i].Networks[j].CloudInstances[k].Options,
+					Roles: infrastructure.Domains[i].Networks[j].CloudInstances[k].Roles,
 				}
-				if _,ok := machineConvertionMap[machine.Id]; ok {
-					return newProject, errors.New("Duplicate Instance Id in Project : " + machine.Id)
+				if _,ok := machineRecogniseMap[infrastructure.Domains[i].Networks[j].CloudInstances[k].Id]; ok {
+					return newProject, errors.New("Duplicate Instance Id in Project : " + infrastructure.Domains[i].Networks[j].CloudInstances[k].Id)
 				}
-				machineConvertionMap[machine.Id] = instance.Id
-				newNetwork.CloudMachines = append(newNetwork.CloudMachines, instance)
+				machineRecogniseMap[infrastructure.Domains[i].Networks[j].CloudInstances[k].Id] = machineId
+				newNetwork.CloudMachines = append(newNetwork.CloudMachines, machine)
 			}
-			for _,plan := range network.Installations {
-				if _,ok := machineConvertionMap[plan.InstanceId]; ! ok {
-					return newProject, errors.New("Invalid instance reference in plan : " + plan.InstanceId)
+			for k := 0; k < len(infrastructure.Domains[i].Networks[j].Installations); k++ {
+				if _,ok := machineRecogniseMap[infrastructure.Domains[i].Networks[j].Installations[k].InstanceId]; ! ok {
+					return newProject, errors.New("Invalid instance reference in plan : " + infrastructure.Domains[i].Networks[j].Installations[k].InstanceId)
 				}
-				instanceId, _  := machineConvertionMap[plan.InstanceId]
-				installation := plan.Plan
+				machineId, _  := machineRecogniseMap[infrastructure.Domains[i].Networks[j].Installations[k].InstanceId]
+				installation := infrastructure.Domains[i].Networks[j].Installations[k].Plan
 				installation.Id = NewUUIDString()
-				installation.MachineId = instanceId
-				installation.IsCloud = plan.IsCloud
+				installation.MachineId = machineId
+				installation.IsCloud = infrastructure.Domains[i].Networks[j].Installations[k].IsCloud
 				newNetwork.Installations = append(newNetwork.Installations, installation)
 			}
 			newDomain.Networks = append(newDomain.Networks, newNetwork)
@@ -420,6 +422,7 @@ func UpdateIndexWithProjectsDescriptor(project model.ProjectsDescriptor, addDesc
 	vmio.LockIndex(indexes)
 	
 	if addDescriptor {
+		project.Open = project.InfraId == ""
 		project.Active = !project.Open
 		NewIndexes = append(NewIndexes, project)
 	}
@@ -687,6 +690,7 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 			}
 			screenManager.Init()
 			screenManager.Start()
+			defer screenManager.Stop(false)
 		}
 		var pending int = jobsArrayLen
 		var answerScreenIds []string = make([]string, 0)
@@ -911,15 +915,14 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 			}
 		}
 		pool.Stop()
-		if ! utils.NO_COLORS {
-			screenManager.Stop(false)
-		}
 	}()
 	pool.WG.Wait()
 	time.Sleep(2*time.Second)
 	term.ScreenMoveCursor(len(actionGroups)+1, 0)
 	utils.PrintlnImportant(fmt.Sprintf("Number of executed processes :  %d", answerCounter))
-	
+	if term.ScreenHasCursorHidden() {
+		term.ScreenShowCursor()
+	}
 	return errorsList
 }
 

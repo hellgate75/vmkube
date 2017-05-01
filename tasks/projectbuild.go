@@ -185,7 +185,7 @@ func (job *MachineOperationsJob) IsError() bool {
 func (job *MachineOperationsJob) Stop() {
 	job.control.Interrupt = true
 	if job.control.CurrentCommand != nil {
-		if job.control.CurrentCommand.Process.Pid > 0 {
+		if job.control.CurrentCommand!=nil && job.control.CurrentCommand.Process.Pid > 0 {
 			job.control.CurrentCommand.Process.Kill()
 		}
 	}

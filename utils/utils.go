@@ -59,9 +59,16 @@ func PrintWarning(text string) {
 	if NO_COLORS {
 		fmt.Print(text)
 	} else {
-		value := term.ScreenColor(text, term.YELLOW)
-		term.ScreenPrint(value)
-		term.ScreenFlush()
+		lines := strings.Split(text, "\n")
+		for i:=0; i<len(lines); i++ {
+			value := term.ScreenColor(lines[i], term.YELLOW)
+			if len(lines) > 1 && i < len(lines)-1 {
+				term.ScreenPrintln(value)
+			} else  {
+				term.ScreenPrint(value)
+			}
+			term.ScreenFlush()
+		}
 	}
 }
 
@@ -69,9 +76,11 @@ func PrintlnWarning(text string) {
 	if NO_COLORS {
 		fmt.Println(text)
 	} else {
-		value := term.ScreenColor(text, term.YELLOW)
-		term.ScreenPrintln(value)
-		term.ScreenFlush()
+		for _,line := range strings.Split(text, "\n") {
+			value := term.ScreenColor(line, term.YELLOW)
+			term.ScreenPrintln(value)
+			term.ScreenFlush()
+		}
 	}
 }
 
@@ -79,9 +88,16 @@ func PrintError(text string) {
 	if NO_COLORS {
 		fmt.Print(text)
 	} else {
-		value := term.ScreenColor(text, term.RED)
-		term.ScreenPrint(value)
-		term.ScreenFlush()
+		lines := strings.Split(text, "\n")
+		for i:=0; i<len(lines); i++ {
+			value := term.ScreenColor(lines[i], term.RED)
+			if len(lines) > 1 && i < len(lines)-1 {
+				term.ScreenPrintln(value)
+			} else  {
+				term.ScreenPrint(value)
+			}
+			term.ScreenFlush()
+		}
 	}
 }
 
@@ -89,9 +105,11 @@ func PrintlnError(text string) {
 	if NO_COLORS {
 		fmt.Println(text)
 	} else {
-		value := term.ScreenColor(text, term.RED)
-		term.ScreenPrintln(value)
-		term.ScreenFlush()
+		for _,line := range strings.Split(text, "\n") {
+			value := term.ScreenColor(line, term.RED)
+			term.ScreenPrintln(value)
+			term.ScreenFlush()
+		}
 	}
 }
 
@@ -100,9 +118,16 @@ func PrintInfo(text string) {
 	if NO_COLORS {
 		fmt.Print(text)
 	} else {
-		value := term.ScreenColor(text, term.WHITE)
-		term.ScreenPrint(value)
-		term.ScreenFlush()
+		lines := strings.Split(text, "\n")
+		for i:=0; i<len(lines); i++ {
+			value := term.ScreenColor(lines[i], term.WHITE)
+			if len(lines) > 1 && i < len(lines)-1 {
+				term.ScreenPrintln(value)
+			} else  {
+				term.ScreenPrint(value)
+			}
+			term.ScreenFlush()
+		}
 	}
 }
 
@@ -110,9 +135,11 @@ func PrintlnInfo(text string) {
 	if NO_COLORS {
 		fmt.Println(text)
 	} else {
-		value := term.ScreenColor(text, term.WHITE)
-		term.ScreenPrintln(value)
-		term.ScreenFlush()
+		for _,line := range strings.Split(text, "\n") {
+			value := term.ScreenColor(line, term.WHITE)
+			term.ScreenPrintln(value)
+			term.ScreenFlush()
+		}
 	}
 }
 
@@ -120,9 +147,16 @@ func PrintSuccess(text string) {
 	if NO_COLORS {
 		fmt.Print(text)
 	} else {
-		value := term.ScreenColor(text, term.GREEN)
-		term.ScreenPrint(value)
-		term.ScreenFlush()
+		lines := strings.Split(text, "\n")
+		for i:=0; i<len(lines); i++ {
+			value := term.ScreenColor(lines[i], term.GREEN)
+			if len(lines) > 1 && i < len(lines)-1 {
+				term.ScreenPrintln(value)
+			} else  {
+				term.ScreenPrint(value)
+			}
+			term.ScreenFlush()
+		}
 	}
 }
 
@@ -130,9 +164,11 @@ func PrintlnSuccess(text string) {
 	if NO_COLORS {
 		fmt.Println(text)
 	} else {
-		value := term.ScreenColor(text, term.GREEN)
-		term.ScreenPrintln(value)
-		term.ScreenFlush()
+		for _,line := range strings.Split(text, "\n") {
+			value := term.ScreenColor(line, term.GREEN)
+			term.ScreenPrintln(value)
+			term.ScreenFlush()
+		}
 	}
 }
 
@@ -140,9 +176,16 @@ func PrintImportant(text string) {
 	if NO_COLORS {
 		fmt.Print(text)
 	} else {
-		value := term.ScreenBold(text)
-		term.ScreenPrint(value)
-		term.ScreenFlush()
+		lines := strings.Split(text, "\n")
+		for i:=0; i<len(lines); i++ {
+			value := term.ScreenBold(lines[i])
+			if len(lines) > 1 && i < len(lines)-1 {
+				term.ScreenPrintln(value)
+			} else  {
+				term.ScreenPrint(value)
+			}
+			term.ScreenFlush()
+		}
 	}
 }
 
@@ -150,9 +193,11 @@ func PrintlnImportant(text string) {
 	if NO_COLORS {
 		fmt.Println(text)
 	} else {
-		value := term.ScreenBold(text)
-		term.ScreenPrintln(value)
-		term.ScreenFlush()
+		for _,line := range strings.Split(text, "\n") {
+			value := term.ScreenBold(line)
+			term.ScreenPrintln(value)
+			term.ScreenFlush()
+		}
 	}
 }
 

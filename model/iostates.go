@@ -90,18 +90,18 @@ func (element *InstanceState) Save(file string) error {
 
 func (element *NetworkState) Validate() []error {
 	errorList := make([]error, 0)
-	if element.Id == "" {
+	if element.Id == "" && element.NetworkId != "" {
 		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
 	}
-	if element.NetworkId == "" {
-		errorList = append(errorList, errors.New("Unassigned Network Unique Identifier field"))
-	}
-	if element.DomainId == "" {
-		errorList = append(errorList, errors.New("Unassigned Domain Unique Identifier field"))
-	}
-	if len(element.InstanceStates) == 0 {
-		errorList = append(errorList, errors.New("Unassigned Instance States List fields"))
-	}
+	//if element.NetworkId == "" {
+	//	errorList = append(errorList, errors.New("Unassigned Network Unique Identifier field"))
+	//}
+	//if element.DomainId == "" {
+	//	errorList = append(errorList, errors.New("Unassigned Domain Unique Identifier field"))
+	//}
+	//if len(element.InstanceStates) == 0 {
+	//	errorList = append(errorList, errors.New("Unassigned Instance States List fields"))
+	//}
 	for _,state := range element.InstanceStates {
 		errorList = append(errorList, state.Validate()...)
 	}
@@ -170,15 +170,15 @@ func (element *NetworkState) Save(file string) error {
 
 func (element *DomainState) Validate() []error {
 	errorList := make([]error, 0)
-	if element.Id == "" {
+	if element.Id == "" && element.DomainId != "" {
 		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
 	}
-	if element.DomainId == "" {
-		errorList = append(errorList, errors.New("Unassigned Domain Unique Identifier field"))
-	}
-	if len(element.NetworkStates) == 0 {
-		errorList = append(errorList, errors.New("Unassigned Network States List fields"))
-	}
+	//if element.DomainId == "" {
+	//	errorList = append(errorList, errors.New("Unassigned Domain Unique Identifier field"))
+	//}
+	//if len(element.NetworkStates) == 0 {
+	//	errorList = append(errorList, errors.New("Unassigned Network States List fields"))
+	//}
 	for _,state := range element.NetworkStates {
 		errorList = append(errorList, state.Validate()...)
 	}
@@ -247,12 +247,12 @@ func (element *DomainState) Save(file string) error {
 
 func (element *State) Validate() []error {
 	errorList := make([]error, 0)
-	if element.Id == "" {
+	if element.Id == "" && len(element.DomainStates) > 0 {
 		errorList = append(errorList, errors.New("Unassigned Unique Identifier field"))
 	}
-	if len(element.DomainStates) == 0 {
-		errorList = append(errorList, errors.New("Unassigned Domain States List fields"))
-	}
+	//if len(element.DomainStates) == 0 {
+	//	errorList = append(errorList, errors.New("Unassigned Domain States List fields"))
+	//}
 	for _,state := range element.DomainStates {
 		errorList = append(errorList, state.Validate()...)
 	}
