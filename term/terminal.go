@@ -30,8 +30,38 @@ const RESET = "\033[0m"
 // Reset to default color
 const RESET_COLOR = "\033[32m"
 
-// Return curor to start of line and clean it
+// Return cursor to start of line and clean it
 const RESET_LINE = "\r\033[K"
+
+// Define color selector base code
+const COLOR_SELECTOR = "\033[3%dm"
+
+// Define background color selector base code
+const BG_COLOR_SELECTOR = "\033[4%dm"
+
+// Reset Screen base position after last row, scrolling down screen
+const CLEAR_SCREEN = "\033[2J"
+
+// Move Cursor on Screen since first visible row of x rows and y columns
+const MOVE_CURSOR_TO_COORD = "\033[%d;%dH"
+
+// Make a transformation to move Cursor on Screen since first visible row of x rows and y columns since last position
+const MOVE_CURSOR_RELATIVE_OF = "\033[%d;%dH%s"
+
+// Move Cursor up on Screen since first visible row of x rows
+const MOVE_CURSOR_UP_ROWS = "\033[%dA"
+
+// Move Cursor down on Screen since first visible row of x rows
+const MOVE_CURSOR_DOWN_ROWS = "\033[%dB"
+
+// Move Cursor forward on Screen since first visible row of y columns
+const MOVE_CURSOR_FORWARD_COLUMNS = "\033[%dC"
+
+// Move Cursor backward on Screen since first visible row of y columns
+const MOVE_CURSOR_BACKWARD_COLUMNS = "\033[%dD"
+
+// Apply bold effect to string
+const APPLY_BOLD_EFFECT = "\033[1m%s\033[0m"
 
 // List of possible colors
 const (
@@ -47,13 +77,14 @@ const (
 
 var OutStream *bufio.Writer = bufio.NewWriter(os.Stdout)
 var Buffer *bytes.Buffer = new(bytes.Buffer)
+var AutoFlush bool = false
 
 func getScreenColor(code int) string {
-	return fmt.Sprintf("\033[3%dm", code)
+	return fmt.Sprintf(COLOR_SELECTOR, code)
 }
 
 func getScreenBgColor(code int) string {
-	return fmt.Sprintf("\033[4%dm", code)
+	return fmt.Sprintf(BG_COLOR_SELECTOR, code)
 }
 
 // Set percent flag: num | PCT
@@ -108,32 +139,47 @@ func applyScreenTransform(str string, transform sf) (out string) {
 
 // Clear screen
 func ScreenClear() {
-	OutStream.WriteString("\033[2J")
+	OutStream.WriteString(CLEAR_SCREEN)
 }
 
 // Move cursor to given position
 func ScreenMoveCursor(x int, y int) {
-	fmt.Fprintf(Buffer, "\033[%d;%dH", x, y)
+	fmt.Fprintf(Buffer, MOVE_CURSOR_TO_COORD, x, y)
+	if AutoFlush {
+		ScreenFlush()
+	}
 }
 
 // Move cursor up relative the current position
 func ScreenMoveCursorUp(spaces int) {
-	fmt.Fprintf(Buffer, "\033[%dA", spaces);
+	fmt.Fprintf(Buffer, MOVE_CURSOR_UP_ROWS, spaces);
+	if AutoFlush {
+		ScreenFlush()
+	}
 }
 
 // Move cursor down relative the current position
 func ScreenMoveCursorDown(spaces int) {
-	fmt.Fprintf(Buffer, "\033[%dB", spaces);
+	fmt.Fprintf(Buffer, MOVE_CURSOR_DOWN_ROWS, spaces);
+	if AutoFlush {
+		ScreenFlush()
+	}
 }
 
 // Move cursor forward relative the current position
 func ScreenMoveCursorForward(spaces int) {
-	fmt.Fprintf(Buffer, "\033[%dC", spaces);
+	fmt.Fprintf(Buffer, MOVE_CURSOR_FORWARD_COLUMNS, spaces);
+	if AutoFlush {
+		ScreenFlush()
+	}
 }
 
 // Move cursor backward relative the current position
 func ScreenMoveCursorBackward(spaces int) {
-	fmt.Fprintf(Buffer, "\033[%dD", spaces);
+	fmt.Fprintf(Buffer, MOVE_CURSOR_BACKWARD_COLUMNS, spaces);
+	if AutoFlush {
+		ScreenFlush()
+	}
 }
 
 // Negative is Left/Top ward positive is Right/Down ward
@@ -150,12 +196,12 @@ func ScreenMoveCursorRelative(XSpaces int,YSpaces int) {
 	}
 }
 
-// Move string to possition
+// Move string to position
 func ScreenMoveTo(str string, x int, y int) (out string) {
 	x, y = GetScreenXY(x, y)
 	
 	return applyScreenTransform(str, func(idx int, line string) string {
-		return fmt.Sprintf("\033[%d;%dH%s", x+idx, y, line)
+		return fmt.Sprintf(MOVE_CURSOR_RELATIVE_OF, x+idx, y, line)
 	})
 }
 
@@ -169,7 +215,7 @@ func ScreenResetLine(str string) (out string) {
 // Make bold
 func ScreenBold(str string) string {
 	return applyScreenTransform(str, func(idx int, line string) string {
-		return fmt.Sprintf("\033[1m%s\033[0m", line)
+		return fmt.Sprintf(APPLY_BOLD_EFFECT, line)
 	})
 }
 
@@ -223,14 +269,17 @@ func getScreenSize() (*ScreenSize, error) {
 		_TIOCGWINSZ = 0x5413
 	case "darwin":
 		_TIOCGWINSZ = 1074295912
+	case "windows":
+	default:
+		_TIOCGWINSZ = syscall.TIOCGWINSZ
 	}
-	
+
 	r1, _, errno := syscall.Syscall(syscall.SYS_IOCTL,
 		uintptr(syscall.Stdin),
 		uintptr(_TIOCGWINSZ),
 		uintptr(unsafe.Pointer(ws)),
 	)
-	
+
 	if int(r1) == -1 {
 		fmt.Println("Error:", os.NewSyscallError("GetWinsize", errno))
 		return nil, os.NewSyscallError("GetWinsize", errno)
@@ -270,21 +319,27 @@ func ScreenFlush() {
 
 func ScreenPrint(a ...interface{}) {
 	fmt.Fprint(Buffer, a...)
+	if AutoFlush {
+		ScreenFlush()
+	}
 }
 
 func ScreenPrintln(a ...interface{}) {
 	fmt.Fprintln(Buffer, a...)
+	if AutoFlush {
+		ScreenFlush()
+	}
 }
 
 var cursorHidden bool = false
 
 func ScreenHideCursor() {
-	fmt.Print("\033[?25l")
+	OutStream.WriteString("\033[?25l")
 	cursorHidden = true
 }
 
 func ScreenShowCursor() {
-	fmt.Print("\033[?25h")
+	OutStream.WriteString("\033[?25h")
 	cursorHidden = false
 }
 
