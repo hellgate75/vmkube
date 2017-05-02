@@ -803,7 +803,7 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 								if machineMessage.Error != nil {
 										answerScreenIds = append(answerScreenIds, keyTerm.Id)
 										keyTerm.State = term.StateColorRed
-										keyTerm.Value = utils.StrPad(tasks.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "..." + term.ScreenBold("failed!!"), 35)
+										keyTerm.Value = utils.StrPad(tasks.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "..." + term.Screen.Bold("failed!!"), 35)
 								} else {
 									keyTerm.State = term.StateColorYellow
 									keyTerm.Value = term.StrPad(tasks.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "...in progress", 35)
@@ -813,19 +813,19 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 									answerScreenIds = append(answerScreenIds, keyTerm.Id)
 									if machineMessage.Error != nil {
 										keyTerm.State = term.StateColorRed
-										keyTerm.Value = term.ScreenBold(term.StrPad("process failed!!", 35))
+										keyTerm.Value = term.Screen.Bold(term.StrPad("process failed!!", 35))
 									} else {
 										keyTerm.State = term.StateColorGreen
-										keyTerm.Value = term.ScreenBold(term.StrPad("process success!!", 35))
+										keyTerm.Value = term.Screen.Bold(term.StrPad("process success!!", 35))
 									}
 								} else {
 									if machineMessage.Error != nil {
 										answerScreenIds = append(answerScreenIds, keyTerm.Id)
 										keyTerm.State = term.StateColorRed
-										keyTerm.Value = term.StrPad(tasks.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "..." + term.ScreenBold("failed!!"), 35)
+										keyTerm.Value = term.StrPad(tasks.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "..." + term.Screen.Bold("failed!!"), 35)
 									} else {
 										keyTerm.State = term.StateColorYellow
-										keyTerm.Value = term.StrPad(tasks.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "..." + term.ScreenBold("completed!!"), 35)
+										keyTerm.Value = term.StrPad(tasks.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task) + "..." + term.Screen.Bold("completed!!"), 35)
 									}
 								}
 							}
@@ -920,10 +920,10 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 	}()
 	pool.WG.Wait()
 	time.Sleep(2*time.Second)
-	term.ScreenMoveCursor(len(actionGroups)+1, 0)
+	term.Screen.MoveCursor(len(actionGroups)+1, 0)
 	utils.PrintlnImportant(fmt.Sprintf("Number of executed processes :  %d", answerCounter))
-	if term.ScreenHasCursorHidden() {
-		term.ScreenShowCursor()
+	if term.Screen.HasCursorHidden() {
+		term.Screen.ShowCursor()
 	}
 	return errorsList
 }

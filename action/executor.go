@@ -12,7 +12,7 @@ func ExecuteRequest(request CmdRequest) bool{
 			if request.HelpType != NoCommand  {
 				PrintCommandHelper(request.SubTypeStr, "")
 				if ! utils.NO_COLORS {
-					term.ScreenShowCursor()
+					term.Screen.ShowCursor()
 				}
 			} else {
 				PrintCommandHelper("", "")
@@ -26,11 +26,11 @@ func ExecuteRequest(request CmdRequest) bool{
 		} else  {
 			response, error := request.StartInfra()
 			if ! response.Status {
-				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
-				term.ScreenFlush()
+				term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
+				term.Screen.Flush()
 			}
 			if ! utils.NO_COLORS {
-				term.ScreenShowCursor()
+				term.Screen.ShowCursor()
 			}
 			return  error == nil
 		}
@@ -42,11 +42,11 @@ func ExecuteRequest(request CmdRequest) bool{
 		} else  {
 			response, error := request.StopInfra()
 			if ! response.Status {
-				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
-				term.ScreenFlush()
+				term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
+				term.Screen.Flush()
 			}
 			if ! utils.NO_COLORS {
-				term.ScreenShowCursor()
+				term.Screen.ShowCursor()
 			}
 			return  error == nil
 		}
@@ -58,11 +58,11 @@ func ExecuteRequest(request CmdRequest) bool{
 		} else  {
 			response, error := request.RestartInfra()
 			if ! response.Status {
-				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
-				term.ScreenFlush()
+				term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
+				term.Screen.Flush()
 		}
 			if ! utils.NO_COLORS {
-				term.ScreenShowCursor()
+				term.Screen.ShowCursor()
 			}
 			return  error == nil
 		}
@@ -74,11 +74,11 @@ func ExecuteRequest(request CmdRequest) bool{
 		} else  {
 			response, error := request.DeleteInfra()
 			if ! response.Status {
-				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
-				term.ScreenFlush()
+				term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
+				term.Screen.Flush()
 			}
 			if ! utils.NO_COLORS {
-				term.ScreenShowCursor()
+				term.Screen.ShowCursor()
 			}
 			return  error == nil
 		}
@@ -90,11 +90,11 @@ func ExecuteRequest(request CmdRequest) bool{
 		} else  {
 			response, error := request.BackupInfra()
 			if ! response.Status {
-				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
-				term.ScreenFlush()
+				term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
+				term.Screen.Flush()
 			}
 			if ! utils.NO_COLORS {
-				term.ScreenShowCursor()
+				term.Screen.ShowCursor()
 			}
 			return  error == nil
 		}
@@ -106,11 +106,11 @@ func ExecuteRequest(request CmdRequest) bool{
 		} else  {
 			response, error := request.RecoverInfra()
 			if ! response.Status {
-				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
-				term.ScreenFlush()
+				term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
+				term.Screen.Flush()
 			}
 			if ! utils.NO_COLORS {
-				term.ScreenShowCursor()
+				term.Screen.ShowCursor()
 			}
 			return  error == nil
 		}
@@ -122,11 +122,11 @@ func ExecuteRequest(request CmdRequest) bool{
 		} else  {
 			response, error := request.StatusInfra()
 			if ! response.Status {
-				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
-				term.ScreenFlush()
+				term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
+				term.Screen.Flush()
 			}
 			if ! utils.NO_COLORS {
-				term.ScreenShowCursor()
+				term.Screen.ShowCursor()
 			}
 			return  error == nil
 		}
@@ -138,11 +138,11 @@ func ExecuteRequest(request CmdRequest) bool{
 		} else  {
 			response, error := request.ListInfras()
 			if ! response.Status {
-				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
-				term.ScreenFlush()
+				term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
+				term.Screen.Flush()
 			}
 			if ! utils.NO_COLORS {
-				term.ScreenShowCursor()
+				term.Screen.ShowCursor()
 			}
 			return  error == nil
 		}
@@ -154,11 +154,11 @@ func ExecuteRequest(request CmdRequest) bool{
 		} else  {
 			response, error := request.ListProjects()
 			if ! response.Status {
-				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
-				term.ScreenFlush()
+				term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
+				term.Screen.Flush()
 			}
 			if ! utils.NO_COLORS {
-				term.ScreenShowCursor()
+				term.Screen.ShowCursor()
 			}
 			return  error == nil
 		}
@@ -170,11 +170,11 @@ func ExecuteRequest(request CmdRequest) bool{
 		} else  {
 			response, error := request.StatusProject()
 			if ! response.Status {
-				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
-				term.ScreenFlush()
+				term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
+				term.Screen.Flush()
 			}
 			if ! utils.NO_COLORS {
-				term.ScreenShowCursor()
+				term.Screen.ShowCursor()
 			}
 			return  error == nil
 		}
@@ -186,11 +186,11 @@ func ExecuteRequest(request CmdRequest) bool{
 		} else  {
 			response, error := request.BuildProject()
 			if ! response.Status {
-				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
-				term.ScreenFlush()
+				term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
+				term.Screen.Flush()
 			}
 			if ! utils.NO_COLORS {
-				term.ScreenShowCursor()
+				term.Screen.ShowCursor()
 			}
 			return  error == nil
 		}
@@ -202,11 +202,11 @@ func ExecuteRequest(request CmdRequest) bool{
 		} else  {
 			response, error := request.ImportProject()
 			if ! response.Status {
-				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
-				term.ScreenFlush()
+				term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
+				term.Screen.Flush()
 			}
 			if ! utils.NO_COLORS {
-				term.ScreenShowCursor()
+				term.Screen.ShowCursor()
 			}
 			return  error == nil
 		}
@@ -218,11 +218,11 @@ func ExecuteRequest(request CmdRequest) bool{
 		} else  {
 			response, error := request.ExportProject()
 			if ! response.Status {
-				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
-				term.ScreenFlush()
+				term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
+				term.Screen.Flush()
 			}
 			if ! utils.NO_COLORS {
-				term.ScreenShowCursor()
+				term.Screen.ShowCursor()
 			}
 			return  error == nil
 		}
@@ -234,11 +234,11 @@ func ExecuteRequest(request CmdRequest) bool{
 		} else  {
 			response, error := request.CreateProject()
 			if ! response.Status {
-				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
-				term.ScreenFlush()
+				term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
+				term.Screen.Flush()
 			}
 			if ! utils.NO_COLORS {
-				term.ScreenShowCursor()
+				term.Screen.ShowCursor()
 			}
 			return  error == nil
 		}
@@ -250,11 +250,11 @@ func ExecuteRequest(request CmdRequest) bool{
 		} else  {
 			response, error := request.DeleteProject()
 			if ! response.Status {
-				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
-				term.ScreenFlush()
+				term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
+				term.Screen.Flush()
 			}
 			if ! utils.NO_COLORS {
-				term.ScreenShowCursor()
+				term.Screen.ShowCursor()
 			}
 			return  error == nil
 		}
@@ -266,11 +266,11 @@ func ExecuteRequest(request CmdRequest) bool{
 		} else  {
 			response, error := request.AlterProject()
 			if ! response.Status {
-				term.ScreenPrintln(term.ScreenColor(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
-				term.ScreenFlush()
+				term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
+				term.Screen.Flush()
 			}
 			if ! utils.NO_COLORS {
-				term.ScreenShowCursor()
+				term.Screen.ShowCursor()
 			}
 			return  error == nil
 		}
@@ -283,7 +283,7 @@ func ExecuteRequest(request CmdRequest) bool{
 			request.InfoProject()
 		}
 		if ! utils.NO_COLORS {
-			term.ScreenShowCursor()
+			term.Screen.ShowCursor()
 		}
 		return  true
 	}

@@ -21,7 +21,7 @@ type TestJob struct {
 	OutChan chan string
 }
 
-func (job TestJob) Start() {
+func (job TestJob) Start(channel chan bool) {
 	if !job.State {
 		job.State = true
 		for i := 0; i < job.Count; i++ {
@@ -31,6 +31,7 @@ func (job TestJob) Start() {
 			}
 		}
 		job.State = false
+		channel <- true
 	}
 }
 
@@ -68,8 +69,8 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 	})
 	task1 := tasks.ScheduleTask{
 		Id: action.NewUUIDString(),
-		Jobs: []tasks.Job{
-			{
+		Jobs: []tasks.JobProcess{
+			tasks.JobProcess(&tasks.Job{
 				Id: action.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
@@ -77,8 +78,8 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 					Count: 10,
 					OutChan: chan1,
 				},
-			},
-			{
+			}),
+			tasks.JobProcess(&tasks.Job{
 				Id: action.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
@@ -86,13 +87,13 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 					Count: 5,
 					OutChan: chan1,
 				},
-			},
+			}),
 		},
 	}
 	task2 := tasks.ScheduleTask{
 		Id: action.NewUUIDString(),
-		Jobs: []tasks.Job{
-			{
+		Jobs: []tasks.JobProcess{
+			tasks.JobProcess(&tasks.Job{
 				Id: action.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
@@ -100,8 +101,8 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 					Count: 5,
 					OutChan: chan2,
 				},
-			},
-			{
+			}),
+			tasks.JobProcess(&tasks.Job{
 				Id: action.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
@@ -109,13 +110,13 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 					Count: 10,
 					OutChan: chan2,
 				},
-			},
+			}),
 		},
 	}
 	task3 := tasks.ScheduleTask{
 		Id: action.NewUUIDString(),
-		Jobs: []tasks.Job{
-			{
+		Jobs: []tasks.JobProcess{
+			tasks.JobProcess(&tasks.Job{
 				Id: action.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
@@ -123,8 +124,8 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 					Count: 5,
 					OutChan: chan3,
 				},
-			},
-			{
+			}),
+			tasks.JobProcess(&tasks.Job{
 				Id: action.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
@@ -132,7 +133,7 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 					Count: 5,
 					OutChan: chan3,
 				},
-			},
+			}),
 		},
 	}
 	pool.WG.Add(1)

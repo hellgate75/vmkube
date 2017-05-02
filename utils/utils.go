@@ -36,18 +36,18 @@ func RequestConfirmation(reason string) bool {
 	text := ""
 	reader := bufio.NewReader(os.Stdin)
 	options := "y/n/yes/no"
-	options = term.ScreenBold(options)
+	options = term.Screen.Bold(options)
 	allText := fmt.Sprintf("%s Confirm operation [%s] : ", reason, options)
-	term.ScreenPrint(allText)
-	term.ScreenFlush()
+	term.Screen.Print(allText)
+	term.Screen.Flush()
 	text, _ = reader.ReadString('\n')
 	fmt.Println("")
 	if CorrectInput(text) != "y" && CorrectInput(text) != "yes" && CorrectInput(text) != "n" && CorrectInput(text) != "no" {
-		text = term.ScreenBold(text)
+		text = term.Screen.Bold(text)
 		answer := "Current text is not allowed"
-		answer = term.ScreenColor(answer, term.RED)
-		term.ScreenPrintln(fmt.Sprintf("%s : %s\n", answer, text))
-		term.ScreenFlush()
+		answer = term.Screen.Color(answer, term.RED)
+		term.Screen.Println(fmt.Sprintf("%s : %s\n", answer, text))
+		term.Screen.Flush()
 		return  RequestConfirmation(reason)
 	}
 	return (CorrectInput(text) == "y" || CorrectInput(text) == "yes")
@@ -61,13 +61,13 @@ func PrintWarning(text string) {
 	} else {
 		lines := strings.Split(text, "\n")
 		for i:=0; i<len(lines); i++ {
-			value := term.ScreenColor(lines[i], term.YELLOW)
+			value := term.Screen.Color(lines[i], term.YELLOW)
 			if len(lines) > 1 && i < len(lines)-1 {
-				term.ScreenPrintln(value)
+				term.Screen.Println(value)
 			} else  {
-				term.ScreenPrint(value)
+				term.Screen.Print(value)
 			}
-			term.ScreenFlush()
+			term.Screen.Flush()
 		}
 	}
 }
@@ -77,9 +77,9 @@ func PrintlnWarning(text string) {
 		fmt.Println(text)
 	} else {
 		for _,line := range strings.Split(text, "\n") {
-			value := term.ScreenColor(line, term.YELLOW)
-			term.ScreenPrintln(value)
-			term.ScreenFlush()
+			value := term.Screen.Color(line, term.YELLOW)
+			term.Screen.Println(value)
+			term.Screen.Flush()
 		}
 	}
 }
@@ -90,13 +90,13 @@ func PrintError(text string) {
 	} else {
 		lines := strings.Split(text, "\n")
 		for i:=0; i<len(lines); i++ {
-			value := term.ScreenColor(lines[i], term.RED)
+			value := term.Screen.Color(lines[i], term.RED)
 			if len(lines) > 1 && i < len(lines)-1 {
-				term.ScreenPrintln(value)
+				term.Screen.Println(value)
 			} else  {
-				term.ScreenPrint(value)
+				term.Screen.Print(value)
 			}
-			term.ScreenFlush()
+			term.Screen.Flush()
 		}
 	}
 }
@@ -106,9 +106,9 @@ func PrintlnError(text string) {
 		fmt.Println(text)
 	} else {
 		for _,line := range strings.Split(text, "\n") {
-			value := term.ScreenColor(line, term.RED)
-			term.ScreenPrintln(value)
-			term.ScreenFlush()
+			value := term.Screen.Color(line, term.RED)
+			term.Screen.Println(value)
+			term.Screen.Flush()
 		}
 	}
 }
@@ -120,13 +120,13 @@ func PrintInfo(text string) {
 	} else {
 		lines := strings.Split(text, "\n")
 		for i:=0; i<len(lines); i++ {
-			value := term.ScreenColor(lines[i], term.WHITE)
+			value := term.Screen.Color(lines[i], term.WHITE)
 			if len(lines) > 1 && i < len(lines)-1 {
-				term.ScreenPrintln(value)
+				term.Screen.Println(value)
 			} else  {
-				term.ScreenPrint(value)
+				term.Screen.Print(value)
 			}
-			term.ScreenFlush()
+			term.Screen.Flush()
 		}
 	}
 }
@@ -136,9 +136,9 @@ func PrintlnInfo(text string) {
 		fmt.Println(text)
 	} else {
 		for _,line := range strings.Split(text, "\n") {
-			value := term.ScreenColor(line, term.WHITE)
-			term.ScreenPrintln(value)
-			term.ScreenFlush()
+			value := term.Screen.Color(line, term.WHITE)
+			term.Screen.Println(value)
+			term.Screen.Flush()
 		}
 	}
 }
@@ -149,13 +149,13 @@ func PrintSuccess(text string) {
 	} else {
 		lines := strings.Split(text, "\n")
 		for i:=0; i<len(lines); i++ {
-			value := term.ScreenColor(lines[i], term.GREEN)
+			value := term.Screen.Color(lines[i], term.GREEN)
 			if len(lines) > 1 && i < len(lines)-1 {
-				term.ScreenPrintln(value)
+				term.Screen.Println(value)
 			} else  {
-				term.ScreenPrint(value)
+				term.Screen.Print(value)
 			}
-			term.ScreenFlush()
+			term.Screen.Flush()
 		}
 	}
 }
@@ -165,9 +165,9 @@ func PrintlnSuccess(text string) {
 		fmt.Println(text)
 	} else {
 		for _,line := range strings.Split(text, "\n") {
-			value := term.ScreenColor(line, term.GREEN)
-			term.ScreenPrintln(value)
-			term.ScreenFlush()
+			value := term.Screen.Color(line, term.GREEN)
+			term.Screen.Println(value)
+			term.Screen.Flush()
 		}
 	}
 }
@@ -178,13 +178,13 @@ func PrintImportant(text string) {
 	} else {
 		lines := strings.Split(text, "\n")
 		for i:=0; i<len(lines); i++ {
-			value := term.ScreenBold(lines[i])
+			value := term.Screen.Bold(lines[i])
 			if len(lines) > 1 && i < len(lines)-1 {
-				term.ScreenPrintln(value)
+				term.Screen.Println(value)
 			} else  {
-				term.ScreenPrint(value)
+				term.Screen.Print(value)
 			}
-			term.ScreenFlush()
+			term.Screen.Flush()
 		}
 	}
 }
@@ -194,9 +194,9 @@ func PrintlnImportant(text string) {
 		fmt.Println(text)
 	} else {
 		for _,line := range strings.Split(text, "\n") {
-			value := term.ScreenBold(line)
-			term.ScreenPrintln(value)
-			term.ScreenFlush()
+			value := term.Screen.Bold(line)
+			term.Screen.Println(value)
+			term.Screen.Flush()
 		}
 	}
 }

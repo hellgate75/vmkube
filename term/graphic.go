@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func ProgressBar(current, total, cols int) string {
+func (Screen *ScreenManager) ProgressBar(current, total, cols int) string {
 	prefix := strconv.Itoa(current) + " / " + strconv.Itoa(total)
 	bar_start := " ["
 	bar_end := "] "
@@ -15,5 +15,5 @@ func ProgressBar(current, total, cols int) string {
 	remain := bar_size - amount
 
 	bar := strings.Repeat("X", amount) + strings.Repeat(" ", remain)
-	return ScreenBold(prefix) + bar_start + bar + bar_end
+	return Screen.Bold(prefix) + bar_start + bar + bar_end
 }

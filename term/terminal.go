@@ -74,19 +74,6 @@ const (
 	CYAN
 	WHITE
 )
-
-var OutStream *bufio.Writer = bufio.NewWriter(os.Stdout)
-var Buffer *bytes.Buffer = new(bytes.Buffer)
-var AutoFlush bool = false
-
-func getScreenColor(code int) string {
-	return fmt.Sprintf(COLOR_SELECTOR, code)
-}
-
-func getScreenBgColor(code int) string {
-	return fmt.Sprintf(BG_COLOR_SELECTOR, code)
-}
-
 // Set percent flag: num | PCT
 //
 // Check percent flag: num & PCT
@@ -102,23 +89,46 @@ type ScreenSize struct {
 	Ypixel uint16
 }
 
+type ScreenManager struct {
+	OutStream 		*bufio.Writer
+	Buffer				*bytes.Buffer
+	AutoFlush 		bool
+	X							int
+	Y							int
+}
+
+var Screen ScreenManager = ScreenManager{
+	OutStream: bufio.NewWriter(os.Stdout),
+	Buffer: new(bytes.Buffer),
+	AutoFlush: false,
+}
+
+func getScreenColor(code int) string {
+	return fmt.Sprintf(COLOR_SELECTOR, code)
+}
+
+func getScreenBgColor(code int) string {
+	return fmt.Sprintf(BG_COLOR_SELECTOR, code)
+}
+
+
 // Get relative or absolute coorditantes
 // To get relative, set PCT flag to number:
 //
 //      // Get 10% of total width to `x` and 20 to y
 //      x, y = tm.GetXY(10|tm.PCT, 20)
 //
-func GetScreenXY(x int, y int) (int, int) {
+func (Screen *ScreenManager) GetScreenXY(x int, y int) (int, int) {
 	if y == -1 {
-		y = ScreenCurrentHeight() + 1
+		y = Screen.CurrentHeight() + 1
 	}
 	
 	if x&PCT != 0 {
-		x = int((x & 0xFF) * ScreenWidth() / 100)
+		x = int((x & 0xFF) * Screen.Width() / 100)
 	}
 	
 	if y&PCT != 0 {
-		y = int((y & 0xFF) * ScreenHeight() / 100)
+		y = int((y & 0xFF) * Screen.Height() / 100)
 	}
 	
 	return x, y
@@ -138,67 +148,67 @@ func applyScreenTransform(str string, transform sf) (out string) {
 }
 
 // Clear screen
-func ScreenClear() {
-	OutStream.WriteString(CLEAR_SCREEN)
+func (Screen *ScreenManager) Clear() {
+	Screen.OutStream.WriteString(CLEAR_SCREEN)
 }
 
 // Move cursor to given position
-func ScreenMoveCursor(x int, y int) {
-	fmt.Fprintf(Buffer, MOVE_CURSOR_TO_COORD, x, y)
-	if AutoFlush {
-		ScreenFlush()
+func (Screen *ScreenManager) MoveCursor(x int, y int) {
+	fmt.Fprintf(Screen.Buffer, MOVE_CURSOR_TO_COORD, x, y)
+	if Screen.AutoFlush {
+		Screen.Flush()
 	}
 }
 
 // Move cursor up relative the current position
-func ScreenMoveCursorUp(spaces int) {
-	fmt.Fprintf(Buffer, MOVE_CURSOR_UP_ROWS, spaces);
-	if AutoFlush {
-		ScreenFlush()
+func (Screen *ScreenManager) MoveCursorUp(spaces int) {
+	fmt.Fprintf(Screen.Buffer, MOVE_CURSOR_UP_ROWS, spaces);
+	if Screen.AutoFlush {
+		Screen.Flush()
 	}
 }
 
 // Move cursor down relative the current position
-func ScreenMoveCursorDown(spaces int) {
-	fmt.Fprintf(Buffer, MOVE_CURSOR_DOWN_ROWS, spaces);
-	if AutoFlush {
-		ScreenFlush()
+func (Screen *ScreenManager) MoveCursorDown(spaces int) {
+	fmt.Fprintf(Screen.Buffer, MOVE_CURSOR_DOWN_ROWS, spaces);
+	if Screen.AutoFlush {
+		Screen.Flush()
 	}
 }
 
 // Move cursor forward relative the current position
-func ScreenMoveCursorForward(spaces int) {
-	fmt.Fprintf(Buffer, MOVE_CURSOR_FORWARD_COLUMNS, spaces);
-	if AutoFlush {
-		ScreenFlush()
+func (Screen *ScreenManager) MoveCursorForward(spaces int) {
+	fmt.Fprintf(Screen.Buffer, MOVE_CURSOR_FORWARD_COLUMNS, spaces);
+	if Screen.AutoFlush {
+		Screen.Flush()
 	}
 }
 
 // Move cursor backward relative the current position
-func ScreenMoveCursorBackward(spaces int) {
-	fmt.Fprintf(Buffer, MOVE_CURSOR_BACKWARD_COLUMNS, spaces);
-	if AutoFlush {
-		ScreenFlush()
+func (Screen *ScreenManager) MoveCursorBackward(spaces int) {
+	fmt.Fprintf(Screen.Buffer, MOVE_CURSOR_BACKWARD_COLUMNS, spaces);
+	if Screen.AutoFlush {
+		Screen.Flush()
 	}
 }
 
 // Negative is Left/Top ward positive is Right/Down ward
-func ScreenMoveCursorRelative(XSpaces int,YSpaces int) {
+func (Screen *ScreenManager) MoveCursorRelative(XSpaces int,YSpaces int) {
 	if XSpaces > 0 {
-		ScreenMoveCursorDown(XSpaces)
+		Screen.MoveCursorDown(XSpaces)
 	} else if XSpaces < 0 {
-		ScreenMoveCursorUp(-XSpaces)
+		Screen.MoveCursorUp(-XSpaces)
 	}
 	if YSpaces > 0 {
-		ScreenMoveCursorForward(YSpaces)
+		Screen.MoveCursorForward(YSpaces)
 	} else if XSpaces < 0 {
-		ScreenMoveCursorBackward(-YSpaces)
+		Screen.MoveCursorBackward(-YSpaces)
 	}
 }
 
 // Move string to position
-func ScreenMoveTo(str string, x int, y int) (out string) {
-	x, y = GetScreenXY(x, y)
+func (Screen *ScreenManager) MoveTo(str string, x int, y int) (out string) {
+	x, y = Screen.GetScreenXY(x, y)
 	
 	return applyScreenTransform(str, func(idx int, line string) string {
 		return fmt.Sprintf(MOVE_CURSOR_RELATIVE_OF, x+idx, y, line)
@@ -206,14 +216,14 @@ func ScreenMoveTo(str string, x int, y int) (out string) {
 }
 
 // Return carrier to start of line
-func ScreenResetLine(str string) (out string) {
+func (Screen *ScreenManager) ResetLine(str string) (out string) {
 	return applyScreenTransform(str, func(idx int, line string) string {
 		return fmt.Sprintf(RESET_LINE, line)
 	})
 }
 
 // Make bold
-func ScreenBold(str string) string {
+func (Screen *ScreenManager) Bold(str string) string {
 	return applyScreenTransform(str, func(idx int, line string) string {
 		return fmt.Sprintf(APPLY_BOLD_EFFECT, line)
 	})
@@ -223,34 +233,34 @@ func ScreenBold(str string) string {
 //
 //     tm.Color("RED STRING", tm.RED)
 //
-func ScreenColor(str string, color int) string {
+func (Screen *ScreenManager) Color(str string, color int) string {
 	return applyScreenTransform(str, func(idx int, line string) string {
 		return fmt.Sprintf("%s%s%s", getScreenColor(color), line, RESET)
 	})
 }
 
-func ScreenHighlight(str, substr string, color int) string {
-	hiSubstr := ScreenColor(substr, color)
+func (Screen *ScreenManager) Highlight(str, substr string, color int) string {
+	hiSubstr := Screen.Color(substr, color)
 	return strings.Replace(str, substr, hiSubstr, -1)
 }
 
-func ScreenHighlightRegion(str string, from, to, color int) string {
-	return str[:from] + ScreenColor(str[from:to], color) + str[to:]
+func (Screen *ScreenManager) HighlightRegion(str string, from, to, color int) string {
+	return str[:from] + Screen.Color(str[from:to], color) + str[to:]
 }
 
 // Change background color of string:
 //
 //     tm.Background("string", tm.RED)
 //
-func ScreenBackground(str string, color int) string {
+func (Screen *ScreenManager) Background(str string, color int) string {
 	return applyScreenTransform(str, func(idx int, line string) string {
 		return fmt.Sprintf("%s%s%s", getScreenBgColor(color), line, RESET)
 	})
 }
 
 // Get console width
-func ScreenWidth() int {
-	ws, err := getScreenSize()
+func (Screen *ScreenManager) Width() int {
+	ws, err := Screen.getScreenSize()
 	
 	if err != nil {
 		return -1
@@ -259,7 +269,7 @@ func ScreenWidth() int {
 	return int(ws.Col)
 }
 
-func getScreenSize() (*ScreenSize, error) {
+func (Screen *ScreenManager) getScreenSize() (*ScreenSize, error) {
 	ws := new(ScreenSize)
 	
 	var _TIOCGWINSZ int64
@@ -287,8 +297,8 @@ func getScreenSize() (*ScreenSize, error) {
 	return ws, nil
 }
 // Get console height
-func ScreenHeight() int {
-	ws, err := getScreenSize()
+func (Screen *ScreenManager) Height() int {
+	ws, err := Screen.getScreenSize()
 	if err != nil {
 		return -1
 	}
@@ -296,62 +306,62 @@ func ScreenHeight() int {
 }
 
 // Get current height. Line count in Screen buffer.
-func ScreenCurrentHeight() int {
-	return strings.Count(Buffer.String(), "\n")
+func (Screen *ScreenManager) CurrentHeight() int {
+	return strings.Count(Screen.Buffer.String(), "\n")
 }
 
 // Flush buffer and ensure that it will not overflow screen
-func ScreenFlush() {
-	for idx, str := range strings.Split(Buffer.String(), "\n") {
-		if idx > ScreenHeight() {
+func (Screen *ScreenManager) Flush() {
+	for idx, str := range strings.Split(Screen.Buffer.String(), "\n") {
+		if idx > Screen.Height() {
 			return
 		}
 		if idx > 0 {
-			OutStream.WriteString("\n" + str)
+			Screen.OutStream.WriteString("\n" + str)
 		} else {
-			OutStream.WriteString(str)
+			Screen.OutStream.WriteString(str)
 		}
 	}
 	
-	OutStream.Flush()
-	Buffer.Reset()
+	Screen.OutStream.Flush()
+	Screen.Buffer.Reset()
 }
 
-func ScreenPrint(a ...interface{}) {
-	fmt.Fprint(Buffer, a...)
-	if AutoFlush {
-		ScreenFlush()
+func (Screen *ScreenManager) Print(a ...interface{}) {
+	fmt.Fprint(Screen.Buffer, a...)
+	if Screen.AutoFlush {
+		Screen.Flush()
 	}
 }
 
-func ScreenPrintln(a ...interface{}) {
-	fmt.Fprintln(Buffer, a...)
-	if AutoFlush {
-		ScreenFlush()
+func (Screen *ScreenManager) Println(a ...interface{}) {
+	fmt.Fprintln(Screen.Buffer, a...)
+	if Screen.AutoFlush {
+		Screen.Flush()
 	}
 }
 
 var cursorHidden bool = false
 
-func ScreenHideCursor() {
-	OutStream.WriteString("\033[?25l")
+func (Screen *ScreenManager) HideCursor() {
+	Screen.OutStream.WriteString("\033[?25l")
 	cursorHidden = true
 }
 
-func ScreenShowCursor() {
-	OutStream.WriteString("\033[?25h")
+func (Screen *ScreenManager) ShowCursor() {
+	Screen.OutStream.WriteString("\033[?25h")
 	cursorHidden = false
 }
 
-func ScreenHasCursorHidden() bool {
+func (Screen *ScreenManager) HasCursorHidden() bool {
 	return cursorHidden
 }
 
-func ScreenPrintf(format string, a ...interface{}) {
-	fmt.Fprintf(Buffer, format, a...)
+func (Screen *ScreenManager) Printf(format string, a ...interface{}) {
+	fmt.Fprintf(Screen.Buffer, format, a...)
 }
 
-func ScreenContext(data string, idx, max int) string {
+func (Screen *ScreenManager) Context(data string, idx, max int) string {
 	var start, end int
 	
 	if len(data[:idx]) < (max / 2) {

@@ -68,7 +68,7 @@ func (screenData *KeyValueScreenManager) getElementScreenColor(elem KeyValueElem
 var mutex sync.Mutex
 
 func (screenData *KeyValueScreenManager) drawGrid() {
-	ScreenClear() // Clear current screen
+	Screen.Clear() // Clear current screen
 	if screenData.TextLen == 0 {
 		for _,elem := range screenData.Elements {
 			if len(elem.Name) > screenData.TextLen {
@@ -76,18 +76,18 @@ func (screenData *KeyValueScreenManager) drawGrid() {
 			}
 		}
 	}
-	screenHeight := ScreenHeight()
+	screenHeight := Screen.Height()
 	rows := len(screenData.Elements)
 	for i := 0; i< rows; i++  {
-		ScreenMoveCursor(i + screenData.OffsetCols + 1, screenData.OffsetRows + 1)
+		Screen.MoveCursor(i + screenData.OffsetCols + 1, screenData.OffsetRows + 1)
 		var text string
 		if screenData.BoldValue {
-			text = ScreenColor(fmt.Sprintf("%s%s%s", StrPad(screenData.Elements[i].Name, screenData.TextLen), screenData.Separator, ScreenBold(StrPad(screenData.Elements[i].Value, screenData.MessageMaxLen))), screenData.getElementScreenColor(screenData.Elements[i]))
+			text = Screen.Color(fmt.Sprintf("%s%s%s", StrPad(screenData.Elements[i].Name, screenData.TextLen), screenData.Separator, Screen.Bold(StrPad(screenData.Elements[i].Value, screenData.MessageMaxLen))), screenData.getElementScreenColor(screenData.Elements[i]))
 		} else {
-			text = ScreenColor(fmt.Sprintf("%s%s%s", StrPad(screenData.Elements[i].Name, screenData.TextLen), screenData.Separator, StrPad(screenData.Elements[i].Value, screenData.MessageMaxLen)), screenData.getElementScreenColor(screenData.Elements[i]))
+			text = Screen.Color(fmt.Sprintf("%s%s%s", StrPad(screenData.Elements[i].Name, screenData.TextLen), screenData.Separator, StrPad(screenData.Elements[i].Value, screenData.MessageMaxLen)), screenData.getElementScreenColor(screenData.Elements[i]))
 		}
-		ScreenPrintln(text)
-		ScreenFlush()
+		Screen.Println(text)
+		Screen.Flush()
 	}
 	if rows > screenHeight {
 		screenData.OffsetRows = screenHeight - rows
@@ -99,15 +99,15 @@ func (screenData *KeyValueScreenManager) drawGrid() {
 			if index >= 0 {
 				mutex.Lock()
 				screenData.Elements[index] = update
-				ScreenMoveCursor(index + screenData.OffsetCols + 1, screenData.OffsetRows + 1)
+				Screen.MoveCursor(index + screenData.OffsetCols + 1, screenData.OffsetRows + 1)
 				var text string
 				if screenData.BoldValue {
-					text = ScreenColor(fmt.Sprintf("%s%s%s", StrPad(screenData.Elements[index].Name, screenData.TextLen), screenData.Separator, ScreenBold(StrPad(screenData.Elements[index].Value, screenData.MessageMaxLen))), screenData.getElementScreenColor(screenData.Elements[index]))
+					text = Screen.Color(fmt.Sprintf("%s%s%s", StrPad(screenData.Elements[index].Name, screenData.TextLen), screenData.Separator, Screen.Bold(StrPad(screenData.Elements[index].Value, screenData.MessageMaxLen))), screenData.getElementScreenColor(screenData.Elements[index]))
 				} else {
-					text = ScreenColor(fmt.Sprintf("%s%s%s", StrPad(screenData.Elements[index].Name, screenData.TextLen), screenData.Separator, StrPad(screenData.Elements[index].Value, screenData.MessageMaxLen)), screenData.getElementScreenColor(screenData.Elements[index]))
+					text = Screen.Color(fmt.Sprintf("%s%s%s", StrPad(screenData.Elements[index].Name, screenData.TextLen), screenData.Separator, StrPad(screenData.Elements[index].Value, screenData.MessageMaxLen)), screenData.getElementScreenColor(screenData.Elements[index]))
 				}
-				ScreenPrintln(text)
-				ScreenFlush()
+				Screen.Println(text)
+				Screen.Flush()
 				mutex.Unlock()
 			}
 		}
@@ -161,9 +161,9 @@ func (screenData *KeyValueScreenManager) Stop(clearScreen bool) {
 		time.Sleep(1 * time.Second)
 		screenData.CtrlChannel <- false
 		if clearScreen {
-			ScreenClear()
+			Screen.Clear()
 		}
-		ScreenShowCursor()
+		Screen.ShowCursor()
 	}
 }
 
@@ -173,6 +173,6 @@ func (screenData *KeyValueScreenManager) Start() {
 	} else  if ! screenData.inited {
 		screenData.Active = true
 		screenData.drawGrid()
-		ScreenHideCursor()
+		Screen.HideCursor()
 	}
 }

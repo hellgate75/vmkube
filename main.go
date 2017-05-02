@@ -22,8 +22,8 @@ func main() {
 		if response  {
 			os.Exit(0)
 		} else  {
-			term.ScreenPrintln(term.ScreenColor("Errors During Command Execution!!", term.RED))
-			term.ScreenFlush()
+			term.Screen.Println(term.Screen.Color("Errors During Command Execution!!", term.RED))
+			term.Screen.Flush()
 			os.Exit(1)
 		}
 	} else  {
