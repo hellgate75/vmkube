@@ -23,7 +23,7 @@ func main() {
 		if response {
 			os.Exit(0)
 		} else {
-			utils.PrintlnError(term.Screen.Bold("Errors During Command Execution!!"))
+			utils.PrintlnBoldError("Errors During Command Execution!!")
 			term.Screen.Flush()
 			os.Exit(1)
 		}

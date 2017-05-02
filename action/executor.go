@@ -96,7 +96,7 @@ func ExecuteRequest(request CmdRequest) bool {
 			} else {
 				response, error := request.AlterInfra()
 				if !response.Status {
-					utils.PrintlnError(term.Screen.Bold(fmt.Sprintf("Error: %s, clause: %s", error, response.Message)))
+					utils.PrintlnBoldError(fmt.Sprintf("Error: %s, clause: %s", error, response.Message))
 					term.Screen.Flush()
 				}
 				if !utils.NO_COLORS {

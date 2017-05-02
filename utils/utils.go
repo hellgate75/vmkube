@@ -112,6 +112,19 @@ func PrintlnError(text string) {
 	}
 }
 
+func PrintlnBoldError(text string) {
+	if NO_COLORS {
+		fmt.Println(text)
+	} else {
+		for _, line := range strings.Split(text, "\n") {
+			value := term.Screen.Color(line, term.RED)
+			value = term.Screen.Bold(value)
+			term.Screen.Println(value)
+			term.Screen.Flush()
+		}
+	}
+}
+
 func PrintInfo(text string) {
 	if NO_COLORS {
 		fmt.Print(text)
