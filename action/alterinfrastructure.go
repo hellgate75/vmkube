@@ -184,6 +184,8 @@ func RecreateInstance(infrastructure model.Infrastructure, instance model.LocalI
 func DestroyInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, descriptor model.ProjectsDescriptor) error {
 	//TODO: Test Destroy Instance
 
+	utils.PrintlnWarning(fmt.Sprintf("Load Project : '%s' for inspection ...", descriptor.Name))
+
 	project, err := vmio.LoadProject(descriptor.Id)
 
 	if err != nil {
@@ -205,6 +207,7 @@ func DestroyInstance(infrastructure model.Infrastructure, instance model.LocalIn
 	if err != nil {
 		return err
 	}
+	utils.PrintlnWarning(fmt.Sprintf("Removing Machine Id: '%s' from Project : '%s' [Id: %s]...", machineId, project.Name, project.Id))
 	if len(stopCouples) == 0 {
 		return  errors.New("No Instance available for destroy procedure...")
 	}
@@ -212,6 +215,7 @@ func DestroyInstance(infrastructure model.Infrastructure, instance model.LocalIn
 	if err != nil {
 		return  err
 	}
+	utils.PrintlnWarning(fmt.Sprintf("Removing Instance Id: %s from Infrastructure : '%s' [Id: %s]...", instanceId, infrastructure.Name, infrastructure.Id))
 	err = RemoveInfrastructureInstanceById(&infrastructure, instanceId)
 	if err != nil {
 		return  err
@@ -224,10 +228,16 @@ func DestroyInstance(infrastructure model.Infrastructure, instance model.LocalIn
 	if len(errorsList) > 0 {
 		return  errorsList[0]
 	}
+
+	utils.PrintlnWarning(fmt.Sprintf("Overwriting Project : %s [Id: %s]", project.Name, project.Id))
+
 	err = vmio.SaveProject(project)
 	if err != nil {
 		return  err
 	}
+
+	utils.PrintlnWarning(fmt.Sprintf("Overwriting Infrastructure : %s [Id: %s]", infrastructure.Name, infrastructure.Id))
+
 	err = vmio.SaveInfrastructure(infrastructure)
 	if err != nil {
 		return  err
