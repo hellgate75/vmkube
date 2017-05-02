@@ -36,7 +36,7 @@ func RequestConfirmation(reason string) bool {
 	reader := bufio.NewReader(os.Stdin)
 	options := "y/n/yes/no"
 	options = term.Screen.Bold(options)
-	allText := fmt.Sprintf("%s Confirm operation [%s] : ", reason, options)
+	allText := fmt.Sprintf("%s Please confirm operation [%s] : ", reason, options)
 	term.Screen.Print(allText)
 	term.Screen.Flush()
 	text, _ = reader.ReadString('\n')

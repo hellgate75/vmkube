@@ -1053,8 +1053,8 @@ func ExistInstance(infrastructure model.Infrastructure, instance model.LocalInst
 		} else {
 			return procedures.Machine_State_None, errors.New("Legacy application not executed correctly!!")
 		}
-		case <-time.After(time.Second * MachineReadOperationTimeout):
-			return procedures.Machine_State_None, errors.New("Legacy application timed out!!")
+	case <-time.After(time.Second * MachineReadOperationTimeout):
+		return procedures.Machine_State_None, errors.New("Legacy application timed out!!")
 	}
 }
 
@@ -1233,4 +1233,34 @@ func GetDefault(value interface{}, nilVal interface{}, dafaultVal interface{}) i
 		return dafaultVal
 	}
 	return value
+}
+
+func FindInfrastructureInstance(Infrastructure model.Infrastructure, InstanceId string, InstanceName string) (model.LocalInstance, error) {
+	var instance model.LocalInstance
+	for i := 0; i < len(Infrastructure.Domains); i++ {
+		for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
+			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].LocalInstances); k++ {
+				if Infrastructure.Domains[i].Networks[j].LocalInstances[k].Id == InstanceId ||
+					CorrectInput(Infrastructure.Domains[i].Networks[j].LocalInstances[k].Name) == CorrectInput(InstanceName){
+					return Infrastructure.Domains[i].Networks[j].LocalInstances[k], nil
+				}
+			}
+		}
+	}
+	return instance, errors.New(fmt.Sprintf("Instance not Found by UID : %s or by Name : %s", InstanceId, InstanceName))
+}
+
+func FindInfrastructureCloudInstance(Infrastructure model.Infrastructure, InstanceId string, InstanceName string) (model.CloudInstance, error) {
+	var instance model.CloudInstance
+	for i := 0; i < len(Infrastructure.Domains); i++ {
+		for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
+			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CloudInstances); k++ {
+				if Infrastructure.Domains[i].Networks[j].CloudInstances[k].Id == InstanceId ||
+					CorrectInput(Infrastructure.Domains[i].Networks[j].CloudInstances[k].Name) == CorrectInput(InstanceName){
+					return Infrastructure.Domains[i].Networks[j].CloudInstances[k], nil
+				}
+			}
+		}
+	}
+	return instance, errors.New(fmt.Sprintf("Cloud Instance not Found by UID : %s or by Name : %s", InstanceId, InstanceName))
 }

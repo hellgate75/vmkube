@@ -542,7 +542,7 @@ func InitHelpers() {
 		Enable,
 		Recreate,
 		Destroy,
-		Autofix,
+		AutoFix,
 	)
 
 	AlterInfra.Options = append(AlterInfra.Options,
@@ -583,8 +583,6 @@ func InitHelpers() {
 			Mandatory:   false,
 		},
 	)
-
-
 
 	//Backup Infrastructure
 	BackupInfra.Options = append(BackupInfra.Options,

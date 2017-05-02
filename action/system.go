@@ -86,7 +86,7 @@ const (
 	Status
 	Recreate
 	Destroy
-	Autofix
+	AutoFix
 )
 
 var CmdSubRequestDescriptors []string = []string{
@@ -174,15 +174,16 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 						ArgCmd.SubCmdHelpType = helper.SubCmdHelperTypes[index]
 					}
 					if ArgCmd.CmdType == NoCommand {
-						return  true
+						return true
 					}
 					if len(args) > 2 {
 						optsArgs := args[2:]
 						options := make([][]string, 0)
 						passed := true
-						for index, option := range optsArgs {if index % 2 == 0 {
-								if len(optsArgs) > index + 1 {
-									key, value, error := utils.OptionsParse(optsArgs[index], optsArgs[index + 1])
+						for index, option := range optsArgs {
+							if index%2 == 0 {
+								if len(optsArgs) > index+1 {
+									key, value, error := utils.OptionsParse(optsArgs[index], optsArgs[index+1])
 									if error != nil {
 										passed = false
 										utils.PrintlnBoldError(fmt.Sprintf("Error: Unable to parse option %s for Command %s and Sub-Command %s", option, command, SubCommand))

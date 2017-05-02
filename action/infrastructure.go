@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 	"vmkube/model"
+	"vmkube/operations"
 	"vmkube/procedures"
 	"vmkube/tasks"
 	"vmkube/utils"
@@ -62,9 +63,159 @@ func (request *CmdRequest) CreateInfra() (Response, error) {
 
 func (request *CmdRequest) AlterInfra() (Response, error) {
 	//TODO: Alter Infra to : Start/Stop/Recreate/Remove Single Instance or AutoFix instances errors.
+	Name := ""
+	InstanceId := ""
+	InstanceName := ""
+	Force := false
+	IsCloud := false
+	utils.NO_COLORS = false
+	for _, option := range request.Arguments.Options {
+		if "infra-name" == CorrectInput(option[0]) {
+			Name = option[1]
+		} else if "force" == CorrectInput(option[0]) {
+			Force = GetBoolean(option[1])
+		} else if "no-colors" == CorrectInput(option[0]) {
+			utils.NO_COLORS = GetBoolean(option[1])
+		} else if "is-cloud" == CorrectInput(option[0]) {
+			IsCloud = GetBoolean(option[1])
+		} else if "instance-id" == CorrectInput(option[0]) {
+			InstanceId = option[1]
+		} else if "instance-name" == CorrectInput(option[0]) {
+			InstanceName = option[1]
+		}
+	}
+	if Name == "" {
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		return Response{
+			Message: "Infrastrcuture Name not provided",
+			Status:  false}, errors.New("Unable to execute task")
+	}
+	descriptor, err := vmio.GetInfrastructureProjectDescriptor(Name)
+	if err != nil {
+		response := Response{
+			Status:  false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	iFaceInfra := vmio.IFaceInfra{
+		Id:        descriptor.InfraId,
+		ProjectId: descriptor.Id,
+	}
+	iFaceInfra.WaitForUnlock()
+
+	infrastructure, err := vmio.LoadInfrastructure(descriptor.Id)
+
+	if err != nil {
+		response := Response{
+			Status:  false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	if request.SubType == AutoFix {
+		err := operations.AutoFixInfrastructureInstances(infrastructure)
+		if err != nil {
+			response := Response{
+				Status:  false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		} else {
+			utils.PrintlnImportant(fmt.Sprintf("Alter Infrastructure '%s' Command : '%s' executed successfully!!", descriptor.InfraName, CmdSubRequestDescriptors[int(request.SubType)]))
+			response := Response{
+				Status:  true,
+				Message: "Success",
+			}
+			return response, nil
+		}
+
+	}
+
+	if InstanceId == "" && InstanceName == "" {
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		return Response{
+			Message: "Instance Unique Identifier or Name not provided",
+			Status:  false}, errors.New("Unable to execute task")
+	}
+	var instance model.LocalInstance
+	var cloudInstance model.CloudInstance
+	if ! IsCloud {
+		instance, err = FindInfrastructureInstance(infrastructure, InstanceId, InstanceName)
+		if err != nil {
+			response := Response{
+				Status:  false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		if !Force {
+			AllowChange := utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with changes with Instance '%s' (uid: %s) part of Infrastructure named '%s'?", instance.Name, instance.Id, Name))
+			if !AllowChange {
+				return Response{
+					Message: "User task interruption",
+					Status:  false,
+				}, errors.New("Unable to execute task")
+			}
+		}
+	} else {
+		cloudInstance, err = FindInfrastructureCloudInstance(infrastructure, InstanceId, InstanceName)
+		if err != nil {
+			response := Response{
+				Status:  false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		if !Force {
+			AllowChange := utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with changes with Instance '%s' (uid: %s) part of Infrastructure named '%s'?", cloudInstance.Name, cloudInstance.Id, Name))
+			if !AllowChange {
+				return Response{
+					Message: "User task interruption",
+					Status:  false,
+				}, errors.New("Unable to execute task")
+			}
+		}
+	}
+
+	switch request.SubType {
+	case Status:
+		err = operations.DescribeInstance(infrastructure, instance, cloudInstance, IsCloud)
+		break
+	case Start:
+		err = operations.StartInstance(infrastructure, instance, cloudInstance, IsCloud)
+		break
+	case Stop:
+		err = operations.StopInstance(infrastructure, instance, cloudInstance, IsCloud)
+		break
+	case Restart:
+		err = operations.RestartInstance(infrastructure, instance, cloudInstance, IsCloud)
+		break
+	case Disable:
+		err = operations.DisableInstance(infrastructure, instance, cloudInstance, IsCloud)
+		break
+	case Enable:
+		err = operations.EnableInstance(infrastructure, instance, cloudInstance, IsCloud)
+		break
+	case Recreate:
+		err = operations.RecreateInstance(infrastructure, instance, cloudInstance, IsCloud)
+		break
+	default:
+		err = operations.DestroyInstance(infrastructure, instance, cloudInstance, IsCloud)
+		break
+		// Destroy
+	}
+	if err != nil {
+		response := Response{
+			Status:  false,
+			Message: err.Error(),
+		}
+		return response, errors.New("Unable to execute task")
+	}
+	utils.PrintlnImportant(fmt.Sprintf("Alter Infrastructure '%s' Command : '%s' executed successfully!!", descriptor.InfraName, CmdSubRequestDescriptors[int(request.SubType)]))
 	response := Response{
-		Status:  false,
-		Message: "Not Implemented",
+		Status:  true,
+		Message: "Success",
 	}
 	return response, errors.New("Unable to execute task")
 }
