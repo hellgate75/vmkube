@@ -62,7 +62,6 @@ func (request *CmdRequest) CreateInfra() (Response, error) {
 }
 
 func (request *CmdRequest) AlterInfra() (Response, error) {
-	//TODO: Alter Infra to : Start/Stop/Recreate/Remove Single Instance or AutoFix instances errors.
 	Name := ""
 	InstanceId := ""
 	InstanceName := ""
@@ -532,7 +531,6 @@ func (request *CmdRequest) BackupInfra() (Response, error) {
 }
 
 func (request *CmdRequest) RecoverInfra() (Response, error) {
-	//TODO: Test Beckup / Recovery commands
 	Name := ""
 	File := ""
 	Override := false
@@ -1104,8 +1102,6 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 }
 
 func (request *CmdRequest) StartInfra() (Response, error) {
-	//TODO: Manage other error status ...
-
 	Name := ""
 	Force := false
 	Threads := 1
@@ -1220,8 +1216,6 @@ func (request *CmdRequest) StartInfra() (Response, error) {
 }
 
 func (request *CmdRequest) StopInfra() (Response, error) {
-	//TODO: Manage other error status ...
-
 	Name := ""
 	Force := false
 	Threads := 1
@@ -1329,8 +1323,6 @@ func (request *CmdRequest) StopInfra() (Response, error) {
 }
 
 func (request *CmdRequest) RestartInfra() (Response, error) {
-	//TODO: Manage other error status ...
-
 	Name := ""
 	Force := false
 	Threads := 1
