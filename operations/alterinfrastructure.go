@@ -95,17 +95,17 @@ func DescribeInstance(infrastructure model.Infrastructure, instance model.LocalI
 	return nil
 }
 
-func StartInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool) error {
+func StartInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState) error {
 	//TODO: Implement Start Instance
 	return errors.New("Command Start Instance not implemented!!")
 }
 
-func RestartInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool) error {
+func RestartInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState) error {
 	//TODO: Implement ReStart Instance
 	return errors.New("Command Restart Instance not implemented!!")
 }
 
-func StopInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool) error {
+func StopInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState) error {
 	//TODO: Implement Stop Instance
 	return errors.New("Command Stop Instance not implemented!!")
 }

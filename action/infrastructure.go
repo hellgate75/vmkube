@@ -180,29 +180,131 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 	switch request.SubType {
 	case Status:
 		var instanceState procedures.MachineState
-		instanceState, _ = ExistInstance(infrastructure, instance, cloudInstance, IsCloud, instance.Id)
-
+		instanceState, err = ExistInstance(infrastructure, instance, cloudInstance, IsCloud, instance.Id)
+		if err != nil {
+			response := Response{
+				Status:  false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
 		err = operations.DescribeInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState)
 		break
 	case Start:
-		err = operations.StartInstance(infrastructure, instance, cloudInstance, IsCloud)
+		var instanceState procedures.MachineState
+		instanceState, err = ExistInstance(infrastructure, instance, cloudInstance, IsCloud, instance.Id)
+		if err != nil {
+			response := Response{
+				Status:  false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		if instanceState != procedures.Machine_State_Stopped {
+			response := Response{
+				Status:  false,
+				Message: fmt.Sprintf("Instance not stopped : %s", instanceState.String()),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		err = operations.StartInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState)
 		break
 	case Stop:
-		err = operations.StopInstance(infrastructure, instance, cloudInstance, IsCloud)
+		var instanceState procedures.MachineState
+		instanceState, err = ExistInstance(infrastructure, instance, cloudInstance, IsCloud, instance.Id)
+		if err != nil {
+			response := Response{
+				Status:  false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		if instanceState != procedures.Machine_State_Running {
+			response := Response{
+				Status:  false,
+				Message: fmt.Sprintf("Instance not running : %s", instanceState.String()),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		err = operations.StopInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState)
 		break
 	case Restart:
-		err = operations.RestartInstance(infrastructure, instance, cloudInstance, IsCloud)
+		var instanceState procedures.MachineState
+		instanceState, err = ExistInstance(infrastructure, instance, cloudInstance, IsCloud, instance.Id)
+		if err != nil {
+			response := Response{
+				Status:  false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		if instanceState != procedures.Machine_State_Running {
+			response := Response{
+				Status:  false,
+				Message: fmt.Sprintf("Instance not running : %s", instanceState.String()),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		err = operations.RestartInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState)
 		break
 	case Disable:
+		var instanceState procedures.MachineState
+		instanceState, err = ExistInstance(infrastructure, instance, cloudInstance, IsCloud, instance.Id)
+		if err != nil {
+			response := Response{
+				Status:  false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		if instanceState == procedures.Machine_State_Running {
+			response := Response{
+				Status:  false,
+				Message: "Instance is running please stop it before disable the virtual machine ...",
+			}
+			return response, errors.New("Unable to execute task")
+		}
 		err = operations.DisableInstance(infrastructure, instance, cloudInstance, IsCloud)
 		break
 	case Enable:
 		err = operations.EnableInstance(infrastructure, instance, cloudInstance, IsCloud)
 		break
 	case Recreate:
+		var instanceState procedures.MachineState
+		instanceState, err = ExistInstance(infrastructure, instance, cloudInstance, IsCloud, instance.Id)
+		if err != nil {
+			response := Response{
+				Status:  false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		if instanceState == procedures.Machine_State_Running {
+			response := Response{
+				Status:  false,
+				Message: "Instance is running please stop it before recreate the virtual machine ...",
+			}
+			return response, errors.New("Unable to execute task")
+		}
 		err = operations.RecreateInstance(infrastructure, instance, cloudInstance, IsCloud)
 		break
 	default:
+		var instanceState procedures.MachineState
+		instanceState, err = ExistInstance(infrastructure, instance, cloudInstance, IsCloud, instance.Id)
+		if err != nil {
+			response := Response{
+				Status:  false,
+				Message: err.Error(),
+			}
+			return response, errors.New("Unable to execute task")
+		}
+		if instanceState == procedures.Machine_State_Running {
+			response := Response{
+				Status:  false,
+				Message: "Instance is running please stop it before destroy the virtual machine ...",
+			}
+			return response, errors.New("Unable to execute task")
+		}
 		err = operations.DestroyInstance(infrastructure, instance, cloudInstance, IsCloud)
 		break
 		// Destroy
