@@ -688,6 +688,18 @@ func InitHelpers() {
 			Mandatory:   true,
 		},
 		HelperOption{
+			Option:      "show-full",
+			Type:        "<boolean>",
+			Description: "Show full details of infrastructures on screen (default: false)",
+			Mandatory:   false,
+		},
+		HelperOption{
+			Option:      "format",
+			Type:        "<text: json|xml>",
+			Description: "Format used to show details on screen (default: json)",
+			Mandatory:   false,
+		},
+		HelperOption{
 			Option:      "no-colors",
 			Type:        "<boolean>",
 			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",

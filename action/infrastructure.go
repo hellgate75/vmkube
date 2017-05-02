@@ -138,7 +138,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 	}
 	var instance model.LocalInstance
 	var cloudInstance model.CloudInstance
-	if ! IsCloud {
+	if !IsCloud {
 		instance, err = FindInfrastructureInstance(infrastructure, InstanceId, InstanceName)
 		if err != nil {
 			response := Response{
@@ -147,7 +147,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		if ! Force && request.SubType != Status {
+		if !Force && request.SubType != Status {
 			AllowChange := utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with changes with Instance '%s' (uid: %s) part of Infrastructure named '%s'?", instance.Name, instance.Id, Name))
 			if !AllowChange {
 				return Response{
@@ -187,7 +187,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		err = DescribeInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState)
+		err = DescribeInstance(instance, cloudInstance, IsCloud, instanceState)
 		break
 	case Start:
 		var instanceState procedures.MachineState
@@ -1573,12 +1573,18 @@ func (request *CmdRequest) ListInfras() (Response, error) {
 
 func (request *CmdRequest) StatusInfra() (Response, error) {
 	Name := ""
+	Format := "json"
+	Details := false
 	utils.NO_COLORS = false
 	for _, option := range request.Arguments.Options {
 		if "infra-name" == CorrectInput(option[0]) {
 			Name = option[1]
 		} else if "no-colors" == CorrectInput(option[0]) {
 			utils.NO_COLORS = GetBoolean(option[1])
+		} else if "show-full" == CorrectInput(option[0]) {
+			Details = GetBoolean(option[1])
+		} else if "format" == CorrectInput(option[0]) {
+			Format = CorrectInput(option[1])
 		}
 	}
 	if Name == "" {
@@ -1609,65 +1615,73 @@ func (request *CmdRequest) StatusInfra() (Response, error) {
 		}
 		return response, errors.New("Unable to execute task")
 	}
-	modified := "no"
-	if infrastructure.Altered {
-		modified = "yes"
-	}
-	errors := "no"
-	if infrastructure.Errors {
-		errors = "yes"
-	}
-	fmt.Printf("Id: %s\nInfrastructure: %s\nModified: %s\n", infrastructure.Id, infrastructure.Name, modified)
-	created := "no"
-	if infrastructure.Created {
-		created = "yes"
-	}
-	fmt.Printf("Created [%s] : %d-%02d-%02d %02d:%02d:%02d\n", created,
-		infrastructure.Creation.Year(), infrastructure.Creation.Month(), infrastructure.Creation.Day(),
-		infrastructure.Creation.Hour(), infrastructure.Creation.Minute(), infrastructure.Creation.Second())
-	fmt.Printf("Modified : %d-%02d-%02d %02d:%02d:%02d\n",
-		infrastructure.Modified.Year(), infrastructure.Modified.Month(), infrastructure.Modified.Day(),
-		infrastructure.Modified.Hour(), infrastructure.Modified.Minute(), infrastructure.Modified.Second())
-	fmt.Printf("Errors: %s\nLast Message: %s\n", errors, infrastructure.LastMessage)
-	fmt.Printf("Domains: %d\n", len(infrastructure.Domains))
-	for _, domain := range infrastructure.Domains {
-		num, options := vmio.StripOptions(domain.Options)
-		fmt.Printf("Domain: %s (Id: %s) - Options [%d] :%s\n", domain.Name, domain.Id, num, options)
-		fmt.Printf("Networks: %d\n", len(domain.Networks))
-		for _, network := range domain.Networks {
-			num, options := vmio.StripOptions(network.Options)
-			fmt.Printf("   Network: %s (Id: %s) - Options [%d] :%s\n", network.Name, network.Id, num, options)
-			fmt.Printf("   Local Instances: %d\n", len(network.LocalInstances))
-			instancesMap := make(map[string]string)
-			for _, instance := range network.LocalInstances {
-				instancesMap[instance.Id] = instance.Name
-				var instanceState procedures.MachineState
-				instanceState, _ = ExistInstance(infrastructure, instance, model.CloudInstance{}, false, instance.Id)
-				fmt.Printf("      Local Instance: %s (Id: %s) - Driver: %s - OS : %s:%s - IP Address: %s State: %s\n", instance.Name, instance.Id, instance.Driver, instance.OSType, instance.OSVersion, strings.TrimSpace(instance.IPAddress), instanceState.String())
+	if Details {
+		var bytesArray []byte = make([]byte, 0)
+		var err error
+		if "json" == Format {
+			bytesArray, err = utils.GetJSONFromElem(infrastructure, true)
+		} else if "xml" == Format {
+			bytesArray, err = utils.GetXMLFromElem(infrastructure, true)
+		} else {
+			response := Response{
+				Status:  false,
+				Message: "Sample Format '" + Format + "' not supported!!",
 			}
-			fmt.Printf("   Cloud Instances: %d\n", len(network.CloudInstances))
-			for _, instance := range network.CloudInstances {
-				instancesMap[instance.Id] = instance.Name
-				var instanceState procedures.MachineState
-				instanceState, _ = ExistInstance(infrastructure, model.LocalInstance{}, instance, true, instance.Id)
-				num, options := vmio.StripOptions(instance.Options)
-				fmt.Printf("      Cloud Instance: %s (Id: %s) - Driver: %s - IP Address: %s - Options [%d] :%s State: %s\n", instance.Name, instance.Id, instance.Driver, strings.TrimSpace(instance.IPAddress), num, options, instanceState.String())
+			return response, errors.New("Unable to execute task")
+		}
+		if err != nil {
+			response := Response{
+				Status:  false,
+				Message: err.Error(),
 			}
-			fmt.Printf("   Installation Plans: %d\n", len(network.Installations))
-			for _, installation := range network.Installations {
-				machineName, ok := instancesMap[installation.InstanceId]
-				if !ok {
-					machineName = "<invalid>"
+			return response, errors.New("Unable to execute task")
+		}
+		fmt.Printf("%s\n", bytesArray)
+	} else {
+		fmt.Printf("Id: %s\nInfrastructure: %s\nModified: %s\n", infrastructure.Id, infrastructure.Name, BoolToString(infrastructure.Altered))
+		created := "no"
+		if infrastructure.Created {
+			created = "yes"
+		}
+		fmt.Printf("Created [%s] : %d-%02d-%02d %02d:%02d:%02d\n", created,
+			infrastructure.Creation.Year(), infrastructure.Creation.Month(), infrastructure.Creation.Day(),
+			infrastructure.Creation.Hour(), infrastructure.Creation.Minute(), infrastructure.Creation.Second())
+		fmt.Printf("Modified : %d-%02d-%02d %02d:%02d:%02d\n",
+			infrastructure.Modified.Year(), infrastructure.Modified.Month(), infrastructure.Modified.Day(),
+			infrastructure.Modified.Hour(), infrastructure.Modified.Minute(), infrastructure.Modified.Second())
+		fmt.Printf("Errors: %s\nLast Message: %s\n", BoolToString(infrastructure.Errors), infrastructure.LastMessage)
+		fmt.Printf("Domains: %d\n", len(infrastructure.Domains))
+		for _, domain := range infrastructure.Domains {
+			num, options := vmio.StripOptions(domain.Options)
+			fmt.Printf("Domain: %s (Id: %s) - Options [%d] :%s\n", domain.Name, domain.Id, num, options)
+			fmt.Printf("Networks: %d\n", len(domain.Networks))
+			for _, network := range domain.Networks {
+				num, options := vmio.StripOptions(network.Options)
+				fmt.Printf("   Network: %s (Id: %s) - Options [%d] :%s\n", network.Name, network.Id, num, options)
+				fmt.Printf("   Local Instances: %d\n", len(network.LocalInstances))
+				instancesMap := make(map[string]string)
+				for _, instance := range network.LocalInstances {
+					instancesMap[instance.Id] = instance.Name
+					var instanceState procedures.MachineState
+					instanceState, _ = ExistInstance(infrastructure, instance, model.CloudInstance{}, false, instance.Id)
+					fmt.Printf("      Local Instance: %s (Id: %s) - Driver: %s - OS : %s:%s - IP Address: %s State: %s\n", instance.Name, instance.Id, instance.Driver, instance.OSType, instance.OSVersion, strings.TrimSpace(instance.IPAddress), instanceState.String())
 				}
-				cloud := "no"
-				if installation.IsCloud {
-					cloud = "yes"
+				fmt.Printf("   Cloud Instances: %d\n", len(network.CloudInstances))
+				for _, instance := range network.CloudInstances {
+					instancesMap[instance.Id] = instance.Name
+					var instanceState procedures.MachineState
+					instanceState, _ = ExistInstance(infrastructure, model.LocalInstance{}, instance, true, instance.Id)
+					num, options := vmio.StripOptions(instance.Options)
+					fmt.Printf("      Cloud Instance: %s (Id: %s) - Driver: %s - IP Address: %s - Options [%d] :%s State: %s\n", instance.Name, instance.Id, instance.Driver, strings.TrimSpace(instance.IPAddress), num, options, instanceState.String())
 				}
-				success := "no"
-				if installation.Success {
-					success = "yes"
+				fmt.Printf("   Installation Plans: %d\n", len(network.Installations))
+				for _, installation := range network.Installations {
+					machineName, ok := instancesMap[installation.InstanceId]
+					if !ok {
+						machineName = "<invalid>"
+					}
+					fmt.Printf("      Plan: Id: %s - Instance: %s [Id: %s] - Success: %s - Cloud: %s - Envoronment : %s  Role: %s  Type: %s\n", installation.Id, machineName, installation.InstanceId, BoolToString(installation.Success), BoolToString(installation.IsCloud), model.InstanceEnvironmentToString(installation.Environment), model.InstanceRoleToString(installation.Role), model.InstanceInstallationToString(installation.Type))
 				}
-				fmt.Printf("      Plan: Id: %s - Instance: %s [Id: %s] - Success: %s - Cloud: %s - Envoronment : %s  Role: %s  Type: %s\n", installation.Id, machineName, installation.InstanceId, success, cloud, model.InstanceEnvironmentToString(installation.Environment), model.InstanceRoleToString(installation.Role), model.InstanceInstallationToString(installation.Type))
 			}
 		}
 	}

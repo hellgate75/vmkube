@@ -307,9 +307,8 @@ func filterCloudInstanceByMachine(id string, infrastructure model.Infrastructure
 }
 
 func GetTaskActivities(project model.Project, infrastructure model.Infrastructure, task ActivityTask) ([]ActivityCouple, error) {
-	return  GetTaskActivitiesExclusion(project, infrastructure, task, []string{})
+	return GetTaskActivitiesExclusion(project, infrastructure, task, []string{})
 }
-
 
 func GetTaskActivitiesExclusion(project model.Project, infrastructure model.Infrastructure, task ActivityTask, exclusionList []string) ([]ActivityCouple, error) {
 	var taskList []ActivityCouple = make([]ActivityCouple, 0)
@@ -423,26 +422,24 @@ func SortGroups(groups []ActivityGroup) {
 	sort.Sort(SortGroupType(groups))
 }
 
-
-func GetExclusionListExceptInstanceList(infrastructure model.Infrastructure,instanceIds []string) []string {
-	var  exclusionList []string  = make([]string, 0)
+func GetExclusionListExceptInstanceList(infrastructure model.Infrastructure, instanceIds []string) []string {
+	var exclusionList []string = make([]string, 0)
 	for _, domain := range infrastructure.Domains {
 		for _, network := range domain.Networks {
 			for _, instance := range network.LocalInstances {
-				if ! containsString(instanceIds, instance.Id) {
+				if !containsString(instanceIds, instance.Id) {
 					exclusionList = append(exclusionList, instance.Id)
 				}
 			}
 			for _, instance := range network.CloudInstances {
-				if ! containsString(instanceIds, instance.Id) {
+				if !containsString(instanceIds, instance.Id) {
 					exclusionList = append(exclusionList, instance.Id)
 				}
 			}
 		}
 	}
-	return  exclusionList
+	return exclusionList
 }
-
 
 func GetPostBuildTaskActivities(infrastructure model.Infrastructure, task ActivityTask, exclusionList []string) ([]ActivityCouple, error) {
 	var taskList []ActivityCouple = make([]ActivityCouple, 0)

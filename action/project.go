@@ -451,12 +451,6 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 		} else if "backup" == CorrectInput(option[0]) {
 			Backup = GetBoolean(option[1])
 		}
-		//else {
-		//	PrintCommandHelper(request.TypeStr, request.SubTypeStr)
-		//	return Response{
-		//		Message: fmt.Sprintf("Argument %s not provided, please review the help", option[0]),
-		//		Status: false,},errors.New("Unable to execute task")
-		//}
 	}
 	if strings.TrimSpace(Name) == "" {
 		response := Response{
@@ -472,13 +466,6 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 		}
 		return response, errors.New("Unable to execute task")
 	}
-	//if strings.TrimSpace(Format) == "" && request.SubType != Open && request.SubType != Close && request.SubType != Remove {
-	//	response := Response{
-	//		Status: false,
-	//		Message: "Input File Format Field is mandatory",
-	//	}
-	//	return  response, errors.New("Unable to execute task")
-	//}
 	if ElementType == NoElement && request.SubType != Open && request.SubType != Close {
 		response := Response{
 			Status:  false,
@@ -1315,15 +1302,7 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 		}
 		fmt.Printf("%s\n", bytesArray)
 	} else {
-		open := "no"
-		if project.Open {
-			open = "yes"
-		}
-		errors := "no"
-		if project.Errors {
-			errors = "yes"
-		}
-		fmt.Printf("Id: %s\nProject: %s\nOpen: %s\n", project.Id, project.Name, open)
+		fmt.Printf("Id: %s\nProject: %s\nOpen: %s\n", project.Id, project.Name, BoolToString(project.Open))
 		fmt.Printf("Created : %d-%02d-%02d %02d:%02d:%02d\n",
 			project.Created.Year(), project.Created.Month(), project.Created.Day(),
 			project.Created.Hour(), project.Created.Minute(), project.Created.Second())
@@ -1335,7 +1314,7 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 		} else {
 			fmt.Println("Infrastructure: No Infrastructure")
 		}
-		fmt.Printf("Errors: %s\nLast Message: %s\n", errors, project.LastMessage)
+		fmt.Printf("Errors: %s\nLast Message: %s\n", BoolToString(project.Errors), project.LastMessage)
 		fmt.Printf("Domains: %d\n", len(project.Domains))
 		for _, domain := range project.Domains {
 			num, options := vmio.StripOptions(domain.Options)
@@ -1362,11 +1341,7 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 					if !ok {
 						machineName = "<invalid>"
 					}
-					cloud := "no"
-					if installation.IsCloud {
-						cloud = "yes"
-					}
-					fmt.Printf("      Plan: Id: %s - Machine: %s [Id: %s] - Cloud: %s - Envoronment : %s  Role: %s  Type: %s\n", installation.Id, machineName, installation.MachineId, cloud, installation.Environment, installation.Role, installation.Type)
+					fmt.Printf("      Plan: Id: %s - Machine: %s [Id: %s] - Cloud: %s - Envoronment : %s  Role: %s  Type: %s\n", installation.Id, machineName, installation.MachineId, BoolToString(installation.IsCloud), installation.Environment, installation.Role, installation.Type)
 				}
 			}
 		}

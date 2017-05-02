@@ -161,7 +161,7 @@ Describe Machine options, contains
 
   * OSVersion   (string)     Machine OS Version (ref: https://docs.docker.com/machine/drivers/os-base/)
 
-  * NoShare     (string)     Do not mount home as shared folder
+  * NoShare     (bool)     	 Do not mount home as shared folder
 
   * Options     ([][]string) Specific vendor option in format key value pairs array without signs (e.g.: --<driver>)
 
@@ -172,6 +172,8 @@ Describe Machine options, contains
   * InspectJSON (string)     Inspection Data JSON
 
   * Logs        (LogStorage) Log information data
+
+  * Disabled    (bool)     	 The Instance is locked on operations
 */
 type LocalInstance struct {
 	Id          string     `json:"Id" xml:"Id"`
@@ -192,6 +194,7 @@ type LocalInstance struct {
 	IPAddress   string     `json:"IPAddress" xml:"IPAddress"`
 	InspectJSON string     `json:"InspectJSON" xml:"InspectJSON"`
 	Logs        LogStorage `json:"Logs" xml:"Logs"`
+	Disabled    bool       `json:"Disabled" xml:"Disabled"`
 }
 
 /*
@@ -199,7 +202,7 @@ Describe Cloud Machine options, contains
 
   * Id          (string)      Unique Identifier
 
-  * MachineId    (string)      Project Cloud Machine Unique Identifier
+  * MachineId   (string)      Project Cloud Machine Unique Identifier
 
   * Name        (string)      Cloud Instance Name
 
@@ -217,6 +220,8 @@ Describe Cloud Machine options, contains
 
   * Logs        (LogStorage)  Log information data
 
+  * Disabled    (bool)     	 	The Instance is locked on operations
+
 	Refers to : https://docs.docker.com/machine/drivers/
 */
 type CloudInstance struct {
@@ -230,6 +235,7 @@ type CloudInstance struct {
 	IPAddress   string     `json:"IPAddress" xml:"IPAddress"`
 	InspectJSON string     `json:"InspectJSON" xml:"InspectJSON"`
 	Logs        LogStorage `json:"Logs" xml:"Logs"`
+	Disabled    bool       `json:"Disabled" xml:"Disabled"`
 }
 
 /*

@@ -72,6 +72,14 @@ func GetBoolean(input string) bool {
 	return CorrectInput(input) == "true"
 }
 
+func BoolToString(input bool) string {
+	if input {
+		return "yes"
+	} else  {
+		return "no"
+	}
+}
+
 func GetInteger(input string, defaultValue int) int {
 	num, err := strconv.Atoi(input)
 	if err != nil {
@@ -225,6 +233,9 @@ func InfrastructureToProject(infrastructure model.Infrastructure, projectName st
 			}
 			machineRecogniseMap := make(map[string]string)
 			for k := 0; k < len(infrastructure.Domains[i].Networks[j].LocalInstances); k++ {
+				if infrastructure.Domains[i].Networks[j].LocalInstances[k].Disabled {
+					infrastructure.Domains[i].Networks[j].LocalInstances[k].Disabled = false
+				}
 				machineId := NewUUIDString()
 				infrastructure.Domains[i].Networks[j].LocalInstances[k].MachineId = machineId
 				machine := model.LocalMachine{
@@ -250,6 +261,9 @@ func InfrastructureToProject(infrastructure model.Infrastructure, projectName st
 				newNetwork.LocalMachines = append(newNetwork.LocalMachines, machine)
 			}
 			for k := 0; k < len(infrastructure.Domains[i].Networks[j].CloudInstances); k++ {
+				if infrastructure.Domains[i].Networks[j].CloudInstances[k].Disabled {
+					infrastructure.Domains[i].Networks[j].CloudInstances[k].Disabled = false
+				}
 				machineId := NewUUIDString()
 				infrastructure.Domains[i].Networks[j].CloudInstances[k].MachineId = machineId
 				machine := model.CloudMachine{
@@ -1011,21 +1025,6 @@ func DefineRebuildOfWholeInfrastructure(activities []tasks.ActivityCouple, exclu
 	return outActivities
 }
 
-func FindActivityById(activities []tasks.ActivityCouple, id string) (tasks.ActivityCouple, error) {
-	for _, activity := range activities {
-		if activity.IsCloud {
-			if activity.CInstance.MachineId == id {
-				return activity, nil
-			}
-		} else {
-			if activity.CInstance.MachineId == id {
-				return activity, nil
-			}
-		}
-	}
-	return tasks.ActivityCouple{}, errors.New("Activity Not Found")
-}
-
 const MachineReadOperationTimeout = 900
 
 func ExistInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cInstance model.CloudInstance, isCloud bool, instanceId string) (procedures.MachineState, error) {
@@ -1241,7 +1240,7 @@ func FindInfrastructureInstance(Infrastructure model.Infrastructure, InstanceId 
 		for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
 			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].LocalInstances); k++ {
 				if Infrastructure.Domains[i].Networks[j].LocalInstances[k].Id == InstanceId ||
-					CorrectInput(Infrastructure.Domains[i].Networks[j].LocalInstances[k].Name) == CorrectInput(InstanceName){
+					CorrectInput(Infrastructure.Domains[i].Networks[j].LocalInstances[k].Name) == CorrectInput(InstanceName) {
 					return Infrastructure.Domains[i].Networks[j].LocalInstances[k], nil
 				}
 			}
@@ -1256,7 +1255,7 @@ func FindInfrastructureCloudInstance(Infrastructure model.Infrastructure, Instan
 		for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
 			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CloudInstances); k++ {
 				if Infrastructure.Domains[i].Networks[j].CloudInstances[k].Id == InstanceId ||
-					CorrectInput(Infrastructure.Domains[i].Networks[j].CloudInstances[k].Name) == CorrectInput(InstanceName){
+					CorrectInput(Infrastructure.Domains[i].Networks[j].CloudInstances[k].Name) == CorrectInput(InstanceName) {
 					return Infrastructure.Domains[i].Networks[j].CloudInstances[k], nil
 				}
 			}
@@ -1269,17 +1268,17 @@ func RemoveInfrastructureInstanceById(Infrastructure *model.Infrastructure, Inst
 	for i := 0; i < len(Infrastructure.Domains); i++ {
 		for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
 			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].LocalInstances); k++ {
-				if Infrastructure.Domains[i].Networks[j].LocalInstances[k].Id == InstanceId{
+				if Infrastructure.Domains[i].Networks[j].LocalInstances[k].Id == InstanceId {
 					tmp := Infrastructure.Domains[i].Networks[j].LocalInstances[:k]
-					Infrastructure.Domains[i].Networks[j].LocalInstances = Infrastructure.Domains[i].Networks[j].LocalInstances[(k+1):]
+					Infrastructure.Domains[i].Networks[j].LocalInstances = Infrastructure.Domains[i].Networks[j].LocalInstances[(k + 1):]
 					Infrastructure.Domains[i].Networks[j].LocalInstances = append(Infrastructure.Domains[i].Networks[j].LocalInstances, tmp...)
 					return nil
 				}
 			}
 			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CloudInstances); k++ {
-				if Infrastructure.Domains[i].Networks[j].CloudInstances[k].Id == InstanceId{
+				if Infrastructure.Domains[i].Networks[j].CloudInstances[k].Id == InstanceId {
 					tmp := Infrastructure.Domains[i].Networks[j].CloudInstances[:k]
-					Infrastructure.Domains[i].Networks[j].CloudInstances = Infrastructure.Domains[i].Networks[j].CloudInstances[(k+1):]
+					Infrastructure.Domains[i].Networks[j].CloudInstances = Infrastructure.Domains[i].Networks[j].CloudInstances[(k + 1):]
 					Infrastructure.Domains[i].Networks[j].CloudInstances = append(Infrastructure.Domains[i].Networks[j].CloudInstances, tmp...)
 					return nil
 				}
@@ -1293,17 +1292,17 @@ func RemoveProjectMachineById(Infrastructure *model.Project, InstanceId string) 
 	for i := 0; i < len(Infrastructure.Domains); i++ {
 		for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
 			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].LocalMachines); k++ {
-				if Infrastructure.Domains[i].Networks[j].LocalMachines[k].Id == InstanceId{
+				if Infrastructure.Domains[i].Networks[j].LocalMachines[k].Id == InstanceId {
 					tmp := Infrastructure.Domains[i].Networks[j].LocalMachines[:k]
-					Infrastructure.Domains[i].Networks[j].LocalMachines = Infrastructure.Domains[i].Networks[j].LocalMachines[(k+1):]
+					Infrastructure.Domains[i].Networks[j].LocalMachines = Infrastructure.Domains[i].Networks[j].LocalMachines[(k + 1):]
 					Infrastructure.Domains[i].Networks[j].LocalMachines = append(Infrastructure.Domains[i].Networks[j].LocalMachines, tmp...)
 					return nil
 				}
 			}
 			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CloudMachines); k++ {
-				if Infrastructure.Domains[i].Networks[j].CloudMachines[k].Id == InstanceId{
+				if Infrastructure.Domains[i].Networks[j].CloudMachines[k].Id == InstanceId {
 					tmp := Infrastructure.Domains[i].Networks[j].CloudMachines[:k]
-					Infrastructure.Domains[i].Networks[j].CloudMachines = Infrastructure.Domains[i].Networks[j].CloudMachines[(k+1):]
+					Infrastructure.Domains[i].Networks[j].CloudMachines = Infrastructure.Domains[i].Networks[j].CloudMachines[(k + 1):]
 					Infrastructure.Domains[i].Networks[j].CloudMachines = append(Infrastructure.Domains[i].Networks[j].CloudMachines, tmp...)
 					return nil
 				}
@@ -1312,4 +1311,3 @@ func RemoveProjectMachineById(Infrastructure *model.Project, InstanceId string) 
 	}
 	return errors.New(fmt.Sprintf("Machine not Found by UID : %s", InstanceId))
 }
-

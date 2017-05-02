@@ -88,6 +88,9 @@ func (element *LocalInstance) PostImport() error {
 	if element.Id == "" {
 		element.Id = NewUUIDString()
 	}
+	if element.Disabled {
+		element.Disabled = false
+	}
 	return nil
 }
 
