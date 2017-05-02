@@ -285,7 +285,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		err = RecreateInstance(infrastructure, instance, cloudInstance, IsCloud, descriptor)
+		err = RecreateInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState, descriptor)
 		break
 	default:
 		// Destroy
@@ -298,14 +298,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		if instanceState == procedures.Machine_State_Running {
-			response := Response{
-				Status:  false,
-				Message: "Instance is running please stop it before destroy the virtual machine ...",
-			}
-			return response, errors.New("Unable to execute task")
-		}
-		err = DestroyInstance(infrastructure, instance, cloudInstance, IsCloud, descriptor)
+		err = DestroyInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState, descriptor)
 	}
 	if err != nil {
 		response := Response{

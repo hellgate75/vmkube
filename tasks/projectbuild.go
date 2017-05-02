@@ -307,6 +307,11 @@ func filterCloudInstanceByMachine(id string, infrastructure model.Infrastructure
 }
 
 func GetTaskActivities(project model.Project, infrastructure model.Infrastructure, task ActivityTask) ([]ActivityCouple, error) {
+	return  GetTaskActivitiesExclusion(project, infrastructure, task, []string{})
+}
+
+
+func GetTaskActivitiesExclusion(project model.Project, infrastructure model.Infrastructure, task ActivityTask, exclusionList []string) ([]ActivityCouple, error) {
 	var taskList []ActivityCouple = make([]ActivityCouple, 0)
 	for _, domain := range project.Domains {
 		for _, network := range domain.Networks {
@@ -316,6 +321,11 @@ func GetTaskActivities(project model.Project, infrastructure model.Infrastructur
 					return taskList, err
 				}
 				if task == MachineExtendsDisk && utils.CorrectInput(machine.Driver) != "virtualbox" && utils.CorrectInput(machine.Driver) != "vmwarefusion" && utils.CorrectInput(machine.Driver) != "vmwarevsphere" {
+					continue
+				} else if machine.DiskSize == 0 {
+					continue
+				}
+				if containsString(exclusionList, instance.Id) {
 					continue
 				}
 				taskList = append(taskList, ActivityCouple{
@@ -336,6 +346,9 @@ func GetTaskActivities(project model.Project, infrastructure model.Infrastructur
 				instance, err := filterCloudInstanceByMachine(machine.Id, infrastructure)
 				if err != nil {
 					return taskList, err
+				}
+				if containsString(exclusionList, instance.Id) {
+					continue
 				}
 				taskList = append(taskList, ActivityCouple{
 					IsCloud:   true,

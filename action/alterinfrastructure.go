@@ -176,12 +176,96 @@ func EnableInstance(infrastructure model.Infrastructure, instance model.LocalIns
 	return errors.New("Command Enable Instance not implemented!!")
 }
 
-func RecreateInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, descriptor model.ProjectsDescriptor) error {
-	//TODO: Implement Re-Create Instance
-	return errors.New("Command Re-Create Instance not implemented!!")
+func RecreateInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState, descriptor model.ProjectsDescriptor) error {
+	//TODO: Test Re-Create Instance
+
+	utils.PrintlnWarning(fmt.Sprintf("Load Project : '%s' for inspection ...", descriptor.Name))
+
+	project, err := vmio.LoadProject(descriptor.Id)
+
+	if err != nil {
+		return  err
+	}
+
+	var  exclusionIdList []string = make([]string, 0)
+	var actionCouples []tasks.ActivityCouple = make([]tasks.ActivityCouple, 0)
+	var machineId, instanceId string
+	if isCloud {
+		machineId = cloudInstance.MachineId
+		instanceId = cloudInstance.Id
+		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{cloudInstance.Id})
+	} else  {
+		machineId = instance.MachineId
+		instanceId = instance.Id
+		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{instance.Id})
+	}
+
+	if instanceState == procedures.Machine_State_Running {
+		stopCouples, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.StopMachine, exclusionIdList)
+		if err != nil {
+			return err
+		}
+		actionCouples = append(actionCouples, stopCouples...)
+	}
+
+	destroyCouples, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.DestroyMachine, exclusionIdList)
+	if err != nil {
+		return err
+	}
+	actionCouples = append(actionCouples, destroyCouples...)
+
+	createCouples, err := tasks.GetTaskActivitiesExclusion(project, infrastructure,tasks.CreateMachine, exclusionIdList)
+
+	if err != nil {
+		return err
+	}
+	actionCouples = append(actionCouples, createCouples...)
+
+	inspectCouples, err := tasks.GetTaskActivitiesExclusion(project, infrastructure,tasks.MachineInspect, exclusionIdList)
+
+	if err != nil {
+		return err
+	}
+	actionCouples = append(actionCouples, inspectCouples...)
+
+	ipAddressCouples, err := tasks.GetTaskActivitiesExclusion(project, infrastructure,tasks.MachineIPAddress, exclusionIdList)
+
+	if err != nil {
+		return err
+	}
+	actionCouples = append(actionCouples, ipAddressCouples...)
+
+	stopCouples, err := tasks.GetTaskActivitiesExclusion(project, infrastructure,tasks.StopMachine, exclusionIdList)
+
+	if err != nil {
+		return err
+	}
+	actionCouples = append(actionCouples, stopCouples...)
+
+	extendsDiskCouples, err := tasks.GetTaskActivitiesExclusion(project, infrastructure,tasks.MachineExtendsDisk, exclusionIdList)
+
+	if err != nil {
+		return err
+	}
+	actionCouples = append(actionCouples, extendsDiskCouples...)
+
+	utils.PrintlnWarning(fmt.Sprintf("Recreating Machine Id: '%s' (Instance ID: %s) in Project : '%s' [Id: %s]  and Infrastructure : '%s' [Id: %s]...", machineId, instanceId, project.Name, project.Id, infrastructure.Name, infrastructure.Id))
+
+	if len(actionCouples) == 0 {
+		return  errors.New("No Instance available for re-create procedure...")
+	}
+	NumThreads := 1
+	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
+	errorsList := ExecuteInfrastructureActions(infrastructure, actionCouples, NumThreads, func(task tasks.ScheduleTask) {})
+
+	if len(errorsList) > 0 {
+		return  errorsList[0]
+	}
+
+	return nil
 }
 
-func DestroyInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, descriptor model.ProjectsDescriptor) error {
+func DestroyInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState, descriptor model.ProjectsDescriptor) error {
 	//TODO: Test Destroy Instance
 
 	utils.PrintlnWarning(fmt.Sprintf("Load Project : '%s' for inspection ...", descriptor.Name))
@@ -193,6 +277,7 @@ func DestroyInstance(infrastructure model.Infrastructure, instance model.LocalIn
 	}
 
 	var  exclusionIdList []string = make([]string, 0)
+	var actionCouples []tasks.ActivityCouple = make([]tasks.ActivityCouple, 0)
 	var machineId, instanceId string
 	if isCloud {
 		machineId = cloudInstance.MachineId
@@ -203,12 +288,22 @@ func DestroyInstance(infrastructure model.Infrastructure, instance model.LocalIn
 		instanceId = instance.Id
 		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{instance.Id})
 	}
-	stopCouples, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.DestroyMachine, exclusionIdList)
+
+	if instanceState == procedures.Machine_State_Running {
+		stopCouples, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.StopMachine, exclusionIdList)
+		if err != nil {
+			return err
+		}
+		actionCouples = append(actionCouples, stopCouples...)
+	}
+
+	destroyCouples, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.DestroyMachine, exclusionIdList)
 	if err != nil {
 		return err
 	}
+	actionCouples = append(actionCouples, destroyCouples...)
 	utils.PrintlnWarning(fmt.Sprintf("Removing Machine Id: '%s' from Project : '%s' [Id: %s]...", machineId, project.Name, project.Id))
-	if len(stopCouples) == 0 {
+	if len(actionCouples) == 0 {
 		return  errors.New("No Instance available for destroy procedure...")
 	}
 	err = RemoveProjectMachineById(&project, machineId)
@@ -223,7 +318,7 @@ func DestroyInstance(infrastructure model.Infrastructure, instance model.LocalIn
 
 	NumThreads := 1
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
-	errorsList := ExecuteInfrastructureActions(infrastructure, stopCouples, NumThreads, func(task tasks.ScheduleTask) {})
+	errorsList := ExecuteInfrastructureActions(infrastructure, actionCouples, NumThreads, func(task tasks.ScheduleTask) {})
 
 	if len(errorsList) > 0 {
 		return  errorsList[0]
