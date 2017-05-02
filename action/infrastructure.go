@@ -148,7 +148,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		if !Force {
+		if ! Force && request.SubType != Status {
 			AllowChange := utils.RequestConfirmation(fmt.Sprintf("Do you want proceed with changes with Instance '%s' (uid: %s) part of Infrastructure named '%s'?", instance.Name, instance.Id, Name))
 			if !AllowChange {
 				return Response{
@@ -179,7 +179,10 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 
 	switch request.SubType {
 	case Status:
-		err = operations.DescribeInstance(infrastructure, instance, cloudInstance, IsCloud)
+		var instanceState procedures.MachineState
+		instanceState, _ = ExistInstance(infrastructure, instance, cloudInstance, IsCloud, instance.Id)
+
+		err = operations.DescribeInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState)
 		break
 	case Start:
 		err = operations.StartInstance(infrastructure, instance, cloudInstance, IsCloud)
@@ -211,12 +214,12 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 		}
 		return response, errors.New("Unable to execute task")
 	}
-	utils.PrintlnImportant(fmt.Sprintf("Alter Infrastructure '%s' Command : '%s' executed successfully!!", descriptor.InfraName, CmdSubRequestDescriptors[int(request.SubType)]))
+	utils.PrintlnImportant(fmt.Sprintf("Alter Infrastructure '%s' Command : '%s' executed successfully!!", descriptor.InfraName, CmdSubRequestDescriptors[int(request.SubType)-1]))
 	response := Response{
 		Status:  true,
 		Message: "Success",
 	}
-	return response, errors.New("Unable to execute task")
+	return response, nil
 }
 
 func (request *CmdRequest) DeleteInfra() (Response, error) {
