@@ -1743,6 +1743,22 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 			Status: false,
 			Message: message,
 		}
+		exclusionList, _ := FilterForExistState(Infrastructure)
+		rollbackActions, err := tasks.GetPostBuildTaskActivities(Infrastructure, tasks.DestroyMachine, exclusionList)
+
+		if err != nil {
+			return response, errors.New("Unable to execute task")
+		}
+		utils.PrintlnWarning(fmt.Sprintf("Executing rollback for Project '%s' Infrastrcucture '%s'...", Name, InfraName))
+		if existsInfrastructure && AllowInfraBackup {
+			utils.PrintlnImportant("Check logs for backup activities, you can use for recovery...")
+		} else {
+			utils.PrintlnImportant("No backup activities, you can not use recovery utils...")
+		}
+		if ! utils.NO_COLORS {
+			time.Sleep(4*time.Second)
+		}
+		ExecuteInfrastructureActions(Infrastructure, rollbackActions, NumThreads,func(task tasks.ScheduleTask){})
 		return response, errors.New("Unable to execute task")
 	}
 	
@@ -1794,7 +1810,12 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	}
 	
 	utils.PrintlnSuccess(fmt.Sprintf("Project '%s' Infrastrcucture '%s' %sBuild successful!!", Name, InfraName, reOpt))
-	
+
+	if InfraBackup != "" {
+		utils.PrintlnWarning(fmt.Sprintf("Removing Infrastructure backup file : %s", InfraBackup))
+		err = model.DeleteIfExists(InfraBackup)
+	}
+
 
 	response := Response{
 		Status: true,
@@ -2569,7 +2590,12 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 		utils.PrintlnWarning(fmt.Sprintf("Removing Project backup file : %s", ProjectBackup))
 		err = model.DeleteIfExists(ProjectBackup)
 	}
-	
+
+	if InfraBackup != "" {
+		utils.PrintlnWarning(fmt.Sprintf("Removing Infrastructure backup file : %s", InfraBackup))
+		err = model.DeleteIfExists(InfraBackup)
+	}
+
 	if existsInfrastructure && OverrideInfra {
 		request.Arguments.Options = append(request.Arguments.Options, []string{"rebuild", "true"})
 		request.BuildProject()

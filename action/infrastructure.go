@@ -588,6 +588,8 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 		return response, errors.New("Unable to execute task")
 	}
 
+	ProjectBackup := ""
+	InfraBackup := ""
 	if DeleteFromDescriptor {
 		utils.PrintlnWarning(fmt.Sprintf("Removing Project '%s' and Infrastructure '%s'...", descriptor.Name, descriptor.InfraName))
 		if Backup {
@@ -603,7 +605,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 				if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
 					folder += string(os.PathSeparator)
 				}
-				ProjectBackup := fmt.Sprintf("%s.project-%s-%s.json", folder, utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name))
+				ProjectBackup = fmt.Sprintf("%s.project-%s-%s.json", folder, utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name))
 				project, err := vmio.LoadProject(descriptor.Id)
 				if err == nil {
 					vmio.ExportUserProject(project, ProjectBackup, "json", true)
@@ -622,7 +624,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 				if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
 					folder += string(os.PathSeparator)
 				}
-				InfraBackup := fmt.Sprintf("%s.prj-%s-%s-infra-export-%s-%s.vmkube", folder, utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name), utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
+				InfraBackup = fmt.Sprintf("%s.prj-%s-%s-infra-export-%s-%s.vmkube", folder, utils.IdToFileFormat(descriptor.Id), utils.NameToFileFormat(descriptor.Name), utils.IdToFileFormat(descriptor.InfraId), utils.NameToFileFormat(descriptor.InfraName))
 				infra, err := vmio.LoadInfrastructure(descriptor.Id)
 				if err == nil {
 					infra.Save(InfraBackup)
@@ -655,7 +657,8 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 		}
 		time.Sleep(time.Second * 2)
 	}
-	
+	ProjectProjectBackup := ""
+	ProjectInfraBackup := ""
 	if DeleteFromProjectDescriptor {
 		utils.PrintlnWarning(fmt.Sprintf("Removing Project '%s' and Infrastructure '%s'...", projectDescriptor.Name, projectDescriptor.InfraName))
 		if Backup {
@@ -671,11 +674,11 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 				if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
 					folder += string(os.PathSeparator)
 				}
-				ProjectBackup := fmt.Sprintf("%s.project-%s-%s.json", folder, utils.IdToFileFormat(projectDescriptor.Id), utils.NameToFileFormat(projectDescriptor.Name))
+				ProjectProjectBackup = fmt.Sprintf("%s.project-%s-%s.json", folder, utils.IdToFileFormat(projectDescriptor.Id), utils.NameToFileFormat(projectDescriptor.Name))
 				project, err := vmio.LoadProject(projectDescriptor.Id)
 				if err == nil {
-					vmio.ExportUserProject(project, ProjectBackup, "json", true)
-					utils.PrintlnImportant(fmt.Sprintf("Emergency Project '%s' backup at : %s", projectDescriptor.Name, ProjectBackup))
+					vmio.ExportUserProject(project, ProjectProjectBackup, "json", true)
+					utils.PrintlnImportant(fmt.Sprintf("Emergency Project '%s' backup at : %s", projectDescriptor.Name, ProjectProjectBackup))
 				}
 			}
 			AllowBackup = Force
@@ -690,11 +693,11 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 				if ! strings.HasSuffix(folder, string(os.PathSeparator)) {
 					folder += string(os.PathSeparator)
 				}
-				InfraBackup := fmt.Sprintf("%s.prj-%s-%s-infra-export-%s-%s.vmkube", folder, utils.IdToFileFormat(projectDescriptor.Id), utils.NameToFileFormat(projectDescriptor.Name), utils.IdToFileFormat(projectDescriptor.InfraId), utils.NameToFileFormat(projectDescriptor.InfraName))
+				ProjectInfraBackup = fmt.Sprintf("%s.prj-%s-%s-infra-export-%s-%s.vmkube", folder, utils.IdToFileFormat(projectDescriptor.Id), utils.NameToFileFormat(projectDescriptor.Name), utils.IdToFileFormat(projectDescriptor.InfraId), utils.NameToFileFormat(projectDescriptor.InfraName))
 				infra, err := vmio.LoadInfrastructure(projectDescriptor.Id)
 				if err == nil {
-					infra.Save(InfraBackup)
-					utils.PrintlnImportant(fmt.Sprintf("Emergency Infrastructure '%s' backup at : %s", projectDescriptor.InfraName, InfraBackup))
+					infra.Save(ProjectInfraBackup)
+					utils.PrintlnImportant(fmt.Sprintf("Emergency Infrastructure '%s' backup at : %s", projectDescriptor.InfraName, ProjectInfraBackup))
 				}
 			}
 		}
@@ -861,12 +864,28 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 	})
 
 	if len(errorsList) > 0 {
-		utils.PrintlnError(fmt.Sprintf("Unable to complete Build of project '%s' : Errors building Infrastructure : '%s'!!", ProjectName, Name))
+			utils.PrintlnError(fmt.Sprintf("Unable to complete Build of project '%s' : Errors building Infrastructure : '%s'!!", ProjectName, Name))
 		_, message := vmio.StripErrorMessages(fmt.Sprintf("Error building Infrastructure -> '%s' : ", Name), errorsList)
 		response := Response{
 			Status: false,
 			Message: message,
 		}
+		exclusionList, _ := FilterForExistState(infrastructure)
+		rollbackActions, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.DestroyMachine, exclusionList)
+
+		if err != nil {
+			return response, errors.New("Unable to execute task")
+		}
+		utils.PrintlnWarning(fmt.Sprintf("Executing rollback for Project '%s' Infrastrcucture '%s'...", ProjectName, Name))
+		if ! utils.NO_COLORS {
+			time.Sleep(4*time.Second)
+		}
+		if existsInfrastructure || existsProject && (ProjectBackup!="" || ProjectProjectBackup!="" || InfraBackup!="" || ProjectInfraBackup!="") {
+			utils.PrintlnImportant("Check logs for backup activities, you can use for recovery...")
+		} else {
+			utils.PrintlnImportant("No backup activities, you can not use recovery utils...")
+		}
+		ExecuteInfrastructureActions(infrastructure, rollbackActions, NumThreads,func(task tasks.ScheduleTask){})
 		return response, errors.New("Unable to execute task")
 	}
 	
@@ -911,7 +930,23 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 	}
 
 	utils.PrintlnSuccess(fmt.Sprintf("Recovery for Infrastructure named : %s completed successfully!!", Name))
-	
+
+	if ProjectBackup != "" {
+		utils.PrintlnWarning(fmt.Sprintf("Removing Project backup file : %s", ProjectBackup))
+		err = model.DeleteIfExists(ProjectBackup)
+	}
+	if ProjectProjectBackup != "" {
+		utils.PrintlnWarning(fmt.Sprintf("Removing Project backup file : %s", ProjectProjectBackup))
+		err = model.DeleteIfExists(ProjectProjectBackup)
+	}
+	if InfraBackup != "" {
+		utils.PrintlnWarning(fmt.Sprintf("Removing Infrastructure backup file : %s", InfraBackup))
+		err = model.DeleteIfExists(InfraBackup)
+	}
+	if ProjectInfraBackup != "" {
+		utils.PrintlnWarning(fmt.Sprintf("Removing Infrastructure backup file : %s", ProjectInfraBackup))
+		err = model.DeleteIfExists(ProjectInfraBackup)
+	}
 	response := Response{
 		Status: true,
 		Message: "Success",
@@ -1366,20 +1401,24 @@ func (request *CmdRequest) StatusInfra() (Response, error) {
 			num, options := vmio.StripOptions(network.Options)
 			fmt.Printf("   Network: %s (Id: %s) - Options [%d] :%s\n", network.Name, network.Id, num, options)
 			fmt.Printf("   Local Instances: %d\n", len(network.LocalInstances))
-			machinesMap := make(map[string]string)
-			for _,machine := range network.LocalInstances {
-				machinesMap[machine.Id] = machine.Name
-				fmt.Printf("      Local Instance: %s (Id: %s) - Driver: %s - OS : %s:%s - IP Address: %s\n", machine.Name, machine.Id, machine.Driver, machine.OSType, machine.OSVersion, machine.IPAddress)
+			instancesMap := make(map[string]string)
+			for _, instance := range network.LocalInstances {
+				instancesMap[instance.Id] = instance.Name
+				var  instanceState procedures.MachineState
+				instanceState, _ = ExistInstance(infrastructure, instance, model.CloudInstance{}, false, instance.Id)
+				fmt.Printf("      Local Instance: %s (Id: %s) - Driver: %s - OS : %s:%s - IP Address: %s State: %s\n", instance.Name, instance.Id, instance.Driver, instance.OSType, instance.OSVersion, strings.TrimSpace(instance.IPAddress), instanceState.String())
 			}
 			fmt.Printf("   Cloud Instances: %d\n", len(network.CloudInstances))
-			for _,machine := range network.CloudInstances {
-				machinesMap[machine.Id] = machine.Name
-				num, options := vmio.StripOptions(machine.Options)
-				fmt.Printf("      Cloud Instance: %s (Id: %s) - Driver: %s - IP Address: %s - Options [%d] :%s\n", machine.Name, machine.Id, machine.Driver, machine.IPAddress, num, options)
+			for _, instance := range network.CloudInstances {
+				instancesMap[instance.Id] = instance.Name
+				var  instanceState procedures.MachineState
+				instanceState, _ = ExistInstance(infrastructure, model.LocalInstance{}, instance, true, instance.Id)
+				num, options := vmio.StripOptions(instance.Options)
+				fmt.Printf("      Cloud Instance: %s (Id: %s) - Driver: %s - IP Address: %s - Options [%d] :%s State: %s\n", instance.Name, instance.Id, instance.Driver, strings.TrimSpace(instance.IPAddress), num, options, instanceState.String())
 			}
 			fmt.Printf("   Installation Plans: %d\n", len(network.Installations))
 			for _,installation := range network.Installations {
-				machineName,ok := machinesMap[installation.InstanceId]
+				machineName,ok := instancesMap[installation.InstanceId]
 				if !ok {
 					machineName = "<invalid>"
 				}

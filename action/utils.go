@@ -939,10 +939,10 @@ func FixInfrastructureElementValue(Infrastructure *model.Infrastructure, instanc
 				for k := 0; k < len(Infrastructure.Domains[i].Networks[j].LocalInstances); k++ {
 					if Infrastructure.Domains[i].Networks[j].LocalInstances[k].Id == instanceId {
 						if strings.TrimSpace(ipAddress) != "" {
-							Infrastructure.Domains[i].Networks[j].LocalInstances[k].IPAddress = ipAddress
+							Infrastructure.Domains[i].Networks[j].LocalInstances[k].IPAddress = strings.TrimSpace(ipAddress)
 						}
 						if strings.TrimSpace(json) != "" {
-							Infrastructure.Domains[i].Networks[j].LocalInstances[k].InspectJSON = json
+							Infrastructure.Domains[i].Networks[j].LocalInstances[k].InspectJSON = strings.TrimSpace(json)
 						}
 						//if log != "" {
 						//	Infrastructure.Domains[i].Networks[j].LocalInstances[k]. = json
@@ -953,10 +953,10 @@ func FixInfrastructureElementValue(Infrastructure *model.Infrastructure, instanc
 				for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CloudInstances); k++ {
 					if Infrastructure.Domains[i].Networks[j].CloudInstances[k].Id == instanceId {
 						if ipAddress != "" {
-							Infrastructure.Domains[i].Networks[j].LocalInstances[k].IPAddress = ipAddress
+							Infrastructure.Domains[i].Networks[j].LocalInstances[k].IPAddress = strings.TrimSpace(ipAddress)
 						}
 						if json != "" {
-							Infrastructure.Domains[i].Networks[j].LocalInstances[k].InspectJSON = json
+							Infrastructure.Domains[i].Networks[j].LocalInstances[k].InspectJSON = strings.TrimSpace(json)
 						}
 						//if log != "" {
 						//	Infrastructure.Domains[i].Networks[j].LocalInstances[k]. = json
@@ -1034,6 +1034,35 @@ func FindActivityById(activities []tasks.ActivityCouple, id string) (tasks.Activ
 }
 
 const MachineReadOperationTimeout = 900
+
+func ExistInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cInstance model.CloudInstance, isCloud bool, instanceId string) (procedures.MachineState, error) {
+	procedureExecutor := procedures.GetCurrentMachineExecutor(model.Project{},
+		infrastructure,
+		model.LocalMachine{},
+		model.CloudMachine{},
+		instance,
+		cInstance,
+		instanceId,
+		isCloud,
+		false)
+	var commandPipe chan procedures.MachineMessage = make(chan procedures.MachineMessage, 1)
+	var commandChannel chan *exec.Cmd = make(chan *exec.Cmd, 1)
+	procedureExecutor.MachineStatus(commandPipe, commandChannel)
+	select {
+	case answer, ok := <- commandPipe:
+		if ok {
+			return  answer.State, answer.Error
+
+		} else {
+			return  procedures.Machine_State_None, errors.New("Legacy application not executed correctly!!")
+		}
+		close(commandPipe)
+		close(commandChannel)
+	case <-time.After(time.Second * MachineReadOperationTimeout):
+		return  procedures.Machine_State_None, errors.New("Legacy application timed out!!")
+	}
+	return  procedures.Machine_State_None, nil
+}
 
 func FilterForExistState(infrastructure model.Infrastructure) ([]string, error) {
 	return  filterForExistStateAndCondState(infrastructure, procedures.Machine_State_None, false, false)
