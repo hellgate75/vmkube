@@ -8,6 +8,7 @@ import (
 	"strings"
 	"vmkube/procedures"
 	"vmkube/tasks"
+	"vmkube/vmio"
 )
 
 func DescribeInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState) error {
@@ -175,14 +176,63 @@ func EnableInstance(infrastructure model.Infrastructure, instance model.LocalIns
 	return errors.New("Command Enable Instance not implemented!!")
 }
 
-func RecreateInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool) error {
+func RecreateInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, descriptor model.ProjectsDescriptor) error {
 	//TODO: Implement Re-Create Instance
 	return errors.New("Command Re-Create Instance not implemented!!")
 }
 
-func DestroyInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool) error {
-	//TODO: Implement Destroy Instance
-	return errors.New("Command Destroy Instance not implemented!!")
+func DestroyInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, descriptor model.ProjectsDescriptor) error {
+	//TODO: Test Destroy Instance
+
+	project, err := vmio.LoadProject(descriptor.Id)
+
+	if err != nil {
+		return  err
+	}
+
+	var  exclusionIdList []string = make([]string, 0)
+	var machineId, instanceId string
+	if isCloud {
+		machineId = cloudInstance.MachineId
+		instanceId = cloudInstance.Id
+		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{cloudInstance.Id})
+	} else  {
+		machineId = instance.MachineId
+		instanceId = instance.Id
+		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{instance.Id})
+	}
+	stopCouples, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.DestroyMachine, exclusionIdList)
+	if err != nil {
+		return err
+	}
+	if len(stopCouples) == 0 {
+		return  errors.New("No Instance available for destroy procedure...")
+	}
+	err = RemoveProjectMachineById(&project, machineId)
+	if err != nil {
+		return  err
+	}
+	err = RemoveInfrastructureInstanceById(&infrastructure, instanceId)
+	if err != nil {
+		return  err
+	}
+
+	NumThreads := 1
+	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
+	errorsList := ExecuteInfrastructureActions(infrastructure, stopCouples, NumThreads, func(task tasks.ScheduleTask) {})
+
+	if len(errorsList) > 0 {
+		return  errorsList[0]
+	}
+	err = vmio.SaveProject(project)
+	if err != nil {
+		return  err
+	}
+	err = vmio.SaveInfrastructure(infrastructure)
+	if err != nil {
+		return  err
+	}
+	return nil
 }
 
 func AutoFixInfrastructureInstances(infrastructure model.Infrastructure) error {

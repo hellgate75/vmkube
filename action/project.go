@@ -111,7 +111,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		}
 		oldProject, err2 := vmio.LoadProject(descriptor.Id)
 
-		if err2 != nil && oldProject.Id != "" {
+		if err2 != nil {
 			response := Response{
 				Status:  false,
 				Message: err.Error(),
@@ -592,7 +592,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 	var ProjectJSON string = ""
 	project, err2 := vmio.LoadProject(descriptor.Id)
 
-	if err2 != nil && project.Id != "" {
+	if err2 != nil {
 		response := Response{
 			Status:  false,
 			Message: err.Error(),

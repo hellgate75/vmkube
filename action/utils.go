@@ -1264,3 +1264,52 @@ func FindInfrastructureCloudInstance(Infrastructure model.Infrastructure, Instan
 	}
 	return instance, errors.New(fmt.Sprintf("Cloud Instance not Found by UID : %s or by Name : %s", InstanceId, InstanceName))
 }
+
+func RemoveInfrastructureInstanceById(Infrastructure *model.Infrastructure, InstanceId string) error {
+	for i := 0; i < len(Infrastructure.Domains); i++ {
+		for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
+			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].LocalInstances); k++ {
+				if Infrastructure.Domains[i].Networks[j].LocalInstances[k].Id == InstanceId{
+					tmp := Infrastructure.Domains[i].Networks[j].LocalInstances[:k]
+					Infrastructure.Domains[i].Networks[j].LocalInstances = Infrastructure.Domains[i].Networks[j].LocalInstances[(k+1):]
+					Infrastructure.Domains[i].Networks[j].LocalInstances = append(Infrastructure.Domains[i].Networks[j].LocalInstances, tmp...)
+					return nil
+				}
+			}
+			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CloudInstances); k++ {
+				if Infrastructure.Domains[i].Networks[j].CloudInstances[k].Id == InstanceId{
+					tmp := Infrastructure.Domains[i].Networks[j].CloudInstances[:k]
+					Infrastructure.Domains[i].Networks[j].CloudInstances = Infrastructure.Domains[i].Networks[j].CloudInstances[(k+1):]
+					Infrastructure.Domains[i].Networks[j].CloudInstances = append(Infrastructure.Domains[i].Networks[j].CloudInstances, tmp...)
+					return nil
+				}
+			}
+		}
+	}
+	return errors.New(fmt.Sprintf("Instance not Found by UID : %s", InstanceId))
+}
+
+func RemoveProjectMachineById(Infrastructure *model.Project, InstanceId string) error {
+	for i := 0; i < len(Infrastructure.Domains); i++ {
+		for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
+			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].LocalMachines); k++ {
+				if Infrastructure.Domains[i].Networks[j].LocalMachines[k].Id == InstanceId{
+					tmp := Infrastructure.Domains[i].Networks[j].LocalMachines[:k]
+					Infrastructure.Domains[i].Networks[j].LocalMachines = Infrastructure.Domains[i].Networks[j].LocalMachines[(k+1):]
+					Infrastructure.Domains[i].Networks[j].LocalMachines = append(Infrastructure.Domains[i].Networks[j].LocalMachines, tmp...)
+					return nil
+				}
+			}
+			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CloudMachines); k++ {
+				if Infrastructure.Domains[i].Networks[j].CloudMachines[k].Id == InstanceId{
+					tmp := Infrastructure.Domains[i].Networks[j].CloudMachines[:k]
+					Infrastructure.Domains[i].Networks[j].CloudMachines = Infrastructure.Domains[i].Networks[j].CloudMachines[(k+1):]
+					Infrastructure.Domains[i].Networks[j].CloudMachines = append(Infrastructure.Domains[i].Networks[j].CloudMachines, tmp...)
+					return nil
+				}
+			}
+		}
+	}
+	return errors.New(fmt.Sprintf("Machine not Found by UID : %s", InstanceId))
+}
+

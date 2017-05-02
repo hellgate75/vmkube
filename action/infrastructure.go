@@ -285,7 +285,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		err = RecreateInstance(infrastructure, instance, cloudInstance, IsCloud)
+		err = RecreateInstance(infrastructure, instance, cloudInstance, IsCloud, descriptor)
 		break
 	default:
 		// Destroy
@@ -305,7 +305,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		err = DestroyInstance(infrastructure, instance, cloudInstance, IsCloud)
+		err = DestroyInstance(infrastructure, instance, cloudInstance, IsCloud, descriptor)
 	}
 	if err != nil {
 		response := Response{
