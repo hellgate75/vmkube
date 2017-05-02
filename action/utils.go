@@ -832,9 +832,11 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 										pool.Pause()
 										pool.Interrupt()
 									}
+									//pending=pool.NumberOfWorkers() + 1
 									for pending > 1 && pool.IsWorking() {
 										time.Sleep(1 * time.Second)
 									}
+									pending = 1
 									go func() {
 										for _, signal := range screenManager.Elements {
 											found := false
