@@ -12,7 +12,6 @@ import (
 )
 
 func DescribeInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState) error {
-	//TODO: Implement Instance Status
 	if isCloud {
 		utils.PrintlnImportant(fmt.Sprintf("Cloud Instance : %s [Id: %s]", cloudInstance.Name, cloudInstance.Id))
 		utils.PrintlnImportant(fmt.Sprintf("Status : %s", instanceState.String()))
