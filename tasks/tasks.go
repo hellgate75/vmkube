@@ -31,6 +31,7 @@ type Job struct {
 	Async    	bool
 	Sequence	int
 	Of				int
+	State			bool
 }
 
 func (job *Job) Init(Sequence int, Global int) {
@@ -40,7 +41,17 @@ func (job *Job) Init(Sequence int, Global int) {
 
 
 func (job *Job) Run() {
-	job.Runnable.Start()
+	job.State = true
+	var exitChannel chan  bool= make(chan  bool, 1)
+	job.Runnable.Start(exitChannel)
+	go func() {
+		select {
+		case	<- exitChannel:
+			job.State = false
+		case <-time.After(time.Second * MachineReadOperationTimeout):
+			job.State = false
+		}
+	}()
 }
 
 func (job *Job) HasErrors() bool {
@@ -52,7 +63,7 @@ func (job *Job) IsAsync() bool {
 }
 
 func (job *Job) IsRunning() bool {
-	return job.Runnable.Status()
+	return job.State
 }
 
 func (job *Job) GetRunnable() RunnableStruct {

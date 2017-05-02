@@ -15,7 +15,7 @@ import (
 
 
 type RunnableStruct interface {
-	Start()
+	Start(exitChannel chan bool)
 	Stop()
 	Status() bool
 	IsInterrupted() bool
@@ -47,8 +47,12 @@ type MachineOperationsJob struct {
 	control          procedures.MachineControlStructure
 }
 
-func (job *MachineOperationsJob) Start() {
+func (job *MachineOperationsJob) Start(exitChannel chan bool) {
 	if !job.State {
+		defer func() {
+			job.State = false
+			exitChannel <- true
+		}()
 		job.State = true
 		name := ""
 		if job.Activity.NewInfra {
@@ -158,7 +162,6 @@ func (job *MachineOperationsJob) Start() {
 			}()
 			job.OutChan <- job
 		}
-		job.State = false
 	}
 }
 
@@ -192,7 +195,7 @@ func (job *MachineOperationsJob) Stop() {
 	if job.State {
 		job.control.Interrupt = true
 		if job.control.CurrentCommand != nil {
-			if job.control.CurrentCommand!=nil && job.control.CurrentCommand.Process.Pid > 0 {
+			if job.control.CurrentCommand!=nil && job.control.CurrentCommand.Process != nil && job.control.CurrentCommand.Process.Pid > 0 {
 				job.control.CurrentCommand.Process.Kill()
 			}
 		}

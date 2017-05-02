@@ -77,6 +77,7 @@ func (pool *SchedulerPool) Start(callback func()) {
 								pool.State.Pool = pool.State.Pool[:i]
 							}
 							pool.WG.Done()
+							time.Sleep(1 * time.Second)
 						} else {
 							i++
 						}
