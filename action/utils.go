@@ -1058,23 +1058,27 @@ func ExistInstance(infrastructure model.Infrastructure, instance model.LocalInst
 }
 
 func FilterForExistState(infrastructure model.Infrastructure) ([]string, error) {
-	return filterForExistStateAndCondState(infrastructure, procedures.Machine_State_None, false, false)
+	return filterForExistStateAndCondState(infrastructure, procedures.Machine_State_None, false, false, false)
 }
 
 func FilterForExistAndRunningState(infrastructure model.Infrastructure, state procedures.MachineState) ([]string, error) {
-	return filterForExistStateAndCondState(infrastructure, state, true, false)
+	return filterForExistStateAndCondState(infrastructure, state, true, false, true)
 }
 
 func FilterForExistAndNotRunningState(infrastructure model.Infrastructure, state procedures.MachineState) ([]string, error) {
-	return filterForExistStateAndCondState(infrastructure, state, true, true)
+	return filterForExistStateAndCondState(infrastructure, state, true, true, true)
 }
 
-func filterForExistStateAndCondState(infrastructure model.Infrastructure, state procedures.MachineState, checkState bool, notState bool) ([]string, error) {
+func filterForExistStateAndCondState(infrastructure model.Infrastructure, state procedures.MachineState, checkState bool, notState bool, excludeDisabled bool) ([]string, error) {
 	var inactiveMachines []string = make([]string, 0)
 	var err error
 	for _, domain := range infrastructure.Domains {
 		for _, network := range domain.Networks {
 			for _, instance := range network.LocalInstances {
+				if excludeDisabled && instance.Disabled {
+					inactiveMachines = append(inactiveMachines, instance.Id)
+					continue
+				}
 				procedureExecutor := procedures.GetCurrentMachineExecutor(model.Project{},
 					infrastructure,
 					model.LocalMachine{},
@@ -1115,6 +1119,10 @@ func filterForExistStateAndCondState(infrastructure model.Infrastructure, state 
 
 			}
 			for _, instance := range network.CloudInstances {
+				if excludeDisabled && instance.Disabled {
+					inactiveMachines = append(inactiveMachines, instance.Id)
+					continue
+				}
 				procedureExecutor := procedures.GetCurrentMachineExecutor(model.Project{},
 					infrastructure,
 					model.LocalMachine{},

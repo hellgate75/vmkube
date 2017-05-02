@@ -256,14 +256,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		if instanceState == procedures.Machine_State_Running {
-			response := Response{
-				Status:  false,
-				Message: "Instance is running please stop it before disable the virtual machine ...",
-			}
-			return response, errors.New("Unable to execute task")
-		}
-		err = DisableInstance(infrastructure, instance, cloudInstance, IsCloud)
+		err = DisableInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState, descriptor)
 		break
 	case Enable:
 		err = EnableInstance(infrastructure, instance, cloudInstance, IsCloud)
@@ -275,13 +268,6 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			response := Response{
 				Status:  false,
 				Message: err.Error(),
-			}
-			return response, errors.New("Unable to execute task")
-		}
-		if instanceState == procedures.Machine_State_Running {
-			response := Response{
-				Status:  false,
-				Message: "Instance is running please stop it before recreate the virtual machine ...",
 			}
 			return response, errors.New("Unable to execute task")
 		}
@@ -307,7 +293,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 		}
 		return response, errors.New("Unable to execute task")
 	}
-	utils.PrintlnImportant(fmt.Sprintf("Alter Infrastructure '%s' Command : '%s' executed successfully!!", descriptor.InfraName, CmdSubRequestDescriptors[int(request.SubType)-1]))
+	utils.PrintlnImportant(fmt.Sprintf("Alter Infrastructure '%s' executed successfully!!", descriptor.InfraName))
 	response := Response{
 		Status:  true,
 		Message: "Success",

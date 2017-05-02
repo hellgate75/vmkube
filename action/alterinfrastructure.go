@@ -101,8 +101,20 @@ func DescribeInstance(instance model.LocalInstance, cloudInstance model.CloudIns
 func StartInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState) error {
 	var exclusionIdList []string = make([]string, 0)
 	if isCloud {
+		if cloudInstance.Disabled {
+			return errors.New(fmt.Sprintf("Cloud Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] is disabled!!", cloudInstance.Name, cloudInstance.Id, infrastructure.Name, infrastructure.Id))
+			if instanceState == procedures.Machine_State_Running {
+				return errors.New(fmt.Sprintf("Cloud Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] already started!!", cloudInstance.Name, cloudInstance.Id, infrastructure.Name, infrastructure.Id))
+			}
+		}
 		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{cloudInstance.Id})
 	} else {
+		if instance.Disabled {
+			return errors.New(fmt.Sprintf("Local Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] is disabled!!", instance.Name, instance.Id, infrastructure.Name, infrastructure.Id))
+		}
+		if instanceState == procedures.Machine_State_Running {
+			return errors.New(fmt.Sprintf("Local Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] already started!!", instance.Name, instance.Id, infrastructure.Name, infrastructure.Id))
+		}
 		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{instance.Id})
 	}
 	startCouples, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.StartMachine, exclusionIdList)
@@ -124,8 +136,15 @@ func StartInstance(infrastructure model.Infrastructure, instance model.LocalInst
 func RestartInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState) error {
 	var exclusionIdList []string = make([]string, 0)
 	if isCloud {
+		if cloudInstance.Disabled {
+			return errors.New(fmt.Sprintf("Cloud Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] is disabled!!", cloudInstance.Name, cloudInstance.Id, infrastructure.Name, infrastructure.Id))
+		}
+
 		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{cloudInstance.Id})
 	} else {
+		if instance.Disabled {
+			return errors.New(fmt.Sprintf("Local Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] is disabled!!", instance.Name, instance.Id, infrastructure.Name, infrastructure.Id))
+		}
 		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{instance.Id})
 	}
 	restartCouples, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.RestartMachine, exclusionIdList)
@@ -147,8 +166,20 @@ func RestartInstance(infrastructure model.Infrastructure, instance model.LocalIn
 func StopInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState) error {
 	var exclusionIdList []string = make([]string, 0)
 	if isCloud {
+		if cloudInstance.Disabled {
+			return errors.New(fmt.Sprintf("Cloud Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] is disabled!!", cloudInstance.Name, cloudInstance.Id, infrastructure.Name, infrastructure.Id))
+		}
+		if instanceState == procedures.Machine_State_Stopped {
+			return errors.New(fmt.Sprintf("Cloud Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] already stopped!!", cloudInstance.Name, cloudInstance.Id, infrastructure.Name, infrastructure.Id))
+		}
 		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{cloudInstance.Id})
 	} else {
+		if instance.Disabled {
+			return errors.New(fmt.Sprintf("Local Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] is disabled!!", instance.Name, instance.Id, infrastructure.Name, infrastructure.Id))
+		}
+		if instanceState == procedures.Machine_State_Stopped {
+			return errors.New(fmt.Sprintf("Local Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] already stopped!!", instance.Name, instance.Id, infrastructure.Name, infrastructure.Id))
+		}
 		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{instance.Id})
 	}
 	stopCouples, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.StopMachine, exclusionIdList)
@@ -167,14 +198,130 @@ func StopInstance(infrastructure model.Infrastructure, instance model.LocalInsta
 	return nil
 }
 
-func DisableInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool) error {
-	//TODO: Implement Disable Instance ??
-	return errors.New("Command Disable Instance not implemented!!")
+func DisableInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState, descriptor model.ProjectsDescriptor) error {
+	var  err error
+
+	if isCloud {
+		if cloudInstance.Disabled {
+			return errors.New(fmt.Sprintf("Cloud Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] already disabled!!", cloudInstance.Name, cloudInstance.Id, infrastructure.Name, infrastructure.Id))
+		}
+	} else {
+		if instance.Disabled {
+			return errors.New(fmt.Sprintf("Local Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] already disabled!!", instance.Name, instance.Id, infrastructure.Name, infrastructure.Id))
+		}
+	}
+
+	if instanceState == procedures.Machine_State_Running {
+		var exclusionIdList []string = make([]string, 0)
+		var actionCouples []tasks.ActivityCouple = make([]tasks.ActivityCouple, 0)
+		var machineId, instanceId string
+		if isCloud {
+			machineId = cloudInstance.MachineId
+			instanceId = cloudInstance.Id
+			exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{cloudInstance.Id})
+		} else {
+			machineId = instance.MachineId
+			instanceId = instance.Id
+			exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{instance.Id})
+		}
+
+		utils.PrintlnWarning(fmt.Sprintf("Stopping Instance Id: '%s', Machine Id : '%s' from Project : '%s' [Id: %s]...", instanceId, machineId, descriptor.Name, descriptor.Id))
+
+		stopCouples, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.StopMachine, exclusionIdList)
+		if err != nil {
+			return err
+		}
+		actionCouples = append(actionCouples, stopCouples...)
+		if len(actionCouples) == 0 {
+			return errors.New("No Instance available for destroy procedure...")
+		}
+		NumThreads := 1
+		utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
+		errorsList := ExecuteInfrastructureActions(infrastructure, actionCouples, NumThreads, func(task tasks.ScheduleTask) {})
+
+		if len(errorsList) > 0 {
+			return errorsList[0]
+		}
+	}
+
+	if isCloud {
+		utils.PrintlnWarning(fmt.Sprintf("Disabling Cloud Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s]", cloudInstance.Name, cloudInstance.Id, infrastructure.Name, infrastructure.Id))
+		for i := 0; i < len(infrastructure.Domains); i++ {
+			for j := 0; j < len(infrastructure.Domains[i].Networks); j++ {
+				for k := 0; k < len(infrastructure.Domains[i].Networks[j].CloudInstances); k++ {
+					if infrastructure.Domains[i].Networks[j].CloudInstances[k].Id == cloudInstance.Id {
+						infrastructure.Domains[i].Networks[j].CloudInstances[k].Disabled = true
+					}
+				}
+			}
+		}
+	} else {
+		utils.PrintlnWarning(fmt.Sprintf("Disabling Local Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s]", instance.Name, instance.Id, infrastructure.Name, infrastructure.Id))
+		for i := 0; i < len(infrastructure.Domains); i++ {
+			for j := 0; j < len(infrastructure.Domains[i].Networks); j++ {
+				for k := 0; k < len(infrastructure.Domains[i].Networks[j].LocalInstances); k++ {
+					if infrastructure.Domains[i].Networks[j].LocalInstances[k].Id == instance.Id {
+						infrastructure.Domains[i].Networks[j].LocalInstances[k].Disabled = true
+					}
+				}
+			}
+		}
+	}
+
+	utils.PrintlnImportant("No changes allowed for this instance ...")
+
+	utils.PrintlnWarning(fmt.Sprintf("Saving information to Infrastructure : %s [Id: %s]", infrastructure.Name, infrastructure.Id))
+
+	err = vmio.SaveInfrastructure(infrastructure)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func EnableInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool) error {
-	//TODO: Implement Enable Instance ??
-	return errors.New("Command Enable Instance not implemented!!")
+	var  err error
+
+	if isCloud {
+		if ! cloudInstance.Disabled {
+			return errors.New(fmt.Sprintf("Cloud Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] already enabled!!", cloudInstance.Name, cloudInstance.Id, infrastructure.Name, infrastructure.Id))
+		}
+		utils.PrintlnWarning(fmt.Sprintf("Enabling Cloud Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s]", cloudInstance.Name, cloudInstance.Id, infrastructure.Name, infrastructure.Id))
+		for i := 0; i < len(infrastructure.Domains); i++ {
+			for j := 0; j < len(infrastructure.Domains[i].Networks); j++ {
+				for k := 0; k < len(infrastructure.Domains[i].Networks[j].CloudInstances); k++ {
+					if infrastructure.Domains[i].Networks[j].CloudInstances[k].Id == cloudInstance.Id {
+						infrastructure.Domains[i].Networks[j].CloudInstances[k].Disabled = false
+					}
+				}
+			}
+		}
+	} else {
+		if ! instance.Disabled {
+			return errors.New(fmt.Sprintf("Local Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] already enabled!!", instance.Name, instance.Id, infrastructure.Name, infrastructure.Id))
+		}
+		utils.PrintlnWarning(fmt.Sprintf("Enabling Local Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s]", instance.Name, instance.Id, infrastructure.Name, infrastructure.Id))
+		for i := 0; i < len(infrastructure.Domains); i++ {
+			for j := 0; j < len(infrastructure.Domains[i].Networks); j++ {
+				for k := 0; k < len(infrastructure.Domains[i].Networks[j].LocalInstances); k++ {
+					if infrastructure.Domains[i].Networks[j].LocalInstances[k].Id == instance.Id {
+						infrastructure.Domains[i].Networks[j].LocalInstances[k].Disabled = false
+					}
+				}
+			}
+		}
+	}
+
+	utils.PrintlnImportant("Now changes available for this instance ...")
+
+	utils.PrintlnWarning(fmt.Sprintf("Saving information to Infrastructure : %s [Id: %s]", infrastructure.Name, infrastructure.Id))
+
+	err = vmio.SaveInfrastructure(infrastructure)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func RecreateInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState, descriptor model.ProjectsDescriptor) error {
