@@ -60,6 +60,7 @@ var (
 			StopInfrastructure,
 			RestartInfrastructure,
 			DestroyInfrastructure,
+			AlterInfrastructure,
 			BackupInfrastructure,
 			RecoverInfrastructure,
 			ListInfrastructure,
@@ -115,6 +116,17 @@ var (
 		Description:       "Destroy a desired infrastructre (No undo available)",
 		CmdType:           DestroyInfrastructure,
 		LineHelp:          "destroy-infra [OPTIONS]",
+		SubCommands:       []SubCommandHelper{},
+		SubCmdTypes:       []CmdSubRequestType{},
+		SubCmdHelperTypes: []CmdRequestType{},
+		Options:           []HelperOption{},
+	}
+	AlterInfra CommandHelper = CommandHelper{
+		Command:           "alter-infra",
+		Name:              "Alter Infrastructure",
+		Description:       "Alter a desired infrastructre (instance start,stop,status,recreate,remove,...)",
+		CmdType:           AlterInfrastructure,
+		LineHelp:          "alter-infra [COMMAND] [OPTIONS]",
 		SubCommands:       []SubCommandHelper{},
 		SubCmdTypes:       []CmdSubRequestType{},
 		SubCmdHelperTypes: []CmdRequestType{},
@@ -202,7 +214,7 @@ var (
 		Name:              "Require Project Schemas",
 		Description:       "Provides information about project elements definition",
 		CmdType:           InfoConfig,
-		LineHelp:          "info-project [OPTIONS]",
+		LineHelp:          "info-project [COMMAND] [OPTIONS]",
 		SubCommands:       []SubCommandHelper{},
 		SubCmdTypes:       []CmdSubRequestType{},
 		SubCmdHelperTypes: []CmdRequestType{},
@@ -213,7 +225,7 @@ var (
 		Name:              "Modify Project",
 		Description:       "Modify existing project, e.g.: open, close project or add, modify, delete items",
 		CmdType:           AlterConfig,
-		LineHelp:          "alter-project [OPTIONS]",
+		LineHelp:          "alter-project [COMMAND] [OPTIONS]",
 		SubCommands:       []SubCommandHelper{},
 		SubCmdTypes:       []CmdSubRequestType{},
 		SubCmdHelperTypes: []CmdRequestType{},
@@ -287,6 +299,10 @@ func InitHelpers() {
 		SubCommandHelper{
 			Command:     "destroy-infra",
 			Description: "Destroy a specific Infrastructure",
+		},
+		SubCommandHelper{
+			Command:     "alter-infra",
+			Description: "Alter a desired infrastructre (instance start,stop,status,recreate,remove,...)",
 		},
 		SubCommandHelper{
 			Command:     "backup-infra",
@@ -476,6 +492,99 @@ func InitHelpers() {
 			Mandatory:   false,
 		},
 	)
+
+	//Alter Infrastructure
+	AlterInfra.SubCommands = append(AlterInfra.SubCommands,
+		SubCommandHelper{
+			Command:     "status",
+			Description: "Display informations about an instance part of an infrastructure",
+		},
+		SubCommandHelper{
+			Command:     "start",
+			Description: "Start an instance part of an infrastructure",
+		},
+		SubCommandHelper{
+			Command:     "stop",
+			Description: "Stop an instance part of an infrastructure",
+		},
+		SubCommandHelper{
+			Command:     "restart",
+			Description: "Restart an instance part of an infrastructure",
+		},
+		SubCommandHelper{
+			Command:     "disable",
+			Description: "Disable an instance part of an infrastructure and no actions available as group",
+		},
+		SubCommandHelper{
+			Command:     "enable",
+			Description: "Enable a disabled instance part of an infrastructure and no actions available as group",
+		},
+		SubCommandHelper{
+			Command:     "recreate",
+			Description: "Recreate an instance part of an infrastructure",
+		},
+		SubCommandHelper{
+			Command:     "remove",
+			Description: "Destory and remove an instance from own infrastructure and the original project",
+		},
+		SubCommandHelper{
+			Command:     "autofix",
+			Description: "Start fixing issues for instances part of an infrastructure",
+		},
+	)
+
+	AlterInfra.SubCmdTypes = append(AlterInfra.SubCmdTypes,
+		Status,
+		Start,
+		Stop,
+		Restart,
+		Disable,
+		Enable,
+		Recreate,
+		Destroy,
+		Autofix,
+	)
+
+	AlterInfra.Options = append(AlterInfra.Options,
+		HelperOption{
+			Option:      "infra-name",
+			Type:        "<text>",
+			Description: "Infrastructure name",
+			Mandatory:   true,
+		},
+		HelperOption{
+			Option:      "instance-id",
+			Type:        "<text>",
+			Description: "Instance Unique identifier information, used to recover the instance to alter (allowed: Instance Id, Cloud Instance Id)",
+			Mandatory:   false,
+		},
+		HelperOption{
+			Option:      "instance-name",
+			Type:        "<text>",
+			Description: "Instance Name information, valid only only if it is unique in the whole infrastruture, used to recover the instance to alter (allowed: Name, Cloud Name)",
+			Mandatory:   false,
+		},
+		HelperOption{
+			Option:      "is-cloud",
+			Type:        "<boolean>",
+			Description: "Flag defining the instance is local or is on the cloud, useful to find and instance by name (default: false)",
+			Mandatory:   false,
+		},
+		HelperOption{
+			Option:      "force",
+			Type:        "<boolean>",
+			Description: "Flag defining to force alter the instance or whole instances, no confirmation will be prompted",
+			Mandatory:   false,
+		},
+		HelperOption{
+			Option:      "no-colors",
+			Type:        "<boolean>",
+			Description: "Prevent to print a colorful output, useful for piping results to a file (default: false)",
+			Mandatory:   false,
+		},
+	)
+
+
 
 	//Backup Infrastructure
 	BackupInfra.Options = append(BackupInfra.Options,
@@ -1033,6 +1142,7 @@ func GetArgumentHelpers() []CommandHelper {
 		StopInfra,
 		RestartInfra,
 		DestroyInfra,
+		AlterInfra,
 		BackupInfra,
 		RecoverInfra,
 		ListInfra,

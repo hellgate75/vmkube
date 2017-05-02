@@ -88,6 +88,23 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
+	case AlterInfrastructure:
+		{
+			if !request.CheckInfra() {
+				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+				return false
+			} else {
+				response, error := request.AlterInfra()
+				if !response.Status {
+					utils.PrintlnError(term.Screen.Bold(fmt.Sprintf("Error: %s, clause: %s", error, response.Message)))
+					term.Screen.Flush()
+				}
+				if !utils.NO_COLORS {
+					term.Screen.ShowCursor()
+				}
+				return error == nil
+			}
+		}
 	case BackupInfrastructure:
 		{
 			if !request.CheckInfra() {

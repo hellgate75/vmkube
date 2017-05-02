@@ -512,7 +512,7 @@ func CmdParseOption(key string, options []SubCommandHelper) (string, int, error)
 			return key, -1, errors.New("Invalid Argument (wrong character: -) : " + key)
 		} else {
 			for index, opts := range options {
-				if CorrectInput(key) == opts.Command {
+				if CorrectInput(key) == CorrectInput(opts.Command) {
 					return CorrectInput(key), index, nil
 				}
 			}
@@ -526,7 +526,7 @@ func CmdParseOption(key string, options []SubCommandHelper) (string, int, error)
 func RecoverCommandHelper(helpCommand string) CommandHelper {
 	helperCommands := GetArgumentHelpers()
 	for _, helper := range helperCommands {
-		if helper.Command == strings.ToLower(helpCommand) {
+		if strings.ToLower(helper.Command) == strings.ToLower(helpCommand) {
 			return helper
 		}
 	}

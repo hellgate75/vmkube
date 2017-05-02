@@ -4,12 +4,13 @@ import (
 	"os"
 	"vmkube/action"
 	"vmkube/term"
+	"vmkube/utils"
 )
 
 func init() {
 	if len(os.Args) == 0 {
 		println("Error: No arguments for command")
-		action.PrintCommandHelper("", "")
+		action.PrintCommandHelper("help", "help")
 		os.Exit(1)
 	}
 	action.InitHelpers()
@@ -22,7 +23,7 @@ func main() {
 		if response {
 			os.Exit(0)
 		} else {
-			term.Screen.Println(term.Screen.Color("Errors During Command Execution!!", term.RED))
+			utils.PrintlnError(term.Screen.Bold("Errors During Command Execution!!"))
 			term.Screen.Flush()
 			os.Exit(1)
 		}

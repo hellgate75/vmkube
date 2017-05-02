@@ -30,6 +30,7 @@ const (
 	StopInfrastructure
 	RestartInfrastructure
 	DestroyInfrastructure
+	AlterInfrastructure
 	BackupInfrastructure
 	RecoverInfrastructure
 	ListInfrastructure
@@ -77,6 +78,15 @@ const (
 	Open
 	List
 	Detail
+	Start
+	Stop
+	Restart
+	Disable
+	Enable
+	Status
+	Recreate
+	Destroy
+	Autofix
 )
 
 var CmdSubRequestDescriptors []string = []string{
@@ -88,6 +98,14 @@ var CmdSubRequestDescriptors []string = []string{
 	"Open",
 	"List",
 	"Detail",
+	"Start",
+	"Stop",
+	"Disable",
+	"Enable",
+	"Status",
+	"Recreate",
+	"Destroy",
+	"Autofix",
 }
 
 type CmdElementType int
@@ -130,6 +148,11 @@ type CmdParser interface {
 func (ArgCmd *CmdArguments) Parse(args []string) bool {
 	if len(args) > 0 {
 		command, error := utils.CmdParse(args[0])
+		if error == nil {
+			for strings.Index(command, "  ") >= 0 {
+				command = strings.Replace(command, "  ", "", len(command)/2)
+			}
+		}
 		ArgCmd.Cmd = command
 		if error == nil {
 			helper := RecoverCommandHelper(command)
@@ -154,38 +177,40 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 						optsArgs := args[2:]
 						options := make([][]string, 0)
 						passed := true
-						for index, option := range optsArgs {
-							if index%2 == 0 && len(optsArgs) >= index+1 {
-								key, value, error := utils.OptionsParse(optsArgs[index], optsArgs[index+1])
-								if error != nil {
-									passed = false
-									utils.PrintlnError(fmt.Sprintf("Error: Unable to parse option %s for Command %s and Sub-Command %s", option, command, SubCommand))
-									break
-								} else {
-									if "elem-type" == strings.ToLower(strings.TrimSpace(key)) {
-										elementType, error := CmdParseElement(value)
-										if error == nil && NoElement != elementType {
-											ArgCmd.Element = elementType
-										} else {
-											utils.PrintlnError(fmt.Sprintf("Error: Invalid infrastructure element type %s for Command %s and Sub-Command %s", value, command, SubCommand))
-											if error != nil {
-												utils.PrintlnError(fmt.Sprintf("Details: %s", error.Error()))
+						for index, option := range optsArgs {if index % 2 == 0 {
+								if len(optsArgs) > index + 1 {
+									key, value, error := utils.OptionsParse(optsArgs[index], optsArgs[index + 1])
+									if error != nil {
+										passed = false
+										utils.PrintlnError(fmt.Sprintf("Error: Unable to parse option %s for Command %s and Sub-Command %s", option, command, SubCommand))
+										break
+									} else {
+										if "elem-type" == strings.ToLower(strings.TrimSpace(key)) {
+											elementType, error := CmdParseElement(value)
+											if error == nil && NoElement != elementType {
+												ArgCmd.Element = elementType
+											} else {
+												utils.PrintlnError(fmt.Sprintf("Error: Invalid infrastructure element type %s for Command %s and Sub-Command %s", value, command, SubCommand))
+												if error != nil {
+													utils.PrintlnError(fmt.Sprintf("Details: %s", error.Error()))
+												}
+												time.Sleep(100 * time.Millisecond)
+												PrintCommandHelper(command, SubCommand)
+												return false
 											}
-											time.Sleep(100 * time.Millisecond)
-											PrintCommandHelper(command, SubCommand)
-											return false
 										}
+										options = append(options, []string{
+											key,
+											value,
+										})
 									}
-									options = append(options, []string{
-										key,
-										value,
-									})
+								} else {
+									passed = false
+									utils.PrintlnError(fmt.Sprintf("Error: Uncomplete option %s for Command %s and Sub-Command %s", option, command, SubCommand))
+									time.Sleep(100 * time.Millisecond)
+									PrintCommandHelper(command, SubCommand)
+									return false
 								}
-							} else if len(optsArgs) < index+1 {
-								passed = false
-								utils.PrintlnError(fmt.Sprintf("Error: Uncomplete option %s for Command %s and Sub-Command %s", option, command, SubCommand))
-								time.Sleep(100 * time.Millisecond)
-								PrintCommandHelper(command, SubCommand)
 							}
 						}
 						if passed {
@@ -197,14 +222,14 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 							}
 							return true
 						} else {
-							fmt.Println("One or more options parse failed!!")
+							utils.PrintlnError("Error: One or more options parse failed!!")
 							time.Sleep(100 * time.Millisecond)
 							PrintCommandHelper(command, SubCommand)
 							return false
 						}
 					}
 				} else {
-					fmt.Println("Error:", error)
+					utils.PrintlnError(fmt.Sprintln("Error:", error))
 					time.Sleep(100 * time.Millisecond)
 					PrintCommandHelper(command, SubCommand)
 					return false
@@ -244,7 +269,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 							}
 						} else if len(optsArgs) < index+1 {
 							passed = false
-							fmt.Println("Error: Uncomplete option", option[index], "for Command", command)
+							utils.PrintlnError(fmt.Sprintln("Error: Uncomplete option", option[index], "for Command", command))
 							time.Sleep(100 * time.Millisecond)
 							PrintCommandHelper(command, "")
 						}
@@ -273,21 +298,21 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 				}
 				return true
 			} else if len(args) >= 1 {
-				fmt.Println("Error: Unable to parse Sub-Command...")
+				utils.PrintlnError("Error: Unable to parse Sub-Command...")
 				time.Sleep(100 * time.Millisecond)
 				PrintCommandHelper(command, "")
 			} else {
-				fmt.Println("Error: Unable to parse any parameter...")
+				utils.PrintlnError("Error: Unable to parse any parameter...")
 				time.Sleep(100 * time.Millisecond)
 				PrintCommandHelper(command, "")
 			}
 		} else {
-			fmt.Printf("Error: Unable to parse command = %s\n", args[0])
+			utils.PrintlnError(fmt.Sprintf("Error: Unable to parse command = %s\n", args[0]))
 			time.Sleep(100 * time.Millisecond)
 			PrintCommandHelper("help", "")
 		}
 	} else {
-		fmt.Printf("Error: Insufficient arguments = %d\n", len(args))
+		utils.PrintlnError(fmt.Sprintf("Error: Insufficient arguments = %d\n", len(args)))
 		time.Sleep(100 * time.Millisecond)
 		PrintCommandHelper("help", "")
 	}
