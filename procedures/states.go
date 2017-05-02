@@ -17,11 +17,11 @@ const (
 )
 
 type MachineExist int
+
 const (
 	Machine_Exists MachineExist = iota
 	Machine_Missing
 )
-
 
 var machine_states = []string{
 	"",
@@ -57,22 +57,20 @@ var machine_exists_states_enum = []MachineExist{
 	Machine_Missing,
 }
 
-
 // Given a State type, returns its string representation
 func (s MachineState) String() string {
-	if int(s) >= 0 && int(s) < len( machine_states) {
-		return  machine_states[s]
+	if int(s) >= 0 && int(s) < len(machine_states) {
+		return machine_states[s]
 	}
 	return ""
 }
 
 func (s MachineExist) String() string {
 	if int(s) >= 0 && int(s) < len(machine_exists_states) {
-		return  machine_exists_states[s]
+		return machine_exists_states[s]
 	}
 	return Machine_Missing.String()
 }
-
 
 // Given a State type, returns its string representation
 func GetStateFromMachineAnswer(state string) MachineState {
@@ -92,4 +90,3 @@ func GetStateFromMachineExist(state string) MachineExist {
 	}
 	return Machine_Missing
 }
-

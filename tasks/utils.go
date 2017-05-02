@@ -1,12 +1,12 @@
 package tasks
 
 import (
-	"strings"
-	"os"
-	"vmkube/model"
-	"io/ioutil"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
 	"sync"
+	"vmkube/model"
 )
 
 func ConvertActivityTaskInString(task ActivityTask) string {
@@ -82,7 +82,7 @@ var mutex sync.RWMutex
 func DumpData(file string, data interface{}, overwrite bool) {
 	text := ""
 	if !overwrite {
-		if strings.Index(file, string(os.PathSeparator)) < 0  {
+		if strings.Index(file, string(os.PathSeparator)) < 0 {
 			file = model.HomeFolder() + string(os.PathSeparator) + file
 		}
 		mutex.RLock()

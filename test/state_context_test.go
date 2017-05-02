@@ -1,10 +1,10 @@
 package test
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
-	"vmkube/state"
+	"testing"
 	"time"
+	"vmkube/state"
 )
 
 func TestNewStateContext(t *testing.T) {
@@ -16,15 +16,15 @@ func TestNewStateContext(t *testing.T) {
 func TestStateContextUse(t *testing.T) {
 	context := state.NewStateContext()
 	context.Collect("1") <- state.StateReferenceData{
-		Id: "1",
+		Id:     "1",
 		Status: true,
 	}
-	time.Sleep(time.Second*1)
+	time.Sleep(time.Second * 1)
 	context.Collect("2") <- state.StateReferenceData{
-		Id: "2",
+		Id:     "2",
 		Status: false,
 	}
-	time.Sleep(time.Second*1)
+	time.Sleep(time.Second * 1)
 	assert.Equal(t, true, context.HasValue("1"), "Registered Id has value")
 	assert.Equal(t, true, context.State("1"), "Registered Id has right state")
 	assert.Equal(t, true, context.HasValue("2"), "Registered Id has value")
@@ -40,19 +40,17 @@ func TestNewGenericContext(t *testing.T) {
 func TestGenericContextUse(t *testing.T) {
 	context := state.NewGenericContext()
 	context.Collect("1") <- state.ReferenceEntry{
-		Key: "1",
+		Key:   "1",
 		Value: "A",
 	}
-	time.Sleep(time.Second*1)
+	time.Sleep(time.Second * 1)
 	context.Collect("2") <- state.ReferenceEntry{
-		Key: "2",
+		Key:   "2",
 		Value: "B",
 	}
-	time.Sleep(time.Second*1)
+	time.Sleep(time.Second * 1)
 	assert.Equal(t, true, context.HasKey("1"), "Registered Id key exists")
 	assert.Equal(t, "A", *context.Value("1"), "Registered Id has right value")
 	assert.Equal(t, true, context.HasKey("2"), "Registered Id key exists")
 	assert.Equal(t, "B", *context.Value("2"), "Registered Id has right value")
 }
-
-

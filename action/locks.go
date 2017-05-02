@@ -1,16 +1,15 @@
 package action
 
 import (
-	"vmkube/model"
+	"strconv"
 	"sync"
 	"time"
-	"strconv"
+	"vmkube/model"
 )
 
 type IFaceProjectActionIndex ProjectActionIndex
 
 type IFaceRollBackIndex RollBackIndex
-
 
 type IFaceRollBackSegment RollBackSegment
 
@@ -19,13 +18,13 @@ type IFaceLogStorage model.LogStorage
 func (iFace *IFaceLogStorage) WaitForUnlock() {
 	waitGroup := sync.WaitGroup{}
 	waitGroup.Add(1)
-	go func(){
+	go func() {
 		index := model.LogStorage{
 			ProjectId: iFace.ProjectId,
-			InfraId: iFace.InfraId,
+			InfraId:   iFace.InfraId,
 			ElementId: iFace.ElementId,
 		}
-		for{
+		for {
 			if IsLogLocked(index) {
 				time.Sleep(500)
 			} else {
@@ -40,14 +39,14 @@ func (iFace *IFaceLogStorage) WaitForUnlock() {
 func (iFace *IFaceLogStorage) WaitForLogFileUnlock(logIndex int) {
 	waitGroup := sync.WaitGroup{}
 	waitGroup.Add(1)
-	go func(){
+	go func() {
 		index := model.LogStorage{
 			ProjectId: iFace.ProjectId,
-			InfraId: iFace.InfraId,
+			InfraId:   iFace.InfraId,
 			ElementId: iFace.ElementId,
 		}
-		for{
-			if IsLogFileLocked(index,logIndex) {
+		for {
+			if IsLogFileLocked(index, logIndex) {
 				time.Sleep(500)
 			} else {
 				waitGroup.Done()
@@ -58,16 +57,15 @@ func (iFace *IFaceLogStorage) WaitForLogFileUnlock(logIndex int) {
 	waitGroup.Wait()
 }
 
-
 func (iFace *IFaceProjectActionIndex) WaitForUnlock() {
 	waitGroup := sync.WaitGroup{}
 	waitGroup.Add(1)
-	go func(){
+	go func() {
 		index := ProjectActionIndex{
-			Id: iFace.Id,
+			Id:        iFace.Id,
 			ProjectId: iFace.ProjectId,
 		}
-		for{
+		for {
 			if IsActionIndexLocked(index) {
 				time.Sleep(500)
 			} else {
@@ -82,12 +80,12 @@ func (iFace *IFaceProjectActionIndex) WaitForUnlock() {
 func (iFace *IFaceRollBackIndex) WaitForUnlock() {
 	waitGroup := sync.WaitGroup{}
 	waitGroup.Add(1)
-	go func(){
+	go func() {
 		index := RollBackIndex{
-			Id: iFace.Id,
+			Id:        iFace.Id,
 			ProjectId: iFace.ProjectId,
 		}
-		for{
+		for {
 			if IsRollBackIndexLocked(index) {
 				time.Sleep(500)
 			} else {
@@ -102,13 +100,13 @@ func (iFace *IFaceRollBackIndex) WaitForUnlock() {
 func (iFace *IFaceRollBackSegment) WaitForUnlock() {
 	waitGroup := sync.WaitGroup{}
 	waitGroup.Add(1)
-	go func(){
+	go func() {
 		index := RollBackSegment{
-			Id: iFace.Id,
+			Id:        iFace.Id,
 			ProjectId: iFace.ProjectId,
-			Index: iFace.Index,
+			Index:     iFace.Index,
 		}
-		for{
+		for {
 			if IsRollBackSegmentLocked(index) {
 				time.Sleep(500)
 			} else {
@@ -178,14 +176,13 @@ func UnlockLog(index model.LogStorage) bool {
 	return model.RemoveLock(index.ProjectId, index.ElementId)
 }
 
-
 func IsLogFileLocked(index model.LogStorage, logIndex int) bool {
-	return model.HasLock(index.ProjectId, index.ElementId + "-" + strconv.Itoa(logIndex))
+	return model.HasLock(index.ProjectId, index.ElementId+"-"+strconv.Itoa(logIndex))
 }
 func LockLogFile(index model.LogStorage, logIndex int) bool {
-	return model.WriteLock(index.ProjectId, index.ElementId + "-" + strconv.Itoa(logIndex))
+	return model.WriteLock(index.ProjectId, index.ElementId+"-"+strconv.Itoa(logIndex))
 }
 
 func UnlockLogFile(index model.LogStorage, logIndex int) bool {
-	return model.RemoveLock(index.ProjectId, index.ElementId + "-" + strconv.Itoa(logIndex))
+	return model.RemoveLock(index.ProjectId, index.ElementId+"-"+strconv.Itoa(logIndex))
 }

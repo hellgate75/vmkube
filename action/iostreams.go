@@ -7,7 +7,7 @@ import (
 func SaveProjectActionIndex(index ProjectActionIndex) error {
 	info := ProjectActionIndexInfo{
 		Format: "",
-		Index: index,
+		Index:  index,
 	}
 	return info.Write()
 }
@@ -18,7 +18,7 @@ func LoadProjectActionIndex(projectId string) (ProjectActionIndex, error) {
 	}
 	info := ProjectActionIndexInfo{
 		Format: "",
-		Index: index,
+		Index:  index,
 	}
 	err := info.Read()
 	return info.Index, err
@@ -30,17 +30,16 @@ func DeleteActionIndex(projectId string) error {
 	}
 	info := ProjectActionIndexInfo{
 		Format: "",
-		Index: index,
+		Index:  index,
 	}
 	err := info.Delete()
 	return err
 }
 
-
 func SaveRollbackIndex(index RollBackIndex) error {
 	info := ProjectRollbackIndexInfo{
 		Format: "",
-		Index: index,
+		Index:  index,
 	}
 	return info.Write()
 }
@@ -51,19 +50,18 @@ func LoadRollbackIndex(projectId string) (RollBackIndex, error) {
 	}
 	info := ProjectRollbackIndexInfo{
 		Format: "",
-		Index: index,
+		Index:  index,
 	}
 	err := info.Read()
 	return info.Index, err
 }
-
 
 func DeleteRollbackIndex(projectId string) error {
 	index, err := LoadRollbackIndex(projectId)
 	if err != nil {
 		return err
 	}
-	for _,segmentIndex := range index.IndexList {
+	for _, segmentIndex := range index.IndexList {
 		err = DeleteRollbackSegment(projectId, segmentIndex)
 		if err != nil {
 			return err
@@ -71,9 +69,9 @@ func DeleteRollbackIndex(projectId string) error {
 	}
 	info := ProjectRollbackIndexInfo{
 		Format: "",
-		Index: index,
+		Index:  index,
 	}
-	
+
 	err = info.Delete()
 	return err
 }
@@ -81,19 +79,19 @@ func DeleteRollbackIndex(projectId string) error {
 func SaveRollbackSegment(index RollBackSegment) error {
 	info := ProjectRollbackSegmentInfo{
 		Format: "",
-		Index: index,
+		Index:  index,
 	}
 	return info.Write()
 }
 
 func LoadRollbackSegment(projectId string, rollbackIndex RollBackSegmentIndex) (RollBackSegment, error) {
 	index := RollBackSegment{
-		Index: rollbackIndex,
+		Index:     rollbackIndex,
 		ProjectId: projectId,
 	}
-	info := ProjectRollbackSegmentInfo {
+	info := ProjectRollbackSegmentInfo{
 		Format: "",
-		Index: index,
+		Index:  index,
 	}
 	err := info.Read()
 	return info.Index, err
@@ -101,36 +99,35 @@ func LoadRollbackSegment(projectId string, rollbackIndex RollBackSegmentIndex) (
 
 func DeleteRollbackSegment(projectId string, rollbackIndex RollBackSegmentIndex) error {
 	index := RollBackSegment{
-		Index: rollbackIndex,
+		Index:     rollbackIndex,
 		ProjectId: projectId,
 	}
 	info := ProjectRollbackSegmentInfo{
 		Format: "",
-		Index: index,
+		Index:  index,
 	}
 	err := info.Delete()
 	return err
 }
 
-
 func SaveInfrastructureLogs(log model.LogStorage) error {
 	info := InfrastructureLogsInfo{
 		Format: "",
-		Logs: log,
+		Logs:   log,
 	}
 	return info.SaveLogFile()
 }
 
 func LoadInfrastructureLogs(projectId string, infraId string, elementId string) (model.LogStorage, error) {
 	logs := model.LogStorage{
-		InfraId: infraId,
+		InfraId:   infraId,
 		ProjectId: projectId,
 		ElementId: elementId,
-		LogLines: []string{},
+		LogLines:  []string{},
 	}
 	info := InfrastructureLogsInfo{
 		Format: "",
-		Logs: logs,
+		Logs:   logs,
 	}
 	err := info.Read()
 	return info.Logs, err
@@ -139,21 +136,21 @@ func LoadInfrastructureLogs(projectId string, infraId string, elementId string) 
 func DeleteInfrastructureLogs(log model.LogStorage) error {
 	info := InfrastructureLogsInfo{
 		Format: "",
-		Logs: log,
+		Logs:   log,
 	}
 	return info.Delete()
 }
 
 func DeleteInfrastructureLogsById(projectId string, infraId string, elementId string) error {
 	logs := model.LogStorage{
-		InfraId: infraId,
+		InfraId:   infraId,
 		ProjectId: projectId,
 		ElementId: elementId,
-		LogLines: []string{},
+		LogLines:  []string{},
 	}
 	info := InfrastructureLogsInfo{
 		Format: "",
-		Logs: logs,
+		Logs:   logs,
 	}
 	return info.Delete()
 }
@@ -161,7 +158,7 @@ func DeleteInfrastructureLogsById(projectId string, infraId string, elementId st
 func LoadInfrastructureLogFiles(log model.LogStorage) error {
 	info := InfrastructureLogsInfo{
 		Format: "",
-		Logs: log,
+		Logs:   log,
 	}
 	return info.ReadLogFiles()
 }
@@ -170,10 +167,10 @@ func DeleteInfrastructureLogFiles(projectId string, infraId string, elementId st
 	info := InfrastructureLogsInfo{
 		Format: "",
 		Logs: model.LogStorage{
-			InfraId: infraId,
+			InfraId:   infraId,
 			ProjectId: projectId,
 			ElementId: elementId,
-			LogLines: []string{},
+			LogLines:  []string{},
 		},
 	}
 	return info.ReadLogFiles()

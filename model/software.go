@@ -1,30 +1,30 @@
 package model
 
 import (
-	"fmt"
-	"os"
-	"io"
-	"net/http"
-	"os/user"
-	"log"
 	"errors"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"os/user"
 	"vmkube/utils"
 )
 
 type MachineISO struct {
-	Name						string `json:"name",xml:"name"`
-	BaseURL					string `json:"baseurl",xml:"baseurl"`
-	ISOName					string `json:"isoname",xml:"isoname"`
-	FolderName			string `json:"folder",xml:"folder"`
-	FinalNamePrefix	string `json:"fileprefix",xml:"fileprefix"`
-	FinalNameSuffix	string `json:"filesuffix",xml:"filesuffix"`
+	Name            string `json:"name" xml:"name"`
+	BaseURL         string `json:"baseurl" xml:"baseurl"`
+	ISOName         string `json:"isoname" xml:"isoname"`
+	FolderName      string `json:"folder" xml:"folder"`
+	FinalNamePrefix string `json:"fileprefix" xml:"fileprefix"`
+	FinalNameSuffix string `json:"filesuffix" xml:"filesuffix"`
 }
 
 func HomeFolder() string {
 	usr, err := user.Current()
 	if err != nil {
-		log.Fatal( err )
-		return  os.TempDir()
+		log.Fatal(err)
+		return os.TempDir()
 	}
 	return usr.HomeDir
 }
@@ -44,22 +44,22 @@ type MachineActions interface {
 	Path(v string) string
 }
 
-func (isoTemplate *MachineISO)	Path(version string) string {
+func (isoTemplate *MachineISO) Path(version string) string {
 	home := VMBaseFolder()
 	folder := home + string(os.PathSeparator) + "images" + string(os.PathSeparator) + isoTemplate.FolderName
 	fileName := folder + string(os.PathSeparator) + isoTemplate.FinalNamePrefix + version + isoTemplate.FinalNameSuffix
 	return fileName
 }
 
-func (isoTemplate *MachineISO)	Check(version string) bool {
+func (isoTemplate *MachineISO) Check(version string) bool {
 	home := VMBaseFolder()
 	folder := home + string(os.PathSeparator) + "images" + string(os.PathSeparator) + isoTemplate.FolderName
 	fileName := folder + string(os.PathSeparator) + isoTemplate.FinalNamePrefix + version + isoTemplate.FinalNameSuffix
 	_, error := os.Stat(fileName)
-	return ! os.IsNotExist(error)
+	return !os.IsNotExist(error)
 }
 
-func (isoTemplate *MachineISO)	Download(version string) bool {
+func (isoTemplate *MachineISO) Download(version string) bool {
 	url := isoTemplate.BaseURL + version + isoTemplate.ISOName
 	home := VMBaseFolder()
 	folder := home + string(os.PathSeparator) + "images" + string(os.PathSeparator) + isoTemplate.FolderName
@@ -80,13 +80,13 @@ func (isoTemplate *MachineISO)	Download(version string) bool {
 		return false
 	}
 	defer response.Body.Close()
-	
+
 	output, err := os.OpenFile(fileName, os.O_RDWR, 0777)
 	if err != nil {
 		return false
 	}
 	defer output.Close()
-	
+
 	n, err := io.Copy(output, response.Body)
 	if err != nil {
 		fmt.Printf("Error while downloading %s - %s\n", url, err)
@@ -94,19 +94,19 @@ func (isoTemplate *MachineISO)	Download(version string) bool {
 	}
 	fmt.Printf("%d bytes downloaded.\n", n)
 	_, error := os.Stat(fileName)
-	return ! os.IsNotExist(error)
+	return !os.IsNotExist(error)
 }
 
 func GetMachineAction(name string) (*MachineISO, error) {
 	switch name {
 	case "rancheros":
-		return  &MachineISO{
-			Name: "rancheros",
-			BaseURL: "https://github.com/rancher/os/releases/download/v",
-			ISOName: "/rancheros.iso",
+		return &MachineISO{
+			Name:            "rancheros",
+			BaseURL:         "https://github.com/rancher/os/releases/download/v",
+			ISOName:         "/rancheros.iso",
 			FinalNamePrefix: "rancheros-",
 			FinalNameSuffix: ".iso",
-			FolderName: "rancheros",
+			FolderName:      "rancheros",
 		}, nil
 	default:
 		return &MachineISO{}, errors.New("Unbable to discover machine type : " + name)

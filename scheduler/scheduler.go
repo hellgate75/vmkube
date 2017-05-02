@@ -1,15 +1,12 @@
 package scheduler
 
-
 import (
 	"runtime"
-	"time"
 	"sync"
-	"vmkube/tasks"
+	"time"
 	"vmkube/state"
+	"vmkube/tasks"
 )
-
-
 
 type SchedulerPool struct {
 	Id          string
@@ -22,11 +19,11 @@ type SchedulerPool struct {
 	State       tasks.SchedulerState
 }
 
-func (pool *SchedulerPool) RegisterWaitGroup(wg sync.WaitGroup) {
-	pool.WG = wg
-	pool.State.Active = false
-	pool.State.Pool = []tasks.ScheduleTask {}
-}
+//func (pool *SchedulerPool) RegisterWaitGroup(wg sync.WaitGroup) {
+//	pool.WG = wg
+//	pool.State.Active = false
+//	pool.State.Pool = []tasks.ScheduleTask{}
+//}
 
 func (pool *SchedulerPool) Init() {
 	pool.State.Paused = false
@@ -38,7 +35,7 @@ func (pool *SchedulerPool) Init() {
 }
 
 func (pool *SchedulerPool) Start(callback func()) {
-	if ! pool.State.Active {
+	if !pool.State.Active {
 		pool.State.Active = true
 		var threads = pool.MaxParallel
 		if threads == 0 {
@@ -51,7 +48,7 @@ func (pool *SchedulerPool) Start(callback func()) {
 		// start Pool enqueue manager
 		go func() {
 			for pool.State.Active {
-				if  ! pool.State.Paused {
+				if !pool.State.Paused {
 					// Try add jobs from Buffer
 					for threads > len(pool.State.Pool) && len(Buffer) > 0 {
 						Task := Buffer[0]
@@ -64,16 +61,16 @@ func (pool *SchedulerPool) Start(callback func()) {
 					// Look for completed jobs to remove from Pool
 					var i int = 0
 					for len(pool.State.Pool) > 0 && i < len(pool.State.Pool) {
-						if ! pool.State.Pool[i].IsRunning() {
+						if !pool.State.Pool[i].IsRunning() {
 							if pool.PostExecute {
 								go pool.Callback(pool.State.Pool[i])
 							}
-							if i > 0 && i < len(pool.State.Pool) - 2 {
+							if i > 0 && i < len(pool.State.Pool)-2 {
 								pool.State.Pool = pool.State.Pool[:i]
 								pool.State.Pool = append(pool.State.Pool, pool.State.Pool[i+1:]...)
 							} else if i == 0 {
 								pool.State.Pool = pool.State.Pool[i+1:]
-							}  else {
+							} else {
 								pool.State.Pool = pool.State.Pool[:i]
 							}
 							pool.WG.Done()
@@ -92,27 +89,27 @@ func (pool *SchedulerPool) Start(callback func()) {
 			//	runtime.GOMAXPROCS(threads + 1)
 			//}
 			for pool.State.Active {
-				if ! pool.State.Paused {
-						Task := <- pool.Tasks
-						if Task.Id != "" {
-							if Task.Id == "<close>" {
-								break
-							} else {
-								Buffer = append(Buffer, Task)
-							}
+				if !pool.State.Paused {
+					Task := <-pool.Tasks
+					if Task.Id != "" {
+						if Task.Id == "<close>" {
+							break
+						} else {
+							Buffer = append(Buffer, Task)
 						}
+					}
 				} else {
-					time.Sleep(1500*time.Millisecond)
+					time.Sleep(1500 * time.Millisecond)
 				}
 			}
-			for ! pumperExited {
-				time.Sleep(500*time.Millisecond)
+			for !pumperExited {
+				time.Sleep(500 * time.Millisecond)
 			}
-			for i :=0; i<len(pool.State.Pool); i++ {
+			for i := 0; i < len(pool.State.Pool); i++ {
 				if pool.State.Pool[i].IsRunning() {
 					pool.State.Pool[i].Abort()
 					for pool.State.Pool[i].IsRunning() {
-						time.Sleep(1000*time.Millisecond)
+						time.Sleep(1000 * time.Millisecond)
 					}
 				}
 				pool.WG.Done()
@@ -124,18 +121,18 @@ func (pool *SchedulerPool) Start(callback func()) {
 			if pool.KeepAlive {
 				pool.WG.Done()
 			}
-			
+
 		}()
 	}
 }
 
 func (pool *SchedulerPool) IsRunning() bool {
-	if pool.State.Active && ! pool.State.Paused {
+	if pool.State.Active && !pool.State.Paused {
 		return true
 	}
-	for _,task := range pool.State.Pool {
+	for _, task := range pool.State.Pool {
 		if task.IsRunning() {
-				return true
+			return true
 		}
 	}
 	return false
@@ -172,11 +169,11 @@ func (pool *SchedulerPool) IsJobActive(id string) bool {
 func (pool *SchedulerPool) Stop() {
 	pool.State.Active = false
 	pool.Tasks <- tasks.ScheduleTask{
-		Id: "<close>",
+		Id:   "<close>",
 		Jobs: []tasks.JobProcess{},
 	}
 	close(pool.Tasks)
-	
+
 }
 
 func (pool *SchedulerPool) Pause() {
@@ -193,6 +190,6 @@ func (pool *SchedulerPool) Resume() {
 
 func (pool *SchedulerPool) Interrupt() {
 	for i := 0; i < len(pool.State.Pool); i++ {
-			pool.State.Pool[i].Abort()
+		pool.State.Pool[i].Abort()
 	}
 }

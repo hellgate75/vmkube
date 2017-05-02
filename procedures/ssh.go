@@ -1,11 +1,10 @@
 package procedures
 
 import (
-	"os/exec"
+	"bufio"
 	"fmt"
 	"os"
-	"strconv"
-	"bufio"
+	"os/exec"
 	"strings"
 	"time"
 )
@@ -25,36 +24,36 @@ func (ssh *SSHCommander) Command(cmd ...string) *exec.Cmd {
 	}
 
 	if len(ssh.Arguments) > 0 {
-		args = append(args, ssh.Arguments... )
+		args = append(args, ssh.Arguments...)
 	}
 
-	args = append(args, fmt.Sprintf("%s@%s:%s", ssh.User, ssh.IP, strconv.Itoa(ssh.Port)) )
-	
-	args = append(args, cmd... )
-	
+	args = append(args, fmt.Sprintf("%s@%s:%d", ssh.User, ssh.IP, ssh.Port))
+
+	args = append(args, cmd...)
+
 	return exec.Command("ssh", args...)
 }
 
-func (ssh *SSHCommander) Procedure(commands ...string) ([]string,error) {
+func (ssh *SSHCommander) Procedure(commands ...string) ([]string, error) {
 	var err error
 	var out []string = make([]string, 0)
 	var args []string = make([]string, 0)
 	if ssh.IdentityFile != "" {
 		args = append(args, "-i", ssh.IdentityFile)
 	}
-	
+
 	if len(ssh.Arguments) > 0 {
-		args = append(args, ssh.Arguments... )
+		args = append(args, ssh.Arguments...)
 	}
 
-	args = append(args, fmt.Sprintf("%s@%s:%s", ssh.User, ssh.IP, strconv.Itoa(ssh.Port)) )
-	
+	args = append(args, fmt.Sprintf("%s@%s:%d", ssh.User, ssh.IP, ssh.Port))
+
 	cmd := exec.Command("ssh", args...)
 	reader, err := cmd.StdoutPipe()
 	scanner := bufio.NewScanner(reader)
 	err = scanner.Err()
 	if err == nil {
-		for _,command := range commands {
+		for _, command := range commands {
 			cmd.Stdin = strings.NewReader(command)
 			for scanner.Scan() {
 				err = scanner.Err()
@@ -68,36 +67,35 @@ func (ssh *SSHCommander) Procedure(commands ...string) ([]string,error) {
 
 	// Graceful ssh exit
 	cmd.Stdin = strings.NewReader("exit")
-	
-	time.Sleep(2*time.Second)
-	
+
+	time.Sleep(2 * time.Second)
+
 	if cmd.Process.Pid > 0 {
 		// Forced ssh exit
 		cmd.Process.Kill()
 	}
 
-	return out,err
+	return out, err
 }
-
 
 func SShGoLangInstall(user string, ip string, port int, identityFilePath string) {
 	if port == 0 {
 		port = 22
 	}
 	commander := SSHCommander{
-		User: user,
-		IP:  ip,
-		Port: port,
+		User:         user,
+		IP:           ip,
+		Port:         port,
 		IdentityFile: identityFilePath,
 	}
-	
+
 	command := []string{
 		"apt-get",
 		"install",
 		"-y",
 		"golang-go",
 	}
-	
+
 	cmd := commander.Command(command...)
 	reader, err := cmd.StdoutPipe()
 	reader.Close()
@@ -105,9 +103,9 @@ func SShGoLangInstall(user string, ip string, port int, identityFilePath string)
 		fmt.Fprintln(os.Stderr, "There was an error running SSH command: ", err)
 		os.Exit(1)
 	}
-	
+
 	scanner := bufio.NewScanner(reader)
-	
+
 	for scanner.Scan() {
 		err = scanner.Err()
 		if err == nil {
@@ -116,5 +114,5 @@ func SShGoLangInstall(user string, ip string, port int, identityFilePath string)
 			fmt.Fprintln(os.Stderr, "Unable to read SSH output: ", err)
 		}
 	}
-	fmt.Fprintln(os.Stdout, fmt.Sprintf("SSH Connection to %:% with user % closed!!",ip, strconv.Itoa(port), user))
+	fmt.Fprintln(os.Stdout, fmt.Sprintf("SSH Connection to %s:%d with user %s closed!!", ip, port, user))
 }

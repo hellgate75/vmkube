@@ -1,30 +1,30 @@
 package model
 
 import (
-	"os"
-	"strings"
 	"bufio"
 	"fmt"
+	"os"
+	"strings"
 	"vmkube/utils"
 )
 
 func ExistsFile(file string) bool {
-	_,err := os.Stat(file)
-	return  err == nil
+	_, err := os.Stat(file)
+	return err == nil
 }
 
 func DeleteIfExists(file string) error {
-	_,err := os.Stat(file)
+	_, err := os.Stat(file)
 	if err == nil {
 		return os.Remove(file)
 	}
-	return  err
+	return err
 }
 
 func MakeFolderIfNotExists(folder string) error {
-	if _,err := os.Stat(folder); err != nil {
+	if _, err := os.Stat(folder); err != nil {
 		err := os.MkdirAll(folder, 0777)
-		return  err
+		return err
 	}
 	return nil
 }
@@ -71,7 +71,7 @@ func addLock(containerId string, newline string) error {
 		return err
 	}
 	defer file.Close()
-	_, err = file.WriteString(newline+"\n")
+	_, err = file.WriteString(newline + "\n")
 	return err
 }
 
@@ -94,7 +94,6 @@ func overwriteLocks(containerId string, lines []string) error {
 	return w.Flush()
 }
 
-
 func WriteLock(containerId string, resourceId string) bool {
 	if strings.TrimSpace(resourceId) != "" && strings.TrimSpace(resourceId) != "" {
 		return addLock(containerId, resourceId) == nil
@@ -110,7 +109,7 @@ func RemoveLock(containerId string, resourceId string) bool {
 			return false
 		}
 		newLines := make([]string, 0)
-		for _,line := range lines {
+		for _, line := range lines {
 			if resourceId != line && strings.TrimSpace(resourceId) != "" && strings.TrimSpace(line) != "" {
 				newLines = append(newLines, line)
 			}
@@ -131,7 +130,7 @@ func HasLock(containerId string, resourceId string) bool {
 		if err != nil {
 			return false
 		}
-		for _,line := range lines {
+		for _, line := range lines {
 			if resourceId == line {
 				return true
 			}

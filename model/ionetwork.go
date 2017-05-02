@@ -1,10 +1,10 @@
 package model
 
 import (
-	"errors"
-	"io/ioutil"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
+	"io/ioutil"
 	"vmkube/utils"
 )
 
@@ -19,48 +19,48 @@ func (element *Network) Validate() []error {
 	if len(element.CloudInstances) == 0 && len(element.LocalInstances) == 0 {
 		errorList = append(errorList, errors.New("Unassigned Cloud Instances or Instances List fields"))
 	}
-	for _,instance := range element.LocalInstances {
+	for _, instance := range element.LocalInstances {
 		errorList = append(errorList, instance.Validate()...)
 	}
-	for _,instance := range element.CloudInstances {
+	for _, instance := range element.CloudInstances {
 		errorList = append(errorList, instance.Validate()...)
 	}
-	for _,installation := range element.Installations {
+	for _, installation := range element.Installations {
 		errorList = append(errorList, installation.Validate()...)
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
+		bytes = append(bytes, utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList
 }
 
 func (element *Network) Load(file string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *Network) Import(file string, format string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" not supported!!")
+		return errors.New("Format " + format + " not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
-	} else  {
+	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil {
@@ -83,9 +83,9 @@ func (element *Network) PostImport() error {
 			id = element.LocalInstances[i].Name
 		}
 		if id != "" {
-			if _,ok := machineMap[id]; ok {
+			if _, ok := machineMap[id]; ok {
 				bytes := []byte(`Duplicate instance Id/Name reference in json : `)
-				bytes = append(bytes,utils.GetJSONFromObj(element.LocalInstances[i], true)...)
+				bytes = append(bytes, utils.GetJSONFromObj(element.LocalInstances[i], true)...)
 				return errors.New(string(bytes))
 			}
 		}
@@ -103,9 +103,9 @@ func (element *Network) PostImport() error {
 			id = element.CloudInstances[i].Name
 		}
 		if id != "" {
-			if _,ok := machineMap[id]; ok {
+			if _, ok := machineMap[id]; ok {
 				bytes := []byte(`Duplicate cloud instance or machine Id/Name reference in json : `)
-				bytes = append(bytes,utils.GetJSONFromObj(element.CloudInstances[i], true)...)
+				bytes = append(bytes, utils.GetJSONFromObj(element.CloudInstances[i], true)...)
 				return errors.New(string(bytes))
 			}
 		}
@@ -123,9 +123,9 @@ func (element *Network) PostImport() error {
 			return err
 		}
 		oldId := element.Installations[i].InstanceId
-		if _,ok := machineMap[oldId]; ! ok || oldId == "" {
+		if _, ok := machineMap[oldId]; !ok || oldId == "" {
 			bytes := []byte(`Unable to locate cloud machine or machine Id/Name in installation plan reference in json : `)
-			bytes = append(bytes,utils.GetJSONFromObj(element.Installations[i], true)...)
+			bytes = append(bytes, utils.GetJSONFromObj(element.Installations[i], true)...)
 			return errors.New(string(bytes))
 		}
 		value, _ := machineMap[oldId]
@@ -137,10 +137,10 @@ func (element *Network) PostImport() error {
 func (element *Network) Save(file string) error {
 	byteArray, err := json.Marshal(element)
 	if err != nil {
-		return  err
+		return err
 	}
 	DeleteIfExists(file)
-	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
+	return ioutil.WriteFile(file, EncodeBytes(byteArray), 0777)
 }
 
 func (element *MachineNetwork) Validate() []error {
@@ -155,48 +155,48 @@ func (element *MachineNetwork) Validate() []error {
 	if len(element.CloudMachines) == 0 && len(element.LocalMachines) == 0 {
 		errorList = append(errorList, errors.New("Unassigned Cloud Machines or Machines List fields"))
 	}
-	for _,machine := range element.LocalMachines {
+	for _, machine := range element.LocalMachines {
 		errorList = append(errorList, machine.Validate()...)
 	}
-	for _,machine := range element.CloudMachines {
+	for _, machine := range element.CloudMachines {
 		errorList = append(errorList, machine.Validate()...)
 	}
-	for _,plan := range element.Installations {
+	for _, plan := range element.Installations {
 		errorList = append(errorList, plan.Validate()...)
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
+		bytes = append(bytes, utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList
 }
 
 func (element *MachineNetwork) Load(file string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *MachineNetwork) Import(file string, format string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" not supported!!")
+		return errors.New("Format " + format + " not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
-	} else  {
+	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil {
@@ -221,9 +221,9 @@ func (element *MachineNetwork) PostImport() error {
 			id = element.LocalMachines[i].Name
 		}
 		if id != "" {
-			if _,ok := machineMap[id]; ok {
+			if _, ok := machineMap[id]; ok {
 				bytes := []byte(`Duplicate machine Id/Name reference in json : `)
-				bytes = append(bytes,utils.GetJSONFromObj(element.LocalMachines[i], true)...)
+				bytes = append(bytes, utils.GetJSONFromObj(element.LocalMachines[i], true)...)
 				return errors.New(string(bytes))
 			}
 		}
@@ -241,9 +241,9 @@ func (element *MachineNetwork) PostImport() error {
 			id = element.CloudMachines[i].Name
 		}
 		if id != "" {
-			if _,ok := machineMap[id]; ok {
+			if _, ok := machineMap[id]; ok {
 				bytes := []byte(`Duplicate cloud machine or machine Id/Name reference in json : `)
-				bytes = append(bytes,utils.GetJSONFromObj(element.CloudMachines[i], true)...)
+				bytes = append(bytes, utils.GetJSONFromObj(element.CloudMachines[i], true)...)
 				return errors.New(string(bytes))
 			}
 		}
@@ -261,9 +261,9 @@ func (element *MachineNetwork) PostImport() error {
 			return err
 		}
 		oldId := element.Installations[i].MachineId
-		if _,ok := machineMap[oldId]; ! ok || oldId == "" {
+		if _, ok := machineMap[oldId]; !ok || oldId == "" {
 			bytes := []byte(`Unable to locate cloud machine or machine Id/Name in installation plan reference in json : `)
-			bytes = append(bytes,utils.GetJSONFromObj(element.Installations[i], true)...)
+			bytes = append(bytes, utils.GetJSONFromObj(element.Installations[i], true)...)
 			return errors.New(string(bytes))
 		}
 		value, _ := machineMap[oldId]
@@ -275,9 +275,8 @@ func (element *MachineNetwork) PostImport() error {
 func (element *MachineNetwork) Save(file string) error {
 	byteArray, err := json.Marshal(element)
 	if err != nil {
-		return  err
+		return err
 	}
 	DeleteIfExists(file)
-	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
+	return ioutil.WriteFile(file, EncodeBytes(byteArray), 0777)
 }
-

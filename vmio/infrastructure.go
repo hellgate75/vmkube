@@ -1,30 +1,30 @@
 package vmio
 
 import (
-	"vmkube/model"
 	"errors"
-	"vmkube/utils"
 	"os"
+	"vmkube/model"
+	"vmkube/utils"
 )
 
 type InfrastructureInfo struct {
-	Format  	string
-	Infra			model.Infrastructure
+	Format string
+	Infra  model.Infrastructure
 }
 
 func (info *InfrastructureInfo) Read() error {
-	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
+	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) + ".data"
 	model.MakeFolderIfNotExists(baseFolder)
 	fileName := baseFolder + string(os.PathSeparator) + ".infra-" + utils.IdToFileFormat(info.Infra.ProjectId) + ".vmkube"
-	if _,err := os.Stat(fileName); err!=nil {
+	if _, err := os.Stat(fileName); err != nil {
 		return err
 	}
 	err := info.Infra.Load(fileName)
-	return  err
+	return err
 }
 
 func (info *InfrastructureInfo) Write() error {
-	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
+	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) + ".data"
 	model.MakeFolderIfNotExists(baseFolder)
 	fileName := baseFolder + string(os.PathSeparator) + ".infra-" + utils.IdToFileFormat(info.Infra.ProjectId) + ".vmkube"
 	err := info.Infra.Save(fileName)
@@ -32,10 +32,10 @@ func (info *InfrastructureInfo) Write() error {
 }
 
 func (info *InfrastructureInfo) Delete() error {
-	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
+	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) + ".data"
 	model.MakeFolderIfNotExists(baseFolder)
 	fileName := baseFolder + string(os.PathSeparator) + ".infra-" + utils.IdToFileFormat(info.Infra.ProjectId) + ".vmkube"
-	_,err := os.Stat(fileName)
+	_, err := os.Stat(fileName)
 	if err == nil {
 		return model.DeleteIfExists(fileName)
 	}
@@ -49,15 +49,15 @@ func (info *InfrastructureInfo) Evacuate() error {
 
 func (info *InfrastructureInfo) Import(file string, format string) error {
 	err := info.Infra.Import(file, format)
-	return  err
+	return err
 }
 
 func (info *InfrastructureInfo) Export(prettify bool) ([]byte, error) {
 	if "json" == info.Format {
-		return  utils.GetJSONFromElem(info.Infra, prettify)
+		return utils.GetJSONFromElem(info.Infra, prettify)
 	} else if "xml" == info.Format {
-		return  utils.GetXMLFromElem(info.Infra, prettify)
+		return utils.GetXMLFromElem(info.Infra, prettify)
 	} else {
-		return  []byte{}, errors.New("Format type : "+info.Format+" not provided ...")
+		return []byte{}, errors.New("Format type : " + info.Format + " not provided ...")
 	}
 }

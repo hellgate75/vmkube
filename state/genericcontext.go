@@ -15,9 +15,9 @@ type ReferenceEntry struct {
 }
 
 type GenericContext interface {
-	Collect(Key string) 	chan ReferenceEntry
-	Value(Key string)			*interface{}
-	HasKey(Key string)		bool
+	Collect(Key string) chan ReferenceEntry
+	Value(Key string) *interface{}
+	HasKey(Key string) bool
 }
 
 type genericCtxData struct {
@@ -29,22 +29,22 @@ func (data *genericCtxData) Collect(RequestId string) chan ReferenceEntry {
 	var Channel chan ReferenceEntry = make(chan ReferenceEntry, 1)
 	go func(data *genericCtxData, Channel chan ReferenceEntry, RequestId string) {
 		select {
-			case Response, ok := <- Channel:
-				if ok {
-					data.mutex.Lock()
-					data.Entries[Response.Key] = Response.Value
-					data.mutex.Unlock()
-				}
-			case <-time.After(time.Second * RESPONSE_TIMEOUT):
+		case Response, ok := <-Channel:
+			if ok {
+				data.mutex.Lock()
+				data.Entries[Response.Key] = Response.Value
+				data.mutex.Unlock()
+			}
+		case <-time.After(time.Second * RESPONSE_TIMEOUT):
 			break
 		}
 		close(Channel)
 	}(data, Channel, RequestId)
-	return  Channel
+	return Channel
 }
 
 func (data *genericCtxData) Value(RequestId string) *interface{} {
-	defer  data.mutex.RUnlock()
+	defer data.mutex.RUnlock()
 	data.mutex.RLock()
 	val, ok := data.Entries[RequestId]
 	if ok {
@@ -54,14 +54,14 @@ func (data *genericCtxData) Value(RequestId string) *interface{} {
 }
 
 func (data *genericCtxData) HasKey(RequestId string) bool {
-	defer  data.mutex.RUnlock()
+	defer data.mutex.RUnlock()
 	data.mutex.RLock()
-	_,ok := data.Entries[RequestId]
-	return  ok
+	_, ok := data.Entries[RequestId]
+	return ok
 }
 
 func NewGenericContext() GenericContext {
-	return  GenericContext(&genericCtxData{
+	return GenericContext(&genericCtxData{
 		Entries: make(GenericContextData),
 	})
 }

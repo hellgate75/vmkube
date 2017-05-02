@@ -1,10 +1,10 @@
 package model
 
 import (
-	"errors"
-	"io/ioutil"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
+	"io/ioutil"
 	"vmkube/utils"
 )
 
@@ -19,31 +19,31 @@ func (element *ProjectImport) Validate() []error {
 	if len(element.Domains) == 0 {
 		errorList = append(errorList, errors.New("Unassigned Domains List fields"))
 	}
-	for _,network := range element.Domains {
+	for _, network := range element.Domains {
 		errorList = append(errorList, network.Validate()...)
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
+		bytes = append(bytes, utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList
 }
 
 func (element *ProjectImport) Import(file string, format string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" not supported!!")
+		return errors.New("Format " + format + " not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
-	} else  {
+	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil {
@@ -79,42 +79,42 @@ func (element *Project) Validate() []error {
 	if len(element.Domains) == 0 {
 		errorList = append(errorList, errors.New("Unassigned Domains List fields"))
 	}
-	for _,network := range element.Domains {
+	for _, network := range element.Domains {
 		errorList = append(errorList, network.Validate()...)
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
+		bytes = append(bytes, utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList
 }
 
 func (element *Project) Load(file string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *Project) Import(file string, format string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" not supported!!")
+		return errors.New("Format " + format + " not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
-	} else  {
+	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil {
@@ -142,10 +142,10 @@ func (element *Project) PostImport() error {
 func (element *Project) Save(file string) error {
 	byteArray, err := json.MarshalIndent(element, "", "  ")
 	if err != nil {
-		return  err
+		return err
 	}
 	DeleteIfExists(file)
-	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
+	return ioutil.WriteFile(file, EncodeBytes(byteArray), 0777)
 }
 
 func (element *Infrastructure) Validate() []error {
@@ -165,37 +165,37 @@ func (element *Infrastructure) Validate() []error {
 	//errorList = append(errorList, element.State.Validate()...)
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
+		bytes = append(bytes, utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList
 }
 
 func (element *Infrastructure) Load(file string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *Infrastructure) Import(file string, format string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" not supported!!")
+		return errors.New("Format " + format + " not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
-	} else  {
+	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil {
@@ -223,10 +223,9 @@ func (element *Infrastructure) PostImport() error {
 func (element *Infrastructure) Save(file string) error {
 	byteArray, err := json.MarshalIndent(element, "", "  ")
 	if err != nil {
-		return  err
+		return err
 	}
 	DeleteIfExists(file)
-	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
-	
-}
+	return ioutil.WriteFile(file, EncodeBytes(byteArray), 0777)
 
+}

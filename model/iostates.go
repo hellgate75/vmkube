@@ -1,10 +1,10 @@
 package model
 
 import (
-	"errors"
-	"io/ioutil"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
+	"io/ioutil"
 	"vmkube/utils"
 )
 
@@ -30,37 +30,37 @@ func (element *InstanceState) Validate() []error {
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
+		bytes = append(bytes, utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList
 }
 
 func (element *InstanceState) Load(file string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *InstanceState) Import(file string, format string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" not supported!!")
+		return errors.New("Format " + format + " not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
-	} else  {
+	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil {
@@ -82,10 +82,10 @@ func (element *InstanceState) PostImport() error {
 func (element *InstanceState) Save(file string) error {
 	byteArray, err := json.MarshalIndent(element, "", "  ")
 	if err != nil {
-		return  err
+		return err
 	}
 	DeleteIfExists(file)
-	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
+	return ioutil.WriteFile(file, EncodeBytes(byteArray), 0777)
 }
 
 func (element *NetworkState) Validate() []error {
@@ -102,42 +102,42 @@ func (element *NetworkState) Validate() []error {
 	//if len(element.InstanceStates) == 0 {
 	//	errorList = append(errorList, errors.New("Unassigned Instance States List fields"))
 	//}
-	for _,state := range element.InstanceStates {
+	for _, state := range element.InstanceStates {
 		errorList = append(errorList, state.Validate()...)
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
+		bytes = append(bytes, utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList
 }
 
 func (element *NetworkState) Load(file string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *NetworkState) Import(file string, format string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" not supported!!")
+		return errors.New("Format " + format + " not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
-	} else  {
+	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil {
@@ -162,10 +162,10 @@ func (element *NetworkState) PostImport() error {
 func (element *NetworkState) Save(file string) error {
 	byteArray, err := json.MarshalIndent(element, "", "  ")
 	if err != nil {
-		return  err
+		return err
 	}
 	DeleteIfExists(file)
-	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
+	return ioutil.WriteFile(file, EncodeBytes(byteArray), 0777)
 }
 
 func (element *DomainState) Validate() []error {
@@ -179,42 +179,42 @@ func (element *DomainState) Validate() []error {
 	//if len(element.NetworkStates) == 0 {
 	//	errorList = append(errorList, errors.New("Unassigned Network States List fields"))
 	//}
-	for _,state := range element.NetworkStates {
+	for _, state := range element.NetworkStates {
 		errorList = append(errorList, state.Validate()...)
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
+		bytes = append(bytes, utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList
 }
 
 func (element *DomainState) Load(file string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *DomainState) Import(file string, format string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" not supported!!")
+		return errors.New("Format " + format + " not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
-	} else  {
+	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil {
@@ -239,10 +239,10 @@ func (element *DomainState) PostImport() error {
 func (element *DomainState) Save(file string) error {
 	byteArray, err := json.MarshalIndent(element, "", "  ")
 	if err != nil {
-		return  err
+		return err
 	}
 	DeleteIfExists(file)
-	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
+	return ioutil.WriteFile(file, EncodeBytes(byteArray), 0777)
 }
 
 func (element *State) Validate() []error {
@@ -253,42 +253,42 @@ func (element *State) Validate() []error {
 	//if len(element.DomainStates) == 0 {
 	//	errorList = append(errorList, errors.New("Unassigned Domain States List fields"))
 	//}
-	for _,state := range element.DomainStates {
+	for _, state := range element.DomainStates {
 		errorList = append(errorList, state.Validate()...)
 	}
 	if len(errorList) > 0 {
 		bytes := []byte(`Errors reported in json : `)
-		bytes = append(bytes,utils.GetJSONFromObj(element, true)...)
+		bytes = append(bytes, utils.GetJSONFromObj(element, true)...)
 		errorList = append(errorList, errors.New(string(bytes)))
 	}
 	return errorList
 }
 
 func (element *State) Load(file string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	return json.Unmarshal(DecodeBytes(byteArray), &element)
 }
 
 func (element *State) Import(file string, format string) error {
-	if ! ExistsFile(file) {
-		return  errors.New("File "+file+" doesn't exist!!")
+	if !ExistsFile(file) {
+		return errors.New("File " + file + " doesn't exist!!")
 	}
 	if format != "json" && format != "xml" {
-		return  errors.New("Format "+format+" not supported!!")
+		return errors.New("Format " + format + " not supported!!")
 	}
 	byteArray, err := ioutil.ReadFile(file)
 	if err != nil {
-		return  err
+		return err
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
-	} else  {
+	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}
 	if err == nil {
@@ -313,9 +313,8 @@ func (element *State) PostImport() error {
 func (element *State) Save(file string) error {
 	byteArray, err := json.MarshalIndent(element, "", "  ")
 	if err != nil {
-		return  err
+		return err
 	}
 	DeleteIfExists(file)
-	return ioutil.WriteFile(file, EncodeBytes(byteArray) , 0777)
+	return ioutil.WriteFile(file, EncodeBytes(byteArray), 0777)
 }
-

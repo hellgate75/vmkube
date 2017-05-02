@@ -6,21 +6,21 @@ import (
 )
 
 func SaveIndex(index model.ProjectsIndex) error {
-	info := ProjectIndexInfo {
+	info := ProjectIndexInfo{
 		Format: "",
-		Index: index,
+		Index:  index,
 	}
 	return info.Write()
 }
 
 func LoadIndex() (model.ProjectsIndex, error) {
 	index := model.ProjectsIndex{
-		Id: model.NewUUIDString(),
+		Id:       model.NewUUIDString(),
 		Projects: []model.ProjectsDescriptor{},
 	}
 	info := ProjectIndexInfo{
 		Format: "",
-		Index: index,
+		Index:  index,
 	}
 	err := info.Read()
 	return info.Index, err
@@ -28,12 +28,12 @@ func LoadIndex() (model.ProjectsIndex, error) {
 
 func ImportIndex(file string, format string) (model.ProjectsIndex, error) {
 	index := model.ProjectsIndex{
-		Id: model.NewUUIDString(),
+		Id:       model.NewUUIDString(),
 		Projects: []model.ProjectsDescriptor{},
 	}
 	info := ProjectIndexInfo{
 		Format: format,
-		Index: index,
+		Index:  index,
 	}
 	err := info.Import(file, format)
 	return info.Index, err
@@ -42,7 +42,7 @@ func ImportIndex(file string, format string) (model.ProjectsIndex, error) {
 func ExportIndex(index model.ProjectsIndex, file string, format string, prettify bool) error {
 	info := ProjectIndexInfo{
 		Format: format,
-		Index: index,
+		Index:  index,
 	}
 	bytes, err := info.Export(prettify)
 	if err != nil {
@@ -54,7 +54,7 @@ func ExportIndex(index model.ProjectsIndex, file string, format string, prettify
 
 func SaveProject(project model.Project) error {
 	info := ProjectInfo{
-		Format: "",
+		Format:  "",
 		Project: project,
 	}
 	return info.Write()
@@ -65,7 +65,7 @@ func LoadProject(id string) (model.Project, error) {
 		Id: id,
 	}
 	info := ProjectInfo{
-		Format: "",
+		Format:  "",
 		Project: project,
 	}
 	err := info.Read()
@@ -73,10 +73,9 @@ func LoadProject(id string) (model.Project, error) {
 }
 
 func ImportProject(file string, format string) (model.Project, error) {
-	project := model.Project{
-	}
+	project := model.Project{}
 	info := ProjectInfo{
-		Format: format,
+		Format:  format,
 		Project: project,
 	}
 	err := info.Import(file, format)
@@ -88,7 +87,7 @@ func ImportUserProject(file string, format string) (model.Project, error) {
 		Domains: []model.MachineDomain{},
 	}
 	info := ProjectImportInfo{
-		Format: format,
+		Format:        format,
 		ProjectImport: imported,
 	}
 	err := info.Import(file, format)
@@ -101,7 +100,7 @@ func ImportUserProject(file string, format string) (model.Project, error) {
 
 func ExportProject(project model.Project, file string, format string, prettify bool) error {
 	info := ProjectInfo{
-		Format: format,
+		Format:  format,
 		Project: project,
 	}
 	bytes, err := info.Export(prettify)
@@ -114,7 +113,7 @@ func ExportProject(project model.Project, file string, format string, prettify b
 
 func ExportUserProject(project model.Project, file string, format string, prettify bool) error {
 	info := ProjectImportInfo{
-		Format: format,
+		Format:        format,
 		ProjectImport: model.ProjectToImport(project),
 	}
 	bytes, err := info.Export(prettify)
@@ -128,7 +127,7 @@ func ExportUserProject(project model.Project, file string, format string, pretti
 func SaveInfrastructure(infrastructure model.Infrastructure) error {
 	info := InfrastructureInfo{
 		Format: "",
-		Infra: infrastructure,
+		Infra:  infrastructure,
 	}
 	return info.Write()
 }
@@ -139,18 +138,17 @@ func LoadInfrastructure(projectId string) (model.Infrastructure, error) {
 	}
 	info := InfrastructureInfo{
 		Format: "",
-		Infra: infrastructure,
+		Infra:  infrastructure,
 	}
 	err := info.Read()
 	return info.Infra, err
 }
 
 func ImportInfrastructure(file string, format string) (model.Infrastructure, error) {
-	infrastructure := model.Infrastructure{
-	}
+	infrastructure := model.Infrastructure{}
 	info := InfrastructureInfo{
 		Format: format,
-		Infra: infrastructure,
+		Infra:  infrastructure,
 	}
 	err := info.Import(file, format)
 	return info.Infra, err
@@ -159,7 +157,7 @@ func ImportInfrastructure(file string, format string) (model.Infrastructure, err
 func ExportInfrastructure(infrastructure model.Infrastructure, file string, format string, prettify bool) error {
 	info := InfrastructureInfo{
 		Format: format,
-		Infra: infrastructure,
+		Infra:  infrastructure,
 	}
 	bytes, err := info.Export(prettify)
 	if err != nil {
@@ -168,5 +166,3 @@ func ExportInfrastructure(infrastructure model.Infrastructure, file string, form
 	err = ioutil.WriteFile(file, bytes, 0777)
 	return err
 }
-
-

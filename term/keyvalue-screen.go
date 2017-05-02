@@ -2,13 +2,13 @@ package term
 
 import (
 	"fmt"
-	"time"
 	"sync"
+	"time"
 )
 
 type TextColorState int
 
-const(
+const (
 	StateColorWhite TextColorState = iota
 	StateColorYellow
 	StateColorGreen
@@ -17,7 +17,6 @@ const(
 	StateColorBlue
 	StateColorCyan
 	StateColorMagenta
-	
 )
 
 type KeyValueElement struct {
@@ -40,29 +39,28 @@ type KeyValueScreenManager struct {
 	OffsetRows    int
 	Separator     string
 	BoldValue     bool
-	inited				bool
+	inited        bool
 }
 
 func (screenData *KeyValueScreenManager) getElementScreenColor(elem KeyValueElement) int {
 	switch elem.State {
-		case StateColorWhite:
-			return WHITE
-		case StateColorYellow:
-			return YELLOW
-		case StateColorGreen:
-			return GREEN
-		case StateColorRed:
-			return RED
-		case StateColorBlack:
-			return BLACK
-		case StateColorBlue:
-			return BLUE
-		case StateColorCyan:
-			return CYAN
-		default:
-			return MAGENTA
+	case StateColorWhite:
+		return WHITE
+	case StateColorYellow:
+		return YELLOW
+	case StateColorGreen:
+		return GREEN
+	case StateColorRed:
+		return RED
+	case StateColorBlack:
+		return BLACK
+	case StateColorBlue:
+		return BLUE
+	case StateColorCyan:
+		return CYAN
+	default:
+		return MAGENTA
 	}
-	return WHITE
 }
 
 var mutex sync.Mutex
@@ -70,7 +68,7 @@ var mutex sync.Mutex
 func (screenData *KeyValueScreenManager) drawGrid() {
 	Screen.Clear() // Clear current screen
 	if screenData.TextLen == 0 {
-		for _,elem := range screenData.Elements {
+		for _, elem := range screenData.Elements {
 			if len(elem.Name) > screenData.TextLen {
 				screenData.TextLen = len(elem.Name)
 			}
@@ -78,8 +76,8 @@ func (screenData *KeyValueScreenManager) drawGrid() {
 	}
 	screenHeight := Screen.Height()
 	rows := len(screenData.Elements)
-	for i := 0; i< rows; i++  {
-		Screen.MoveCursor(i + screenData.OffsetCols + 1, screenData.OffsetRows + 1)
+	for i := 0; i < rows; i++ {
+		Screen.MoveCursor(i+screenData.OffsetCols+1, screenData.OffsetRows+1)
 		var text string
 		if screenData.BoldValue {
 			text = Screen.Color(fmt.Sprintf("%s%s%s", StrPad(screenData.Elements[i].Name, screenData.TextLen), screenData.Separator, Screen.Bold(StrPad(screenData.Elements[i].Value, screenData.MessageMaxLen))), screenData.getElementScreenColor(screenData.Elements[i]))
@@ -92,14 +90,14 @@ func (screenData *KeyValueScreenManager) drawGrid() {
 	if rows > screenHeight {
 		screenData.OffsetRows = screenHeight - rows
 	}
-	go func(screenData *KeyValueScreenManager){
+	go func(screenData *KeyValueScreenManager) {
 		for screenData.Active {
-			update := <- screenData.CommChannel
+			update := <-screenData.CommChannel
 			index := screenData.IndexOf(update)
 			if index >= 0 {
 				mutex.Lock()
 				screenData.Elements[index] = update
-				Screen.MoveCursor(index + screenData.OffsetCols + 1, screenData.OffsetRows + 1)
+				Screen.MoveCursor(index+screenData.OffsetCols+1, screenData.OffsetRows+1)
 				var text string
 				if screenData.BoldValue {
 					text = Screen.Color(fmt.Sprintf("%s%s%s", StrPad(screenData.Elements[index].Name, screenData.TextLen), screenData.Separator, Screen.Bold(StrPad(screenData.Elements[index].Value, screenData.MessageMaxLen))), screenData.getElementScreenColor(screenData.Elements[index]))
@@ -120,9 +118,9 @@ func (screenData *KeyValueScreenManager) Init() {
 	if screenData.Separator == "" {
 		screenData.Separator = " "
 	}
-	go func(screenData *KeyValueScreenManager){
-		screenData.Active = <- screenData.CtrlChannel
-		if ! screenData.Active {
+	go func(screenData *KeyValueScreenManager) {
+		screenData.Active = <-screenData.CtrlChannel
+		if !screenData.Active {
 			close(screenData.CtrlChannel)
 			close(screenData.CommChannel)
 		} else {
@@ -132,7 +130,7 @@ func (screenData *KeyValueScreenManager) Init() {
 }
 
 func (screenData *KeyValueScreenManager) IndexOf(elem KeyValueElement) int {
-	for i := 0; i< len(screenData.Elements); i++  {
+	for i := 0; i < len(screenData.Elements); i++ {
 		if screenData.Elements[i].Id == elem.Id {
 			return i
 		}
@@ -168,9 +166,9 @@ func (screenData *KeyValueScreenManager) Stop(clearScreen bool) {
 }
 
 func (screenData *KeyValueScreenManager) Start() {
-	if ! screenData.Active {
+	if !screenData.Active {
 		screenData.CtrlChannel <- true
-	} else  if ! screenData.inited {
+	} else if !screenData.inited {
 		screenData.Active = true
 		screenData.drawGrid()
 		Screen.HideCursor()

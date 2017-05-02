@@ -1,12 +1,12 @@
 package scheduler
 
 import (
-	"io/ioutil"
 	"fmt"
-	"strings"
+	"io/ioutil"
 	"os"
-	"vmkube/model"
+	"strings"
 	"sync"
+	"vmkube/model"
 )
 
 var mutex sync.RWMutex
@@ -14,7 +14,7 @@ var mutex sync.RWMutex
 func DumpData(file string, data interface{}, overwrite bool) {
 	text := ""
 	if !overwrite {
-		if strings.Index(file, string(os.PathSeparator)) < 0  {
+		if strings.Index(file, string(os.PathSeparator)) < 0 {
 			file = model.HomeFolder() + string(os.PathSeparator) + file
 		}
 		mutex.RLock()

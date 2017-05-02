@@ -10,7 +10,7 @@ func (Screen *ScreenManager) ProgressBar(current, total, cols int) string {
 	bar_start := " ["
 	bar_end := "] "
 
-	bar_size := cols - len(prefix + bar_start + bar_end)
+	bar_size := cols - len(prefix+bar_start+bar_end)
 	amount := int(float32(current) / (float32(total) / float32(bar_size)))
 	remain := bar_size - amount
 

@@ -1,18 +1,17 @@
 package test
 
 import (
-	"testing"
-	"github.com/stretchr/testify/assert"
-	"vmkube/term"
 	"bufio"
-	"os"
 	"fmt"
+	"github.com/stretchr/testify/assert"
+	"os"
+	"testing"
+	"vmkube/term"
 	"vmkube/utils"
 )
 
 var TermBuffer *utils.ByteStream = utils.NewByteStream([]byte{})
 var writer *bufio.Writer = utils.NewByteStreamAsWriter([]byte{})
-
 
 func TestBeforeAllTests(t *testing.T) {
 	term.Screen.OutStream = writer
@@ -55,7 +54,7 @@ func TestTerminalWriteBufferStyle(t *testing.T) {
 	term.Screen.Buffer.Reset()
 	term.Screen.Flush()
 	TermBuffer.Reset()
-	outText =term.Screen.Bold(text)
+	outText = term.Screen.Bold(text)
 	term.Screen.Print(outText)
 	expected = fmt.Sprintf(term.APPLY_BOLD_EFFECT, text)
 	assert.Equal(t, expected, term.Screen.Buffer.String(), "Bold effect must be written on buffer correctly")
@@ -75,8 +74,6 @@ func TestTerminalWriteBufferStyle(t *testing.T) {
 //
 //}
 
-
 func TestAfterAllTests(t *testing.T) {
 	term.Screen.OutStream = bufio.NewWriter(os.Stdout)
 }
-

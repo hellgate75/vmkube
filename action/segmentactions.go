@@ -4,7 +4,7 @@ import "time"
 
 const MAX_SEGMENT_SIZE int = 1000
 
-func AddProjectChangeActions(projectId string,actions ...ActionDescriptor) error {
+func AddProjectChangeActions(projectId string, actions ...ActionDescriptor) error {
 	actionIndex, err := LoadProjectActionChanges(projectId)
 	if err != nil {
 		return err
@@ -12,7 +12,7 @@ func AddProjectChangeActions(projectId string,actions ...ActionDescriptor) error
 
 	iFaceIndex := IFaceProjectActionIndex{
 		ProjectId: projectId,
-		Id: actionIndex.Id,
+		Id:        actionIndex.Id,
 	}
 	iFaceIndex.WaitForUnlock()
 
@@ -27,22 +27,22 @@ func AddProjectChangeActions(projectId string,actions ...ActionDescriptor) error
 	return err
 }
 
-func AddRollBackChangeActions(projectId string,actions ...ActionDescriptor) error {
+func AddRollBackChangeActions(projectId string, actions ...ActionDescriptor) error {
 	rollbackIndex, err := LoadProjectRollBackIndex(projectId)
 
 	if err != nil {
 		return err
 	}
-	
-	rollbackIFace := IFaceRollBackIndex {
-		Id: rollbackIndex.Id,
+
+	rollbackIFace := IFaceRollBackIndex{
+		Id:        rollbackIndex.Id,
 		ProjectId: rollbackIndex.ProjectId,
 	}
-	
+
 	latestIndex := RollBackSegmentIndex{}
 	latestIndex.New()
 	isNewIndex := false
-	
+
 	var segment RollBackSegment
 
 	if len(rollbackIndex.IndexList) == 0 {
@@ -75,20 +75,19 @@ func AddRollBackChangeActions(projectId string,actions ...ActionDescriptor) erro
 		latestIndex = rollbackIndex.IndexList[len(rollbackIndex.IndexList)-1]
 	}
 
-	if ! isNewIndex {
+	if !isNewIndex {
 		segment, err = LoadProjectRollBackSegment(projectId, latestIndex)
 		if err != nil {
 			return err
 		}
 	}
-	
-	
+
 	newSegmentRequired := false
 	actionsInRollback1 := actions
 	var actionsInRollback2 []ActionDescriptor = make([]ActionDescriptor, 0)
 	var newSegment RollBackSegment = RollBackSegment{}
-	
-	if segment.Size + len(actions) > MAX_SEGMENT_SIZE {
+
+	if segment.Size+len(actions) > MAX_SEGMENT_SIZE {
 		newSegmentRequired = true
 		if segment.Size < MAX_SEGMENT_SIZE {
 			maxSegmentDiff := MAX_SEGMENT_SIZE - segment.Size
@@ -99,13 +98,13 @@ func AddRollBackChangeActions(projectId string,actions ...ActionDescriptor) erro
 			actionsInRollback2 = actions
 		}
 	}
-	
+
 	if len(actionsInRollback1) > 0 {
-		for _,action := range actionsInRollback1 {
+		for _, action := range actionsInRollback1 {
 			segment.Storage = append(segment.Storage, ActionStorage{
 				Action: action,
-				Date: time.Now(),
-				Id: NewUUIDString(),
+				Date:   time.Now(),
+				Id:     NewUUIDString(),
 			})
 		}
 		segment.Size += len(actionsInRollback1)
@@ -116,19 +115,19 @@ func AddRollBackChangeActions(projectId string,actions ...ActionDescriptor) erro
 		if err != nil {
 			return err
 		}
-		
+
 	}
-	
+
 	if newSegmentRequired {
 		//Creating new segment index
 		NewSegmentIndex := RollBackSegmentIndex{}
 		NewSegmentIndex.NewNextFrom(segment.Index.Index)
 		//Creating new segment
-		for _,action := range actionsInRollback2 {
+		for _, action := range actionsInRollback2 {
 			newSegment.Storage = append(newSegment.Storage, ActionStorage{
 				Action: action,
-				Date: time.Now(),
-				Id: NewUUIDString(),
+				Date:   time.Now(),
+				Id:     NewUUIDString(),
 			})
 		}
 		newSegment.Size = len(actionsInRollback2)

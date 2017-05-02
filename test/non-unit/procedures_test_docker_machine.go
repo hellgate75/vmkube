@@ -1,108 +1,107 @@
 package main
 
 import (
-	"vmkube/model"
-	"time"
-	"vmkube/procedures"
 	"fmt"
+	"os/exec"
 	"strings"
 	"sync"
-	"os/exec"
+	"time"
+	"vmkube/model"
+	"vmkube/procedures"
 )
 
 var Machine1 model.LocalMachine = model.LocalMachine{
-	Id: model.NewUUIDString(),
-	Name: "Machine1",
-	Memory: 4096,
-	DiskSize: 50,
-	Cpus: 2,
-	Driver: "vmwarefusion",
-	Hostname: "machine1",
-	OSType: "rancheros",
+	Id:        model.NewUUIDString(),
+	Name:      "Machine1",
+	Memory:    4096,
+	DiskSize:  50,
+	Cpus:      2,
+	Driver:    "vmwarefusion",
+	Hostname:  "machine1",
+	OSType:    "rancheros",
 	OSVersion: "1.0.0",
-	NoShare: true,
-	Roles: []string{"rancher", "server"},
-	Options: [][]string{},
+	NoShare:   true,
+	Roles:     []string{"rancher", "server"},
+	Options:   [][]string{},
 }
 
 var Instance1 model.LocalInstance = model.LocalInstance{
-	Id: model.NewUUIDString(),
-	Name: "Machine1",
+	Id:     model.NewUUIDString(),
+	Name:   "Machine1",
 	Memory: 4096,
 	Disks: []model.Disk{
 		{
-			Id: model.NewUUIDString(),
+			Id:   model.NewUUIDString(),
 			Name: "dev0",
 			Size: 50,
 			Type: 0,
 		},
 	},
-	Cpus: 2,
-	Driver: "virtualbox",
-	Hostname: "machine1",
-	OSType: "rancheros",
+	Cpus:      2,
+	Driver:    "virtualbox",
+	Hostname:  "machine1",
+	OSType:    "rancheros",
 	OSVersion: "1.0.0",
-	NoShare: true,
-	Roles: []string{"rancher", "server"},
+	NoShare:   true,
+	Roles:     []string{"rancher", "server"},
 }
 
 var Machine2 model.LocalMachine = model.LocalMachine{
-	Id: model.NewUUIDString(),
-	Name: "Machine2",
-	Memory: 4096,
-	DiskSize: 50,
-	Cpus: 2,
-	Driver: "virtualbox",
-	Hostname: "machine2",
-	OSType: "rancheros",
+	Id:        model.NewUUIDString(),
+	Name:      "Machine2",
+	Memory:    4096,
+	DiskSize:  50,
+	Cpus:      2,
+	Driver:    "virtualbox",
+	Hostname:  "machine2",
+	OSType:    "rancheros",
 	OSVersion: "1.0.0",
-	NoShare: false,
-	Roles: []string{"rancher", "server"},
-	Options: [][]string{},
+	NoShare:   false,
+	Roles:     []string{"rancher", "server"},
+	Options:   [][]string{},
 	Engine: model.ProjectEngineOpt{
 		StorageDriver: "overlay",
 	},
 }
 
 var Instance2 model.LocalInstance = model.LocalInstance{
-	Id: model.NewUUIDString(),
-	Name: "Machine2",
+	Id:     model.NewUUIDString(),
+	Name:   "Machine2",
 	Memory: 4096,
 	Disks: []model.Disk{
 		{
-			Id: model.NewUUIDString(),
+			Id:   model.NewUUIDString(),
 			Name: "dev0",
 			Size: 50,
 			Type: 0,
 		},
 	},
-	Cpus: 2,
-	Driver: "virtualbox",
-	Hostname: "machine2",
-	OSType: "rancheros",
+	Cpus:      2,
+	Driver:    "virtualbox",
+	Hostname:  "machine2",
+	OSType:    "rancheros",
 	OSVersion: "1.0.0",
-	NoShare: true,
-	Roles: []string{"rancher", "server"},
+	NoShare:   true,
+	Roles:     []string{"rancher", "server"},
 }
 
-
 var myProject model.Project = model.Project{
-	Id: model.NewUUIDString(),
-	Created: time.Now(),
-	Name: "MyBuildProject",
-	Errors: false,
+	Id:          model.NewUUIDString(),
+	Created:     time.Now(),
+	Name:        "MyBuildProject",
+	Errors:      false,
 	LastMessage: "",
-	Modified: time.Now(),
-	Open: false,
+	Modified:    time.Now(),
+	Open:        false,
 	Domains: []model.MachineDomain{
 		{
-			Id: model.NewUUIDString(),
-			Name: "Default Domain",
+			Id:      model.NewUUIDString(),
+			Name:    "Default Domain",
 			Options: [][]string{},
 			Networks: []model.MachineNetwork{
 				{
-					Id: model.NewUUIDString(),
-					Name: "Default Network",
+					Id:            model.NewUUIDString(),
+					Name:          "Default Network",
 					CloudMachines: []model.CloudMachine{},
 					Installations: []model.InstallationPlan{},
 					LocalMachines: []model.LocalMachine{
@@ -116,23 +115,23 @@ var myProject model.Project = model.Project{
 }
 
 var myInfra model.Infrastructure = model.Infrastructure{
-	Id: model.NewUUIDString(),
-	Created: false,
-	Name: "MyBuildProject",
-	Errors: false,
+	Id:          model.NewUUIDString(),
+	Created:     false,
+	Name:        "MyBuildProject",
+	Errors:      false,
 	LastMessage: "",
-	Modified: time.Now(),
+	Modified:    time.Now(),
 	Domains: []model.Domain{
 		{
-			Id: model.NewUUIDString(),
-			Name: "Default Domain",
+			Id:      model.NewUUIDString(),
+			Name:    "Default Domain",
 			Options: [][]string{},
 			Networks: []model.Network{
 				{
-					Id: model.NewUUIDString(),
-					Name: "Default Network",
+					Id:             model.NewUUIDString(),
+					Name:           "Default Network",
 					CloudInstances: []model.CloudInstance{},
-					Installations: []model.Installation{},
+					Installations:  []model.Installation{},
 					LocalInstances: []model.LocalInstance{
 						Instance1,
 						Instance2,
@@ -145,13 +144,13 @@ var myInfra model.Infrastructure = model.Infrastructure{
 
 func TestVMFusionDockerMachineCreation() {
 	var mySyncDockerMachine procedures.DockerMachineExecutor = procedures.DockerMachineExecutor{
-		Infra: myInfra,
-		Project: myProject,
+		Infra:      myInfra,
+		Project:    myProject,
 		InstanceId: Instance1.Id,
-		IsCloud: false,
-		Machine: Machine1,
-		Instance: Instance1,
-		NewInfra: true,
+		IsCloud:    false,
+		Machine:    Machine1,
+		Instance:   Instance1,
+		NewInfra:   true,
 	}
 	commandChan := make(chan *exec.Cmd)
 	responseChan := make(chan procedures.MachineMessage)
@@ -159,7 +158,7 @@ func TestVMFusionDockerMachineCreation() {
 	wGroup := sync.WaitGroup{}
 	wGroup.Add(1)
 	go func(wGroup *sync.WaitGroup, responseChan chan procedures.MachineMessage) {
-		myResponse := <- responseChan
+		myResponse := <-responseChan
 		close(responseChan)
 		fmt.Printf("SyncCommand : %s\nSuccess: %t\n", strings.Join(myResponse.Cmd, " "), (myResponse.Error == nil))
 		fmt.Printf("Response :\n%s\nSupply :\n%s\nComplete: %t\nError: %v\n", myResponse.Result, myResponse.Supply, myResponse.Complete, myResponse.Error)
@@ -171,13 +170,13 @@ func TestVMFusionDockerMachineCreation() {
 
 func TestVirtualBoxDockerMachineCreation() {
 	var mySyncDockerMachine procedures.DockerMachineExecutor = procedures.DockerMachineExecutor{
-		Infra: myInfra,
-		Project: myProject,
+		Infra:      myInfra,
+		Project:    myProject,
 		InstanceId: Instance1.Id,
-		IsCloud: false,
-		Machine: Machine2,
-		Instance: Instance2,
-		NewInfra: true,
+		IsCloud:    false,
+		Machine:    Machine2,
+		Instance:   Instance2,
+		NewInfra:   true,
 	}
 	commandChan := make(chan *exec.Cmd)
 	responseChan := make(chan procedures.MachineMessage)
@@ -185,7 +184,7 @@ func TestVirtualBoxDockerMachineCreation() {
 	wGroup := sync.WaitGroup{}
 	wGroup.Add(1)
 	go func(wGroup *sync.WaitGroup, responseChan chan procedures.MachineMessage) {
-		myResponse := <- responseChan
+		myResponse := <-responseChan
 		close(responseChan)
 		fmt.Printf("ASyncCommand : %s\nSuccess: %t\n", strings.Join(myResponse.Cmd, " "), (myResponse.Error == nil))
 		fmt.Printf("Response :\n%s\nSupply :\n%s\nComplete: %t\nError: %v\n", myResponse.Result, myResponse.Supply, myResponse.Complete, myResponse.Error)

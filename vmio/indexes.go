@@ -1,38 +1,37 @@
 package vmio
 
 import (
-	"vmkube/model"
 	"errors"
-	"vmkube/utils"
 	"os"
+	"vmkube/model"
+	"vmkube/utils"
 )
 
 type ProjectIndexInfo struct {
-	Format  	string
-	Index			model.ProjectsIndex
+	Format string
+	Index  model.ProjectsIndex
 }
 
-
 func (info *ProjectIndexInfo) Read() error {
-	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
+	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) + ".data"
 	err := model.MakeFolderIfNotExists(baseFolder)
 	if err != nil {
 		return err
 	}
 	fileName := baseFolder + string(os.PathSeparator) + ".vmkubeindex"
-	if _,err = os.Stat(fileName); err!=nil {
+	if _, err = os.Stat(fileName); err != nil {
 		info.Index = model.ProjectsIndex{
-			Id: model.NewUUIDString(),
+			Id:       model.NewUUIDString(),
 			Projects: []model.ProjectsDescriptor{},
 		}
 		return nil
 	}
 	err = info.Index.Load(fileName)
-	return  err
+	return err
 }
 
 func (info *ProjectIndexInfo) Write() error {
-	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
+	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) + ".data"
 	model.MakeFolderIfNotExists(baseFolder)
 	fileName := baseFolder + string(os.PathSeparator) + ".vmkubeindex"
 	err := info.Index.Save(fileName)
@@ -41,28 +40,26 @@ func (info *ProjectIndexInfo) Write() error {
 
 func (info *ProjectIndexInfo) Import(file string, format string) error {
 	err := info.Index.Import(file, format)
-	return  err
+	return err
 }
 
-
 func (info *ProjectIndexInfo) Delete() error {
-	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) +  ".data"
+	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) + ".data"
 	model.MakeFolderIfNotExists(baseFolder)
 	fileName := baseFolder + string(os.PathSeparator) + ".vmkubeindex"
-	_,err := os.Stat(fileName)
+	_, err := os.Stat(fileName)
 	if err == nil {
 		return model.DeleteIfExists(fileName)
 	}
 	return nil
 }
 
-
 func (info *ProjectIndexInfo) Export(prettify bool) ([]byte, error) {
 	if "json" == info.Format {
-		return  utils.GetJSONFromElem(info.Index, prettify)
+		return utils.GetJSONFromElem(info.Index, prettify)
 	} else if "xml" == info.Format {
-		return  utils.GetXMLFromElem(info.Index, prettify)
+		return utils.GetXMLFromElem(info.Index, prettify)
 	} else {
-		return  []byte{}, errors.New("Format type : "+info.Format+" not provided ...")
+		return []byte{}, errors.New("Format type : " + info.Format + " not provided ...")
 	}
 }

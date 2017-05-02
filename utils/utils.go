@@ -1,36 +1,35 @@
 package utils
 
 import (
-	"strings"
-	"errors"
-	"strconv"
+	"bufio"
 	"encoding/json"
 	"encoding/xml"
-	"bufio"
-	"os"
+	"errors"
 	"fmt"
 	"io/ioutil"
-	"syscall"
+	"os"
 	"reflect"
+	"strconv"
+	"strings"
+	"syscall"
 	"vmkube/term"
 )
 
 func StrPad(instr string, capping int) string {
 	strLen := len(instr)
-	if strLen == capping  {
-		return  instr
-	} else  {
+	if strLen == capping {
+		return instr
+	} else {
 		if strLen < capping {
-			padding := strings.Repeat(" ", (capping- strLen))
-			return  instr + padding
+			padding := strings.Repeat(" ", (capping - strLen))
+			return instr + padding
 		} else {
-			val := instr[0:(capping-2)]
+			val := instr[0:(capping - 2)]
 			val += ".."
-			return  val
+			return val
 		}
 	}
 }
-
 
 func RequestConfirmation(reason string) bool {
 	text := ""
@@ -48,7 +47,7 @@ func RequestConfirmation(reason string) bool {
 		answer = term.Screen.Color(answer, term.RED)
 		term.Screen.Println(fmt.Sprintf("%s : %s\n", answer, text))
 		term.Screen.Flush()
-		return  RequestConfirmation(reason)
+		return RequestConfirmation(reason)
 	}
 	return (CorrectInput(text) == "y" || CorrectInput(text) == "yes")
 }
@@ -60,11 +59,11 @@ func PrintWarning(text string) {
 		fmt.Print(text)
 	} else {
 		lines := strings.Split(text, "\n")
-		for i:=0; i<len(lines); i++ {
+		for i := 0; i < len(lines); i++ {
 			value := term.Screen.Color(lines[i], term.YELLOW)
 			if len(lines) > 1 && i < len(lines)-1 {
 				term.Screen.Println(value)
-			} else  {
+			} else {
 				term.Screen.Print(value)
 			}
 			term.Screen.Flush()
@@ -76,7 +75,7 @@ func PrintlnWarning(text string) {
 	if NO_COLORS {
 		fmt.Println(text)
 	} else {
-		for _,line := range strings.Split(text, "\n") {
+		for _, line := range strings.Split(text, "\n") {
 			value := term.Screen.Color(line, term.YELLOW)
 			term.Screen.Println(value)
 			term.Screen.Flush()
@@ -89,11 +88,11 @@ func PrintError(text string) {
 		fmt.Print(text)
 	} else {
 		lines := strings.Split(text, "\n")
-		for i:=0; i<len(lines); i++ {
+		for i := 0; i < len(lines); i++ {
 			value := term.Screen.Color(lines[i], term.RED)
 			if len(lines) > 1 && i < len(lines)-1 {
 				term.Screen.Println(value)
-			} else  {
+			} else {
 				term.Screen.Print(value)
 			}
 			term.Screen.Flush()
@@ -105,7 +104,7 @@ func PrintlnError(text string) {
 	if NO_COLORS {
 		fmt.Println(text)
 	} else {
-		for _,line := range strings.Split(text, "\n") {
+		for _, line := range strings.Split(text, "\n") {
 			value := term.Screen.Color(line, term.RED)
 			term.Screen.Println(value)
 			term.Screen.Flush()
@@ -113,17 +112,16 @@ func PrintlnError(text string) {
 	}
 }
 
-
 func PrintInfo(text string) {
 	if NO_COLORS {
 		fmt.Print(text)
 	} else {
 		lines := strings.Split(text, "\n")
-		for i:=0; i<len(lines); i++ {
+		for i := 0; i < len(lines); i++ {
 			value := term.Screen.Color(lines[i], term.WHITE)
 			if len(lines) > 1 && i < len(lines)-1 {
 				term.Screen.Println(value)
-			} else  {
+			} else {
 				term.Screen.Print(value)
 			}
 			term.Screen.Flush()
@@ -135,7 +133,7 @@ func PrintlnInfo(text string) {
 	if NO_COLORS {
 		fmt.Println(text)
 	} else {
-		for _,line := range strings.Split(text, "\n") {
+		for _, line := range strings.Split(text, "\n") {
 			value := term.Screen.Color(line, term.WHITE)
 			term.Screen.Println(value)
 			term.Screen.Flush()
@@ -148,11 +146,11 @@ func PrintSuccess(text string) {
 		fmt.Print(text)
 	} else {
 		lines := strings.Split(text, "\n")
-		for i:=0; i<len(lines); i++ {
+		for i := 0; i < len(lines); i++ {
 			value := term.Screen.Color(lines[i], term.GREEN)
 			if len(lines) > 1 && i < len(lines)-1 {
 				term.Screen.Println(value)
-			} else  {
+			} else {
 				term.Screen.Print(value)
 			}
 			term.Screen.Flush()
@@ -164,7 +162,7 @@ func PrintlnSuccess(text string) {
 	if NO_COLORS {
 		fmt.Println(text)
 	} else {
-		for _,line := range strings.Split(text, "\n") {
+		for _, line := range strings.Split(text, "\n") {
 			value := term.Screen.Color(line, term.GREEN)
 			term.Screen.Println(value)
 			term.Screen.Flush()
@@ -177,11 +175,11 @@ func PrintImportant(text string) {
 		fmt.Print(text)
 	} else {
 		lines := strings.Split(text, "\n")
-		for i:=0; i<len(lines); i++ {
+		for i := 0; i < len(lines); i++ {
 			value := term.Screen.Bold(lines[i])
 			if len(lines) > 1 && i < len(lines)-1 {
 				term.Screen.Println(value)
-			} else  {
+			} else {
 				term.Screen.Print(value)
 			}
 			term.Screen.Flush()
@@ -193,7 +191,7 @@ func PrintlnImportant(text string) {
 	if NO_COLORS {
 		fmt.Println(text)
 	} else {
-		for _,line := range strings.Split(text, "\n") {
+		for _, line := range strings.Split(text, "\n") {
 			value := term.Screen.Bold(line)
 			term.Screen.Println(value)
 			term.Screen.Flush()
@@ -201,37 +199,35 @@ func PrintlnImportant(text string) {
 	}
 }
 
-
 func CmdParse(key string) (string, error) {
 	if len(key) > 0 {
-		if strings.Index(key, "--") == 0  {
+		if strings.Index(key, "--") == 0 {
 			return key, errors.New("Invalid Argument : " + key)
-		} else	if strings.Index(key, "-") == 0  {
+		} else if strings.Index(key, "-") == 0 {
 			return key, errors.New("Invalid Argument : " + key)
-		} else  {
-			return  CorrectInput(key), nil
+		} else {
+			return CorrectInput(key), nil
 		}
-	} else  {
-		return  key, errors.New("Unable to parse Agument : " + key)
+	} else {
+		return key, errors.New("Unable to parse Agument : " + key)
 	}
 }
 
 func OptionsParse(key string, val string) (string, string, error) {
-	if strings.Index(key, "--") == 0  {
-		return  CorrectInput(key[2:]), val, nil
-	} else	if strings.Index(key, "-") == 0  {
-		return  CorrectInput(key[1:]), val, nil
-	} else  {
-		return  key, val, errors.New("Unable to parse Agument : " + key)
+	if strings.Index(key, "--") == 0 {
+		return CorrectInput(key[2:]), val, nil
+	} else if strings.Index(key, "-") == 0 {
+		return CorrectInput(key[1:]), val, nil
+	} else {
+		return key, val, errors.New("Unable to parse Agument : " + key)
 	}
 }
 
 func CorrectInput(input string) string {
-	return  strings.TrimSpace(strings.ToLower(input))
+	return strings.TrimSpace(strings.ToLower(input))
 }
 
-
-func StringToInt(s string) (int,error) {
+func StringToInt(s string) (int, error) {
 	return strconv.Atoi(s)
 }
 
@@ -239,39 +235,36 @@ func IntToString(n int) string {
 	return strconv.Itoa(n)
 }
 
-
 // go binary decoder
 func GetJSONFromObj(m interface{}, prettify bool) []byte {
 	if prettify {
-		bytes,err := json.MarshalIndent(m, "", "  ")
+		bytes, err := json.MarshalIndent(m, "", "  ")
 		if err != nil {
 			return []byte{}
 		}
 		return bytes
 	}
-	bytes,err := json.Marshal(m)
+	bytes, err := json.Marshal(m)
 	if err != nil {
 		return []byte{}
 	}
 	return bytes
 }
-
 
 func GetXMLFromObj(m interface{}, prettify bool) []byte {
 	if prettify {
-		bytes,err := xml.MarshalIndent(m, "", "  ")
+		bytes, err := xml.MarshalIndent(m, "", "  ")
 		if err != nil {
 			return []byte{}
 		}
 		return bytes
 	}
-	bytes,err := xml.Marshal(m)
+	bytes, err := xml.Marshal(m)
 	if err != nil {
 		return []byte{}
 	}
 	return bytes
 }
-
 
 func ExportStructureToFile(File string, Format string, structure interface{}) error {
 	var bytesArray []byte = make([]byte, 0)
@@ -279,15 +272,15 @@ func ExportStructureToFile(File string, Format string, structure interface{}) er
 	if CorrectInput(Format) == "json" {
 		bytesArray, err = GetJSONFromElem(structure, true)
 		if err != nil {
-			return  err
+			return err
 		}
 	} else if CorrectInput(Format) == "xml" {
 		bytesArray, err = GetXMLFromElem(structure, true)
 		if err != nil {
-			return  err
+			return err
 		}
 	} else {
-			return errors.New("File Format '"+Format+"' not available")
+		return errors.New("File Format '" + Format + "' not available")
 	}
 	return ioutil.WriteFile(File, bytesArray, 0777)
 }
@@ -295,7 +288,7 @@ func ExportStructureToFile(File string, Format string, structure interface{}) er
 // go binary decoder
 func GetJSONFromElem(m interface{}, prettify bool) ([]byte, error) {
 	if prettify {
-		return  json.MarshalIndent(m, "", "  ")
+		return json.MarshalIndent(m, "", "  ")
 	}
 	return json.Marshal(m)
 }
@@ -311,7 +304,7 @@ func ToMap(m interface{}) map[string]interface{} {
 	var inInterface interface{}
 	inrec, _ := json.Marshal(&m)
 	json.Unmarshal(inrec, &inInterface)
-	return  inInterface.(map[string]interface{})
+	return inInterface.(map[string]interface{})
 }
 
 func CreateNewEmptyFile(file string) error {
@@ -323,29 +316,29 @@ func ReverseString(str string) string {
 	if err != nil {
 		return str
 	}
-	size := len(bytesArray);
-	cycle := len(bytesArray)/2;
+	size := len(bytesArray)
+	cycle := len(bytesArray) / 2
 	for i := 0; i < cycle; i++ {
-		var b byte =  bytesArray[i]
-		bytesArray[i] = bytesArray[size -1 - i]
-		bytesArray[size -1 - i] = b
+		var b byte = bytesArray[i]
+		bytesArray[i] = bytesArray[size-1-i]
+		bytesArray[size-1-i] = b
 	}
-	return string(bytesArray);
+	return string(bytesArray)
 }
 
 func ReverseBytesArray(bytesArray []byte) []byte {
-	size := len(bytesArray);
-	cycle := len(bytesArray)/2;
+	size := len(bytesArray)
+	cycle := len(bytesArray) / 2
 	for i := 0; i < cycle; i++ {
-		var b byte =  bytesArray[i]
-		bytesArray[i] = bytesArray[size -1 - i]
-		bytesArray[size -1 - i] = b
+		var b byte = bytesArray[i]
+		bytesArray[i] = bytesArray[size-1-i]
+		bytesArray[size-1-i] = b
 	}
-	return bytesArray;
+	return bytesArray
 }
 
 func IdToFileFormat(id string) string {
-	return id//strings.Replace(id, "-", "_", len(id))
+	return id //strings.Replace(id, "-", "_", len(id))
 }
 
 func NameToFileFormat(id string) string {
@@ -354,7 +347,7 @@ func NameToFileFormat(id string) string {
 
 func ReducedToStringsSlice(reduced []interface{}) []string {
 	arrayOfStrings := make([]string, 0)
-	for _,interfaceX := range reduced {
+	for _, interfaceX := range reduced {
 		arrayOfStrings = append(arrayOfStrings, reflect.ValueOf(interfaceX).String())
 	}
 	return arrayOfStrings
@@ -362,14 +355,14 @@ func ReducedToStringsSlice(reduced []interface{}) []string {
 
 func ReducedToIntsSlice(reduced []interface{}) []int {
 	arrayOfStrings := make([]int, 0)
-	for _,interfaceX := range reduced {
+	for _, interfaceX := range reduced {
 		arrayOfStrings = append(arrayOfStrings, int(reflect.ValueOf(interfaceX).Int()))
 	}
 	return arrayOfStrings
 }
 
 func ReduceStruct(field string, list []interface{}) ([]interface{}, error) {
-	sample  := make([]interface{}, 0)
+	sample := make([]interface{}, 0)
 	fieldIndex := -1
 	if len(list) == 0 {
 		return sample, nil
@@ -389,35 +382,35 @@ func ReduceStruct(field string, list []interface{}) ([]interface{}, error) {
 			fieldIndex = i
 			found = true
 			valueField := typeStruct.Field(i)
-			if valueField.IsValid(){
+			if valueField.IsValid() {
 				extraction = true
-				
+
 			}
 			break
 		}
 	}
-	if ! found {
+	if !found {
 		return sample, errors.New(fmt.Sprintf("Field %s not found in structure", field))
 	}
-	if ! extraction {
+	if !extraction {
 		return sample, errors.New(fmt.Sprintf("Field %s not valid in structure", field))
 	}
-//	arrType := typeStruct.Type()
-//	arrElemType := arrType.Elem()
+	//	arrType := typeStruct.Type()
+	//	arrElemType := arrType.Elem()
 	resultSliceType := reflect.SliceOf(typeOfField)
 	reduced := reflect.MakeSlice(resultSliceType, 0, len(list))
-	
-	for _,structure := range list {
+
+	for _, structure := range list {
 		typeStruct := reflect.ValueOf(structure)
-//		typeField := typeStruct.Type().Field(fieldIndex)
+		//		typeField := typeStruct.Type().Field(fieldIndex)
 		valueField := typeStruct.Field(fieldIndex)
 		reduced = reflect.Append(reduced, reflect.ValueOf(valueField.Interface()))
 	}
 	ret := make([]interface{}, 0)
-	
-	for i:=0; i<reduced.Len(); i++ {
-		ret = append(ret,reduced.Index(i).Interface())
+
+	for i := 0; i < reduced.Len(); i++ {
+		ret = append(ret, reduced.Index(i).Interface())
 	}
-	
+
 	return ret, nil
 }

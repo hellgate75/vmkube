@@ -18,8 +18,8 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"strings"
 	"runtime"
+	"strings"
 	"syscall"
 	"unsafe"
 )
@@ -74,6 +74,7 @@ const (
 	CYAN
 	WHITE
 )
+
 // Set percent flag: num | PCT
 //
 // Check percent flag: num & PCT
@@ -90,16 +91,16 @@ type ScreenSize struct {
 }
 
 type ScreenManager struct {
-	OutStream 		*bufio.Writer
-	Buffer				*bytes.Buffer
-	AutoFlush 		bool
-	X							int
-	Y							int
+	OutStream *bufio.Writer
+	Buffer    *bytes.Buffer
+	AutoFlush bool
+	X         int
+	Y         int
 }
 
 var Screen ScreenManager = ScreenManager{
 	OutStream: bufio.NewWriter(os.Stdout),
-	Buffer: new(bytes.Buffer),
+	Buffer:    new(bytes.Buffer),
 	AutoFlush: false,
 }
 
@@ -111,7 +112,6 @@ func getScreenBgColor(code int) string {
 	return fmt.Sprintf(BG_COLOR_SELECTOR, code)
 }
 
-
 // Get relative or absolute coorditantes
 // To get relative, set PCT flag to number:
 //
@@ -122,15 +122,15 @@ func (Screen *ScreenManager) GetScreenXY(x int, y int) (int, int) {
 	if y == -1 {
 		y = Screen.CurrentHeight() + 1
 	}
-	
+
 	if x&PCT != 0 {
 		x = int((x & 0xFF) * Screen.Width() / 100)
 	}
-	
+
 	if y&PCT != 0 {
 		y = int((y & 0xFF) * Screen.Height() / 100)
 	}
-	
+
 	return x, y
 }
 
@@ -139,11 +139,11 @@ type sf func(int, string) string
 // Apply given transformation func for each line in string
 func applyScreenTransform(str string, transform sf) (out string) {
 	out = ""
-	
+
 	for idx, line := range strings.Split(str, "\n") {
 		out += transform(idx, line)
 	}
-	
+
 	return
 }
 
@@ -162,7 +162,7 @@ func (Screen *ScreenManager) MoveCursor(x int, y int) {
 
 // Move cursor up relative the current position
 func (Screen *ScreenManager) MoveCursorUp(spaces int) {
-	fmt.Fprintf(Screen.Buffer, MOVE_CURSOR_UP_ROWS, spaces);
+	fmt.Fprintf(Screen.Buffer, MOVE_CURSOR_UP_ROWS, spaces)
 	if Screen.AutoFlush {
 		Screen.Flush()
 	}
@@ -170,7 +170,7 @@ func (Screen *ScreenManager) MoveCursorUp(spaces int) {
 
 // Move cursor down relative the current position
 func (Screen *ScreenManager) MoveCursorDown(spaces int) {
-	fmt.Fprintf(Screen.Buffer, MOVE_CURSOR_DOWN_ROWS, spaces);
+	fmt.Fprintf(Screen.Buffer, MOVE_CURSOR_DOWN_ROWS, spaces)
 	if Screen.AutoFlush {
 		Screen.Flush()
 	}
@@ -178,7 +178,7 @@ func (Screen *ScreenManager) MoveCursorDown(spaces int) {
 
 // Move cursor forward relative the current position
 func (Screen *ScreenManager) MoveCursorForward(spaces int) {
-	fmt.Fprintf(Screen.Buffer, MOVE_CURSOR_FORWARD_COLUMNS, spaces);
+	fmt.Fprintf(Screen.Buffer, MOVE_CURSOR_FORWARD_COLUMNS, spaces)
 	if Screen.AutoFlush {
 		Screen.Flush()
 	}
@@ -186,14 +186,14 @@ func (Screen *ScreenManager) MoveCursorForward(spaces int) {
 
 // Move cursor backward relative the current position
 func (Screen *ScreenManager) MoveCursorBackward(spaces int) {
-	fmt.Fprintf(Screen.Buffer, MOVE_CURSOR_BACKWARD_COLUMNS, spaces);
+	fmt.Fprintf(Screen.Buffer, MOVE_CURSOR_BACKWARD_COLUMNS, spaces)
 	if Screen.AutoFlush {
 		Screen.Flush()
 	}
 }
 
 // Negative is Left/Top ward positive is Right/Down ward
-func (Screen *ScreenManager) MoveCursorRelative(XSpaces int,YSpaces int) {
+func (Screen *ScreenManager) MoveCursorRelative(XSpaces int, YSpaces int) {
 	if XSpaces > 0 {
 		Screen.MoveCursorDown(XSpaces)
 	} else if XSpaces < 0 {
@@ -209,7 +209,7 @@ func (Screen *ScreenManager) MoveCursorRelative(XSpaces int,YSpaces int) {
 // Move string to position
 func (Screen *ScreenManager) MoveTo(str string, x int, y int) (out string) {
 	x, y = Screen.GetScreenXY(x, y)
-	
+
 	return applyScreenTransform(str, func(idx int, line string) string {
 		return fmt.Sprintf(MOVE_CURSOR_RELATIVE_OF, x+idx, y, line)
 	})
@@ -218,7 +218,7 @@ func (Screen *ScreenManager) MoveTo(str string, x int, y int) (out string) {
 // Return carrier to start of line
 func (Screen *ScreenManager) ResetLine(str string) (out string) {
 	return applyScreenTransform(str, func(idx int, line string) string {
-		return fmt.Sprintf(RESET_LINE, line)
+		return fmt.Sprintf("%s"+RESET_LINE, line)
 	})
 }
 
@@ -261,19 +261,19 @@ func (Screen *ScreenManager) Background(str string, color int) string {
 // Get console width
 func (Screen *ScreenManager) Width() int {
 	ws, err := Screen.getScreenSize()
-	
+
 	if err != nil {
 		return -1
 	}
-	
+
 	return int(ws.Col)
 }
 
 func (Screen *ScreenManager) getScreenSize() (*ScreenSize, error) {
 	ws := new(ScreenSize)
-	
+
 	var _TIOCGWINSZ int64
-	
+
 	switch runtime.GOOS {
 	case "linux":
 		_TIOCGWINSZ = 0x5413
@@ -296,6 +296,7 @@ func (Screen *ScreenManager) getScreenSize() (*ScreenSize, error) {
 	}
 	return ws, nil
 }
+
 // Get console height
 func (Screen *ScreenManager) Height() int {
 	ws, err := Screen.getScreenSize()
@@ -322,7 +323,7 @@ func (Screen *ScreenManager) Flush() {
 			Screen.OutStream.WriteString(str)
 		}
 	}
-	
+
 	Screen.OutStream.Flush()
 	Screen.Buffer.Reset()
 }
@@ -363,35 +364,34 @@ func (Screen *ScreenManager) Printf(format string, a ...interface{}) {
 
 func (Screen *ScreenManager) Context(data string, idx, max int) string {
 	var start, end int
-	
+
 	if len(data[:idx]) < (max / 2) {
 		start = 0
 	} else {
 		start = idx - max/2
 	}
-	
+
 	if len(data)-idx < (max / 2) {
 		end = len(data) - 1
 	} else {
 		end = idx + max/2
 	}
-	
+
 	return data[start:end]
 }
 
-
 func StrPad(instr string, capping int) string {
 	strlen := len(instr)
-	if strlen == capping  {
-		return  instr
-	} else  {
+	if strlen == capping {
+		return instr
+	} else {
 		if strlen < capping {
-			padding := strings.Repeat(" ", (capping-strlen))
-			return  instr + padding
+			padding := strings.Repeat(" ", (capping - strlen))
+			return instr + padding
 		} else {
-			val := instr[0:(capping-2)]
+			val := instr[0:(capping - 2)]
 			val += ".."
-			return  val
+			return val
 		}
 	}
 }

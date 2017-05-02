@@ -1,19 +1,19 @@
 package test
 
 import (
-	"testing"
-	"github.com/stretchr/testify/assert"
-	"vmkube/action"
-	"time"
-	"strconv"
-	"vmkube/scheduler"
 	"bytes"
+	"github.com/stretchr/testify/assert"
+	"strconv"
+	"testing"
+	"time"
+	"vmkube/action"
+	"vmkube/scheduler"
 	"vmkube/tasks"
 )
 
 /*
 * Test Job implements vmkube/scheduler.RunnableStruct
-*/
+ */
 type TestJob struct {
 	Name    string
 	Count   int
@@ -26,7 +26,7 @@ func (job TestJob) Start(channel chan bool) {
 		job.State = true
 		for i := 0; i < job.Count; i++ {
 			job.OutChan <- strconv.Itoa(i)
-			if ! job.State {
+			if !job.State {
 				break
 			}
 		}
@@ -44,47 +44,46 @@ func (job TestJob) Status() bool {
 }
 
 func (job TestJob) IsInterrupted() bool {
-	return  false
+	return false
 }
 func (job TestJob) IsError() bool {
-	return  false
+	return false
 }
 func (job TestJob) Response() interface{} {
-	return  ""
+	return ""
 }
 func (job TestJob) WaitFor() {
 
 }
 
-
-func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
+func testJobs(chan1 chan string, chan2 chan string, chan3 chan string) {
 	pool := scheduler.SchedulerPool{
-		Id: action.NewUUIDString(),
+		Id:          action.NewUUIDString(),
 		MaxParallel: 2,
-		KeepAlive: false,
+		KeepAlive:   false,
 	}
 	pool.Init()
-	go pool.Start(func(){
+	go pool.Start(func() {
 		pool.WG.Done()
 	})
 	task1 := tasks.ScheduleTask{
 		Id: action.NewUUIDString(),
 		Jobs: []tasks.JobProcess{
 			tasks.JobProcess(&tasks.Job{
-				Id: action.NewUUIDString(),
+				Id:   action.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
-					Name: "Job 1",
-					Count: 10,
+					Name:    "Job 1",
+					Count:   10,
 					OutChan: chan1,
 				},
 			}),
 			tasks.JobProcess(&tasks.Job{
-				Id: action.NewUUIDString(),
+				Id:   action.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
-					Name: "Job 2",
-					Count: 5,
+					Name:    "Job 2",
+					Count:   5,
 					OutChan: chan1,
 				},
 			}),
@@ -94,20 +93,20 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 		Id: action.NewUUIDString(),
 		Jobs: []tasks.JobProcess{
 			tasks.JobProcess(&tasks.Job{
-				Id: action.NewUUIDString(),
+				Id:   action.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
-					Name: "Job 3",
-					Count: 5,
+					Name:    "Job 3",
+					Count:   5,
 					OutChan: chan2,
 				},
 			}),
 			tasks.JobProcess(&tasks.Job{
-				Id: action.NewUUIDString(),
+				Id:   action.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
-					Name: "Job 4",
-					Count: 10,
+					Name:    "Job 4",
+					Count:   10,
 					OutChan: chan2,
 				},
 			}),
@@ -117,20 +116,20 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 		Id: action.NewUUIDString(),
 		Jobs: []tasks.JobProcess{
 			tasks.JobProcess(&tasks.Job{
-				Id: action.NewUUIDString(),
+				Id:   action.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
-					Name: "Job 5",
-					Count: 5,
+					Name:    "Job 5",
+					Count:   5,
 					OutChan: chan3,
 				},
 			}),
 			tasks.JobProcess(&tasks.Job{
-				Id: action.NewUUIDString(),
+				Id:   action.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
-					Name: "Job 6",
-					Count: 5,
+					Name:    "Job 6",
+					Count:   5,
 					OutChan: chan3,
 				},
 			}),
@@ -142,16 +141,16 @@ func testJobs(chan1 chan string,chan2 chan string,chan3 chan string) {
 		pool.Tasks <- task2
 		pool.Tasks <- task3
 	}()
-	go func(pool scheduler.SchedulerPool) {
-		time.Sleep(3*time.Second)
+	go func(pool *scheduler.SchedulerPool) {
+		time.Sleep(3 * time.Second)
 		pool.Stop()
-	}(pool)
+	}(&pool)
 	pool.WG.Wait()
 }
 
 func collectChanValues(chanX chan string, buffer *bytes.Buffer) {
 	for {
-		val := <- chanX
+		val := <-chanX
 		if val == "" {
 			break
 		}
@@ -170,7 +169,7 @@ func TestSchedulerJobExecution(t *testing.T) {
 	go collectChanValues(chan1, buffer1)
 	go collectChanValues(chan2, buffer2)
 	go collectChanValues(chan3, buffer3)
-	
+
 	testJobs(chan1, chan2, chan3)
 	chan1 <- ""
 	chan2 <- ""

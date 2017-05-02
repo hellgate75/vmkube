@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	if len(os.Args) == 0  {
+	if len(os.Args) == 0 {
 		println("Error: No arguments for command")
 		action.PrintCommandHelper("", "")
 		os.Exit(1)
@@ -17,16 +17,16 @@ func init() {
 
 func main() {
 	request, error := action.ParseCommandLine(os.Args)
-	if error == nil  {
+	if error == nil {
 		response := action.ExecuteRequest(request)
-		if response  {
+		if response {
 			os.Exit(0)
-		} else  {
+		} else {
 			term.Screen.Println(term.Screen.Color("Errors During Command Execution!!", term.RED))
 			term.Screen.Flush()
 			os.Exit(1)
 		}
-	} else  {
+	} else {
 		os.Exit(1)
 	}
 }

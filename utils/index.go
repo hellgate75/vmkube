@@ -1,7 +1,7 @@
 package utils
 
 type Index struct {
-	Value   string
+	Value string
 }
 
 var INDEX_START byte = 48
@@ -34,20 +34,20 @@ func (element *Index) Next() Index {
 		for i := 0; i < len(element.Value); i++ {
 			byteArray = append(byteArray, INDEX_END)
 		}
-		newIndex := Index{Value:string(byteArray)}
+		newIndex := Index{Value: string(byteArray)}
 		return newIndex
 	}
 	var elements []byte = []byte(element.Value)
 	var length int = len(elements)
 	var report bool = true
-	for i := length-1; i >= 0; i-- {
+	for i := length - 1; i >= 0; i-- {
 		if report {
 			if elements[i] == INDEX_END {
 				elements[i] = INDEX_START
 				report = true
 			} else {
 				report = false
-				elements[i]=elements[i] + 1
+				elements[i] = elements[i] + 1
 			}
 		}
 	}
@@ -58,9 +58,9 @@ func (element *Index) Next() Index {
 
 func (element *Index) IsZero() bool {
 	for i := 0; i < len(element.Value); i++ {
-			if element.Value[i] > INDEX_START {
-				return false
-			}
+		if element.Value[i] > INDEX_START {
+			return false
+		}
 	}
 	return true
 }
@@ -76,14 +76,14 @@ func (element *Index) IsMaxValue() bool {
 
 func (element *Index) Previous() Index {
 	if element.IsZero() {
-		newIndex := Index{Value:""}
+		newIndex := Index{Value: ""}
 		newIndex.New(len(element.Value))
 		return newIndex
 	}
 	var elements []byte = []byte(element.Value)
 	var length int = len(element.Value)
 	var report bool = true
-	for i := length-1; i >= 0; i-- {
+	for i := length - 1; i >= 0; i-- {
 		if report {
 			if elements[i] == INDEX_START {
 				elements[i] = INDEX_END
@@ -104,7 +104,7 @@ func (element *Index) FromInt(value int, length int) {
 	var elements []byte = []byte(element.Value)
 	var report byte = byte(value)
 	var RATIONAL byte = INDEX_END - INDEX_START
-	for i := length-1; i >= 0; i-- {
+	for i := length - 1; i >= 0; i-- {
 		var newValue byte = (elements[i] + report)
 		if newValue >= INDEX_END {
 			value := newValue % RATIONAL
@@ -118,16 +118,14 @@ func (element *Index) FromInt(value int, length int) {
 	element.Value = string(elements)
 }
 
-
-
 func (element *Index) Sum(index Index) {
 	var elements []byte = []byte(element.Value)
 	var elements2 []byte = []byte(index.Value)
 	var length int = len(element.Value)
 	var report byte = 0
 	var RATIONAL byte = INDEX_END - INDEX_START
-	for i := length-1; i >= 0; i-- {
-		var newValue byte = (elements[i] + (elements2[i]-INDEX_START) + report)
+	for i := length - 1; i >= 0; i-- {
+		var newValue byte = (elements[i] + (elements2[i] - INDEX_START) + report)
 		if newValue >= INDEX_END {
 			value := newValue % RATIONAL
 			elements[i] = value
@@ -145,8 +143,8 @@ func (element *Index) Subtract(index Index) {
 	var elements2 []byte = []byte(index.Value)
 	var length int = len(element.Value)
 	var report byte = 0
-	for i := length-1; i >= 0; i-- {
-		var newValue byte = (elements[i] - (elements2[i]-INDEX_START) - report)
+	for i := length - 1; i >= 0; i-- {
+		var newValue byte = (elements[i] - (elements2[i] - INDEX_START) - report)
 		if newValue < INDEX_START {
 			var value byte = 0
 			value = INDEX_START - newValue

@@ -1,34 +1,34 @@
 package procedures
 
 import (
-	"fmt"
-	"vmkube/model"
-	"os/exec"
-	"io"
-	"strings"
 	"errors"
+	"fmt"
+	"io"
+	"os/exec"
+	"strings"
+	"vmkube/model"
 )
 
 func DownloadISO(machineType string, version string) (string, string, error) {
 	machineAction, error := model.GetMachineAction(machineType)
 	var log string = ""
 	if error == nil {
-		if ! machineAction.Check(version) {
-			log += fmt.Sprintf("OS %s Version %s not present, downloading from internet...\n",strings.ToUpper(machineType),version)
+		if !machineAction.Check(version) {
+			log += fmt.Sprintf("OS %s Version %s not present, downloading from internet...\n", strings.ToUpper(machineType), version)
 			downloaded := machineAction.Download(version)
-			log += fmt.Sprintf("OS %s Version %s dowanloaded: %t\n",strings.ToUpper(machineType),version,downloaded)
+			log += fmt.Sprintf("OS %s Version %s dowanloaded: %t\n", strings.ToUpper(machineType), version, downloaded)
 			if downloaded {
 				return log, machineAction.Path(version), nil
 			} else {
-				return log, machineAction.Path(version), errors.New(fmt.Sprintf("Unable to download locally OS %s Version %s!!\n",strings.ToUpper(machineType),version))
+				return log, machineAction.Path(version), errors.New(fmt.Sprintf("Unable to download locally OS %s Version %s!!\n", strings.ToUpper(machineType), version))
 			}
 		} else {
-			log += fmt.Sprintf("OS %s Version %s already dowanloaded...\n",strings.ToUpper(machineType),version)
+			log += fmt.Sprintf("OS %s Version %s already dowanloaded...\n", strings.ToUpper(machineType), version)
 			return log, machineAction.Path(version), nil
 		}
 	} else {
-		log += fmt.Sprintf("OS %s v.%s not found!! - error: %v\n", strings.ToUpper(machineType),version, error)
-		return  log, "", errors.New(log)
+		log += fmt.Sprintf("OS %s v.%s not found!! - error: %v\n", strings.ToUpper(machineType), version, error)
+		return log, "", errors.New(log)
 	}
 }
 
@@ -49,26 +49,26 @@ type MachineActions interface {
 }
 
 type MachineControlStructure struct {
-	CurrentCommand   *exec.Cmd
-	Interrupt        bool
+	CurrentCommand *exec.Cmd
+	Interrupt      bool
 }
 
 type DockerMachineExecutor struct {
-	Project     model.Project
-	Infra       model.Infrastructure
-	IsCloud     bool
-	InstanceId  string
-	Machine      model.LocalMachine
-	CMachine     model.CloudMachine
-	Instance    model.LocalInstance
-	CInstance   model.CloudInstance
-	NewInfra    bool
-	Control     *MachineControlStructure
+	Project    model.Project
+	Infra      model.Infrastructure
+	IsCloud    bool
+	InstanceId string
+	Machine    model.LocalMachine
+	CMachine   model.CloudMachine
+	Instance   model.LocalInstance
+	CInstance  model.CloudInstance
+	NewInfra   bool
+	Control    *MachineControlStructure
 }
 
 type MachineOperation int
 
-const(
+const (
 	CreateCloud MachineOperation = iota
 	CreateMachine
 	DestroyMachine
@@ -106,24 +106,24 @@ func executeSyncCommand(command []string) *exec.Cmd {
 	return cmd
 }
 
-func GetCurrentMachineExecutor( Project     model.Project,
-												Infra       model.Infrastructure,
-												Machine      model.LocalMachine,
-												CMachine     model.CloudMachine,
-												Instance    model.LocalInstance,
-												CInstance   model.CloudInstance,
-												InstanceId  string,
-												IsCloud     bool,
-												NewInfra    bool) MachineActions {
+func GetCurrentMachineExecutor(Project model.Project,
+	Infra model.Infrastructure,
+	Machine model.LocalMachine,
+	CMachine model.CloudMachine,
+	Instance model.LocalInstance,
+	CInstance model.CloudInstance,
+	InstanceId string,
+	IsCloud bool,
+	NewInfra bool) MachineActions {
 	return MachineActions(&DockerMachineExecutor{
-		Project: Project,
-		Infra: Infra,
-		Machine: Machine,
-		CMachine: CMachine,
-		Instance:Instance,
-		CInstance:CInstance,
+		Project:    Project,
+		Infra:      Infra,
+		Machine:    Machine,
+		CMachine:   CMachine,
+		Instance:   Instance,
+		CInstance:  CInstance,
 		InstanceId: InstanceId,
-		IsCloud: IsCloud,
-		NewInfra: NewInfra,
+		IsCloud:    IsCloud,
+		NewInfra:   NewInfra,
 	})
 }

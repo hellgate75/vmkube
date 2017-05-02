@@ -1,10 +1,10 @@
 package test
 
 import (
-	"testing"
-	"vmkube/utils"
 	"github.com/stretchr/testify/assert"
 	"reflect"
+	"testing"
+	"vmkube/utils"
 )
 
 //
@@ -17,24 +17,23 @@ type Test struct {
 }
 
 var (
-myStruct []interface{} = []interface{} {
-	Test {
-		Name: "Fabiana",
-		Surname: "XXXXXXXXXXX",
-		Age: 42,
-	},
-	Test {
-		Name: "Fabrizio",
-		Surname: "XXXXXXXXXXX",
-		Age: 42,
-	},
-	Test {
-		Name: "Francesco",
-		Surname: "XXXXXXXXXXX",
-		Age: 38,
-	},
-}
-
+	myStruct []interface{} = []interface{}{
+		Test{
+			Name:    "Fabiana",
+			Surname: "XXXXXXXXXXX",
+			Age:     42,
+		},
+		Test{
+			Name:    "Fabrizio",
+			Surname: "XXXXXXXXXXX",
+			Age:     42,
+		},
+		Test{
+			Name:    "Francesco",
+			Surname: "XXXXXXXXXXX",
+			Age:     38,
+		},
+	}
 )
 
 func TestReduce(t *testing.T) {
@@ -63,4 +62,3 @@ func TestReduceToIntsSlice(t *testing.T) {
 	assert.Equal(t, 42, myArray[1], "Expected second element in the array is the same of the Age in the structure")
 	assert.Equal(t, 38, myArray[2], "Expected third element in the array is the same of the Age in the structure")
 }
-

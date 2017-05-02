@@ -1,11 +1,11 @@
 package action
 
 import (
-	"vmkube/model"
-	"errors"
-	"io/ioutil"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
+	"io/ioutil"
+	"vmkube/model"
 	"vmkube/vmio"
 )
 
@@ -24,40 +24,40 @@ func UserImportDomains(File string, Format string) (ExportImportDomains, error) 
 	domains := ExportImportDomains{
 		Domains: []model.MachineDomain{},
 	}
-	if ! model.ExistsFile(File) {
-		return  domains, errors.New("File "+File+" doesn't exist!!")
+	if !model.ExistsFile(File) {
+		return domains, errors.New("File " + File + " doesn't exist!!")
 	}
 	if Format != "json" && Format != "xml" {
-		return  domains, errors.New("Format "+Format+" not available!!")
+		return domains, errors.New("Format " + Format + " not available!!")
 	}
 	byteArray, err := ioutil.ReadFile(File)
 	if err != nil {
-		return  domains, err
+		return domains, err
 	}
 	if Format == "json" {
 		err = json.Unmarshal(byteArray, &domains)
-	} else  {
+	} else {
 		err = xml.Unmarshal(byteArray, &domains)
 	}
 	return domains, err
 }
 
 type DomainReference struct {
-	DomainId      string
-	DomainName    string
+	DomainId   string
+	DomainName string
 }
 
 type ExportImportNetwork struct {
-	Domain      DomainReference
-	Networks    []model.MachineNetwork
+	Domain   DomainReference
+	Networks []model.MachineNetwork
 }
 
 var ImportNetworkSample ExportImportNetwork = ExportImportNetwork{
-	Domain:      DomainReference{
-		DomainId: NewUUIDString(),
+	Domain: DomainReference{
+		DomainId:   NewUUIDString(),
 		DomainName: vmio.DomainSample.Name,
 	},
-	Networks:    []model.MachineNetwork{
+	Networks: []model.MachineNetwork{
 		vmio.NetworkSample,
 		vmio.NetworkSample,
 	},
@@ -65,11 +65,11 @@ var ImportNetworkSample ExportImportNetwork = ExportImportNetwork{
 
 func UserImportNetworks(File string, Format string) ([]ExportImportNetwork, error) {
 	networks := make([]ExportImportNetwork, 0)
-	if ! model.ExistsFile(File) {
-		return networks, errors.New("File "+File+" doesn't exist!!")
+	if !model.ExistsFile(File) {
+		return networks, errors.New("File " + File + " doesn't exist!!")
 	}
 	if Format != "json" && Format != "xml" {
-		return networks, errors.New("Format "+Format+" not available!!")
+		return networks, errors.New("Format " + Format + " not available!!")
 	}
 	byteArray, err := ioutil.ReadFile(File)
 	if err != nil {
@@ -77,32 +77,32 @@ func UserImportNetworks(File string, Format string) ([]ExportImportNetwork, erro
 	}
 	if Format == "json" {
 		err = json.Unmarshal(byteArray, &networks)
-	} else  {
+	} else {
 		err = xml.Unmarshal(byteArray, &networks)
 	}
 	return networks, err
 }
 
 type NetworkReference struct {
-	DomainId        string
-	DomainName      string
-	NetworkId       string
-	NetworkName     string
+	DomainId    string
+	DomainName  string
+	NetworkId   string
+	NetworkName string
 }
 
 type ExportImportLocalMachines struct {
-	Network      NetworkReference
-	Machines      []model.LocalMachine
+	Network  NetworkReference
+	Machines []model.LocalMachine
 }
 
 var ImportLocalMachineSample ExportImportLocalMachines = ExportImportLocalMachines{
-	Network:      NetworkReference{
-		DomainId:     NewUUIDString(),
-		DomainName:   vmio.DomainSample.Name,
-		NetworkId:    NewUUIDString(),
-		NetworkName:  vmio.NetworkSample.Name,
+	Network: NetworkReference{
+		DomainId:    NewUUIDString(),
+		DomainName:  vmio.DomainSample.Name,
+		NetworkId:   NewUUIDString(),
+		NetworkName: vmio.NetworkSample.Name,
 	},
-	Machines:    []model.LocalMachine{
+	Machines: []model.LocalMachine{
 		vmio.MachineSample,
 		vmio.MachineSample,
 	},
@@ -110,11 +110,11 @@ var ImportLocalMachineSample ExportImportLocalMachines = ExportImportLocalMachin
 
 func UserImportLocalMachines(File string, Format string) ([]ExportImportLocalMachines, error) {
 	machines := make([]ExportImportLocalMachines, 0)
-	if ! model.ExistsFile(File) {
-		return machines, errors.New("File "+File+" doesn't exist!!")
+	if !model.ExistsFile(File) {
+		return machines, errors.New("File " + File + " doesn't exist!!")
 	}
 	if Format != "json" && Format != "xml" {
-		return machines, errors.New("Format "+Format+" not available!!")
+		return machines, errors.New("Format " + Format + " not available!!")
 	}
 	byteArray, err := ioutil.ReadFile(File)
 	if err != nil {
@@ -122,25 +122,25 @@ func UserImportLocalMachines(File string, Format string) ([]ExportImportLocalMac
 	}
 	if Format == "json" {
 		err = json.Unmarshal(byteArray, &machines)
-	} else  {
+	} else {
 		err = xml.Unmarshal(byteArray, &machines)
 	}
 	return machines, err
 }
 
 type ExportImportCloudMachines struct {
-	Network      NetworkReference
-	Machines      []model.CloudMachine
+	Network  NetworkReference
+	Machines []model.CloudMachine
 }
 
 var ImportCloudMachineSample ExportImportCloudMachines = ExportImportCloudMachines{
-	Network:      NetworkReference{
-		DomainId:     NewUUIDString(),
-		DomainName:   vmio.DomainSample.Name,
-		NetworkId:    NewUUIDString(),
-		NetworkName:  vmio.NetworkSample.Name,
+	Network: NetworkReference{
+		DomainId:    NewUUIDString(),
+		DomainName:  vmio.DomainSample.Name,
+		NetworkId:   NewUUIDString(),
+		NetworkName: vmio.NetworkSample.Name,
 	},
-	Machines:    []model.CloudMachine{
+	Machines: []model.CloudMachine{
 		vmio.CloudMachineSample,
 		vmio.CloudMachineSample,
 	},
@@ -148,11 +148,11 @@ var ImportCloudMachineSample ExportImportCloudMachines = ExportImportCloudMachin
 
 func UserImportCloudMachines(File string, Format string) ([]ExportImportCloudMachines, error) {
 	machines := make([]ExportImportCloudMachines, 0)
-	if ! model.ExistsFile(File) {
-		return machines, errors.New("File "+File+" doesn't exist!!")
+	if !model.ExistsFile(File) {
+		return machines, errors.New("File " + File + " doesn't exist!!")
 	}
 	if Format != "json" && Format != "xml" {
-		return machines, errors.New("Format "+Format+" not available!!")
+		return machines, errors.New("Format " + Format + " not available!!")
 	}
 	byteArray, err := ioutil.ReadFile(File)
 	if err != nil {
@@ -160,51 +160,51 @@ func UserImportCloudMachines(File string, Format string) ([]ExportImportCloudMac
 	}
 	if Format == "json" {
 		err = json.Unmarshal(byteArray, &machines)
-	} else  {
+	} else {
 		err = xml.Unmarshal(byteArray, &machines)
 	}
 	return machines, err
 }
 
 type ExportImportPlans struct {
-	Network      NetworkReference
-	Plans       []model.InstallationPlan
+	Network NetworkReference
+	Plans   []model.InstallationPlan
 }
 
 var InstallationPlanSample model.InstallationPlan = model.InstallationPlan{
-	Id: "",
-	Environment: model.KubernetesEnv,
-	IsCloud: false,
-	MachineId: NewUUIDString(),
-	MainCommandRef: "https://github.com/myrepo/something/mycommand.git",
-	MainCommandSet: model.AnsibleCmdSet,
+	Id:                  "",
+	Environment:         model.KubernetesEnv,
+	IsCloud:             false,
+	MachineId:           NewUUIDString(),
+	MainCommandRef:      "https://github.com/myrepo/something/mycommand.git",
+	MainCommandSet:      model.AnsibleCmdSet,
 	ProvisionCommandRef: "https://site.to.my.commands/something/mycommand.tgz",
 	ProvisionCommandSet: model.HelmCmdSet,
-	Role: model.MasterRole,
-	Type: model.HostDeployment,
+	Role:                model.MasterRole,
+	Type:                model.HostDeployment,
 }
 
 var InstallationPlanSample2 model.InstallationPlan = model.InstallationPlan{
-	Id: "",
-	Environment: model.CattleEnv,
-	IsCloud: true,
-	MachineId: NewUUIDString(),
-	MainCommandRef: "https://github.com/myrepo/something/mycommand.git",
-	MainCommandSet: model.AnsibleCmdSet,
+	Id:                  "",
+	Environment:         model.CattleEnv,
+	IsCloud:             true,
+	MachineId:           NewUUIDString(),
+	MainCommandRef:      "https://github.com/myrepo/something/mycommand.git",
+	MainCommandSet:      model.AnsibleCmdSet,
 	ProvisionCommandRef: "https://site.to.my.commands/something/mycommand.tgz",
 	ProvisionCommandSet: model.VirtKubeCmdSet,
-	Role: model.StandAloneRole,
-	Type: model.MachineDeployment,
+	Role:                model.StandAloneRole,
+	Type:                model.MachineDeployment,
 }
 
 var ImportPlansSample ExportImportPlans = ExportImportPlans{
-	Network:      NetworkReference{
-		DomainId:     NewUUIDString(),
-		DomainName:   vmio.DomainSample.Name,
-		NetworkId:    NewUUIDString(),
-		NetworkName:  vmio.NetworkSample.Name,
+	Network: NetworkReference{
+		DomainId:    NewUUIDString(),
+		DomainName:  vmio.DomainSample.Name,
+		NetworkId:   NewUUIDString(),
+		NetworkName: vmio.NetworkSample.Name,
 	},
-	Plans:    []model.InstallationPlan{
+	Plans: []model.InstallationPlan{
 		InstallationPlanSample,
 		InstallationPlanSample2,
 	},
@@ -212,11 +212,11 @@ var ImportPlansSample ExportImportPlans = ExportImportPlans{
 
 func UserImportPlans(File string, Format string) ([]ExportImportPlans, error) {
 	machines := make([]ExportImportPlans, 0)
-	if ! model.ExistsFile(File) {
-		return machines, errors.New("File "+File+" doesn't exist!!")
+	if !model.ExistsFile(File) {
+		return machines, errors.New("File " + File + " doesn't exist!!")
 	}
 	if Format != "json" && Format != "xml" {
-		return machines, errors.New("Format "+Format+" not available!!")
+		return machines, errors.New("Format " + Format + " not available!!")
 	}
 	byteArray, err := ioutil.ReadFile(File)
 	if err != nil {
@@ -224,7 +224,7 @@ func UserImportPlans(File string, Format string) ([]ExportImportPlans, error) {
 	}
 	if Format == "json" {
 		err = json.Unmarshal(byteArray, &machines)
-	} else  {
+	} else {
 		err = xml.Unmarshal(byteArray, &machines)
 	}
 	return machines, err
