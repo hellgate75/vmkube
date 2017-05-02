@@ -1,4 +1,4 @@
-package operations
+package action
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"vmkube/procedures"
+	"vmkube/tasks"
 )
 
 func DescribeInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState) error {
@@ -96,18 +97,72 @@ func DescribeInstance(infrastructure model.Infrastructure, instance model.LocalI
 }
 
 func StartInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState) error {
-	//TODO: Implement Start Instance
-	return errors.New("Command Start Instance not implemented!!")
+	var  exclusionIdList []string = make([]string, 0)
+	if isCloud {
+		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{cloudInstance.Id})
+	} else  {
+		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{instance.Id})
+	}
+	startCouples, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.StartMachine, exclusionIdList)
+	if err != nil {
+		return err
+	}
+	if len(startCouples) == 0 {
+		return  errors.New("No Instance available for start procedure...")
+	}
+	NumThreads := 1
+	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
+	errorsList := ExecuteInfrastructureActions(infrastructure, startCouples, NumThreads, func(task tasks.ScheduleTask) {})
+	if len(errorsList) > 0 {
+		return  errorsList[0]
+	}
+	return nil
 }
 
 func RestartInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState) error {
-	//TODO: Implement ReStart Instance
-	return errors.New("Command Restart Instance not implemented!!")
+	var  exclusionIdList []string = make([]string, 0)
+	if isCloud {
+		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{cloudInstance.Id})
+	} else  {
+		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{instance.Id})
+	}
+	restartCouples, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.RestartMachine, exclusionIdList)
+	if err != nil {
+		return err
+	}
+	if len(restartCouples) == 0 {
+		return  errors.New("No Instance available for restart procedure...")
+	}
+	NumThreads := 1
+	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
+	errorsList := ExecuteInfrastructureActions(infrastructure, restartCouples, NumThreads, func(task tasks.ScheduleTask) {})
+	if len(errorsList) > 0 {
+		return  errorsList[0]
+	}
+	return nil
 }
 
 func StopInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState) error {
-	//TODO: Implement Stop Instance
-	return errors.New("Command Stop Instance not implemented!!")
+	var  exclusionIdList []string = make([]string, 0)
+	if isCloud {
+		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{cloudInstance.Id})
+	} else  {
+		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{instance.Id})
+	}
+	stopCouples, err := tasks.GetPostBuildTaskActivities(infrastructure, tasks.StopMachine, exclusionIdList)
+	if err != nil {
+		return err
+	}
+	if len(stopCouples) == 0 {
+		return  errors.New("No Instance available for stop procedure...")
+	}
+	NumThreads := 1
+	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
+	errorsList := ExecuteInfrastructureActions(infrastructure, stopCouples, NumThreads, func(task tasks.ScheduleTask) {})
+	if len(errorsList) > 0 {
+		return  errorsList[0]
+	}
+	return nil
 }
 
 func DisableInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool) error {

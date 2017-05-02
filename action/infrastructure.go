@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 	"vmkube/model"
-	"vmkube/operations"
 	"vmkube/procedures"
 	"vmkube/tasks"
 	"vmkube/utils"
@@ -113,7 +112,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 		return response, errors.New("Unable to execute task")
 	}
 	if request.SubType == AutoFix {
-		err := operations.AutoFixInfrastructureInstances(infrastructure)
+		err := AutoFixInfrastructureInstances(infrastructure)
 		if err != nil {
 			response := Response{
 				Status:  false,
@@ -188,7 +187,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		err = operations.DescribeInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState)
+		err = DescribeInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState)
 		break
 	case Start:
 		var instanceState procedures.MachineState
@@ -207,7 +206,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		err = operations.StartInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState)
+		err = StartInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState)
 		break
 	case Stop:
 		var instanceState procedures.MachineState
@@ -226,7 +225,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		err = operations.StopInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState)
+		err = StopInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState)
 		break
 	case Restart:
 		var instanceState procedures.MachineState
@@ -245,7 +244,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		err = operations.RestartInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState)
+		err = RestartInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState)
 		break
 	case Disable:
 		var instanceState procedures.MachineState
@@ -264,10 +263,10 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		err = operations.DisableInstance(infrastructure, instance, cloudInstance, IsCloud)
+		err = DisableInstance(infrastructure, instance, cloudInstance, IsCloud)
 		break
 	case Enable:
-		err = operations.EnableInstance(infrastructure, instance, cloudInstance, IsCloud)
+		err = EnableInstance(infrastructure, instance, cloudInstance, IsCloud)
 		break
 	case Recreate:
 		var instanceState procedures.MachineState
@@ -286,9 +285,10 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		err = operations.RecreateInstance(infrastructure, instance, cloudInstance, IsCloud)
+		err = RecreateInstance(infrastructure, instance, cloudInstance, IsCloud)
 		break
 	default:
+		// Destroy
 		var instanceState procedures.MachineState
 		instanceState, err = ExistInstance(infrastructure, instance, cloudInstance, IsCloud, instance.Id)
 		if err != nil {
@@ -305,9 +305,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		err = operations.DestroyInstance(infrastructure, instance, cloudInstance, IsCloud)
-		break
-		// Destroy
+		err = DestroyInstance(infrastructure, instance, cloudInstance, IsCloud)
 	}
 	if err != nil {
 		response := Response{

@@ -410,6 +410,27 @@ func SortGroups(groups []ActivityGroup) {
 	sort.Sort(SortGroupType(groups))
 }
 
+
+func GetExclusionListExceptInstanceList(infrastructure model.Infrastructure,instanceIds []string) []string {
+	var  exclusionList []string  = make([]string, 0)
+	for _, domain := range infrastructure.Domains {
+		for _, network := range domain.Networks {
+			for _, instance := range network.LocalInstances {
+				if ! containsString(instanceIds, instance.Id) {
+					exclusionList = append(exclusionList, instance.Id)
+				}
+			}
+			for _, instance := range network.CloudInstances {
+				if ! containsString(instanceIds, instance.Id) {
+					exclusionList = append(exclusionList, instance.Id)
+				}
+			}
+		}
+	}
+	return  exclusionList
+}
+
+
 func GetPostBuildTaskActivities(infrastructure model.Infrastructure, task ActivityTask, exclusionList []string) ([]ActivityCouple, error) {
 	var taskList []ActivityCouple = make([]ActivityCouple, 0)
 	for _, domain := range infrastructure.Domains {
