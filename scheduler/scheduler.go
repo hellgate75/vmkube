@@ -86,8 +86,8 @@ func (pool *SchedulerPool) Start(callback func()) {
 		}()
 		// start jobs
 		go func() {
-			//if runtime.NumCPU() < threads + 1 {
-			//	runtime.GOMAXPROCS(threads + 1)
+			//if runtime.NumCPU() < threads + 3 {
+			//	runtime.GOMAXPROCS(threads + 5)
 			//}
 			for pool.State.Active {
 				if !pool.State.Paused {
