@@ -325,8 +325,6 @@ func EnableInstance(infrastructure model.Infrastructure, instance model.LocalIns
 }
 
 func RecreateInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState, descriptor model.ProjectsDescriptor) error {
-	//TODO: Test Re-Create Instance
-
 	utils.PrintlnWarning(fmt.Sprintf("Load Project : '%s' for inspection ...", descriptor.Name))
 
 	project, err := vmio.LoadProject(descriptor.Id)
@@ -414,8 +412,6 @@ func RecreateInstance(infrastructure model.Infrastructure, instance model.LocalI
 }
 
 func DestroyInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState, descriptor model.ProjectsDescriptor) error {
-	//TODO: Test Destroy Instance
-
 	utils.PrintlnWarning(fmt.Sprintf("Load Project : '%s' for inspection ...", descriptor.Name))
 
 	project, err := vmio.LoadProject(descriptor.Id)
@@ -489,5 +485,6 @@ func DestroyInstance(infrastructure model.Infrastructure, instance model.LocalIn
 }
 
 func AutoFixInfrastructureInstances(infrastructure model.Infrastructure) error {
-	return nil
+	//TODO: Implement Autofix Procedure
+	return errors.New("Alter Infrastructure, Autofix instancs not yet implemented ...")
 }

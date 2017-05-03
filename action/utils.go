@@ -1277,16 +1277,16 @@ func RemoveInfrastructureInstanceById(Infrastructure *model.Infrastructure, Inst
 		for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
 			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].LocalInstances); k++ {
 				if Infrastructure.Domains[i].Networks[j].LocalInstances[k].Id == InstanceId {
-					tmp := Infrastructure.Domains[i].Networks[j].LocalInstances[:k]
-					Infrastructure.Domains[i].Networks[j].LocalInstances = Infrastructure.Domains[i].Networks[j].LocalInstances[(k + 1):]
+					tmp := Infrastructure.Domains[i].Networks[j].LocalInstances[(k + 1):]
+					Infrastructure.Domains[i].Networks[j].LocalInstances = Infrastructure.Domains[i].Networks[j].LocalInstances[:k]
 					Infrastructure.Domains[i].Networks[j].LocalInstances = append(Infrastructure.Domains[i].Networks[j].LocalInstances, tmp...)
 					return nil
 				}
 			}
 			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CloudInstances); k++ {
 				if Infrastructure.Domains[i].Networks[j].CloudInstances[k].Id == InstanceId {
-					tmp := Infrastructure.Domains[i].Networks[j].CloudInstances[:k]
-					Infrastructure.Domains[i].Networks[j].CloudInstances = Infrastructure.Domains[i].Networks[j].CloudInstances[(k + 1):]
+					tmp := Infrastructure.Domains[i].Networks[j].CloudInstances[(k + 1):]
+					Infrastructure.Domains[i].Networks[j].CloudInstances = Infrastructure.Domains[i].Networks[j].CloudInstances[:k]
 					Infrastructure.Domains[i].Networks[j].CloudInstances = append(Infrastructure.Domains[i].Networks[j].CloudInstances, tmp...)
 					return nil
 				}
@@ -1301,16 +1301,16 @@ func RemoveProjectMachineById(Infrastructure *model.Project, InstanceId string) 
 		for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
 			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].LocalMachines); k++ {
 				if Infrastructure.Domains[i].Networks[j].LocalMachines[k].Id == InstanceId {
-					tmp := Infrastructure.Domains[i].Networks[j].LocalMachines[:k]
-					Infrastructure.Domains[i].Networks[j].LocalMachines = Infrastructure.Domains[i].Networks[j].LocalMachines[(k + 1):]
+					tmp := Infrastructure.Domains[i].Networks[j].LocalMachines[(k + 1):]
+					Infrastructure.Domains[i].Networks[j].LocalMachines = Infrastructure.Domains[i].Networks[j].LocalMachines[:k]
 					Infrastructure.Domains[i].Networks[j].LocalMachines = append(Infrastructure.Domains[i].Networks[j].LocalMachines, tmp...)
 					return nil
 				}
 			}
 			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CloudMachines); k++ {
 				if Infrastructure.Domains[i].Networks[j].CloudMachines[k].Id == InstanceId {
-					tmp := Infrastructure.Domains[i].Networks[j].CloudMachines[:k]
-					Infrastructure.Domains[i].Networks[j].CloudMachines = Infrastructure.Domains[i].Networks[j].CloudMachines[(k + 1):]
+					tmp := Infrastructure.Domains[i].Networks[j].CloudMachines[(k + 1):]
+					Infrastructure.Domains[i].Networks[j].CloudMachines = Infrastructure.Domains[i].Networks[j].CloudMachines[:k]
 					Infrastructure.Domains[i].Networks[j].CloudMachines = append(Infrastructure.Domains[i].Networks[j].CloudMachines, tmp...)
 					return nil
 				}
