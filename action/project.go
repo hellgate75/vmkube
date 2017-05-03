@@ -1696,6 +1696,10 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 						log := response[2] + "\n" + response[3]
 						FixInfrastructureElementValue(&Infrastructure, instanceId, ipAddress, json, log)
 					}
+				} else if len(response) > 2 {
+					planId := response[0]
+					log := response[1] + "\n" + response[2]
+					FixInfrastructureIntallationLogs(&Infrastructure, planId, log)
 				}
 				fixInfraValue--
 			}

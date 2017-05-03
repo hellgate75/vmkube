@@ -75,7 +75,7 @@ func GetBoolean(input string) bool {
 func BoolToString(input bool) string {
 	if input {
 		return "yes"
-	} else  {
+	} else {
 		return "no"
 	}
 }
@@ -938,6 +938,35 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 
 var FixInfrastructureElementMutex sync.Mutex
 
+func FixInfrastructureIntallationLogs(Infrastructure *model.Infrastructure, planId string, log string) bool {
+	defer FixInfrastructureElementMutex.Unlock()
+	FixInfrastructureElementMutex.Lock()
+	if log != "" {
+		for i := 0; i < len(Infrastructure.Domains); i++ {
+			for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
+				for k := 0; k < len(Infrastructure.Domains[i].Networks[j].Installations); k++ {
+					if Infrastructure.Domains[i].Networks[j].Installations[k].Id == planId {
+						var logsInfo InfrastructureLogsInfo = InfrastructureLogsInfo{
+							Format: "",
+							Logs:   Infrastructure.Domains[i].Networks[j].Installations[k].Logs,
+						}
+						_ = logsInfo.ReadLogFiles()
+						logsInfo.Logs.LogLines = append(logsInfo.Logs.LogLines, strings.Split(log, "\n")...)
+						_ = logsInfo.SaveLogFile()
+						logsInfo.Logs.LogLines = make([]string, 0)
+						Infrastructure.Domains[i].Networks[j].Installations[k].Logs = logsInfo.Logs
+						if ! logsInfo.Exists() {
+							logsInfo.Write()
+						}
+						return true
+					}
+				}
+			}
+		}
+	}
+	return true
+}
+
 func FixInfrastructureElementValue(Infrastructure *model.Infrastructure, instanceId string, ipAddress string, json string, log string) bool {
 	defer FixInfrastructureElementMutex.Unlock()
 	FixInfrastructureElementMutex.Lock()
@@ -952,23 +981,46 @@ func FixInfrastructureElementValue(Infrastructure *model.Infrastructure, instanc
 						if strings.TrimSpace(json) != "" {
 							Infrastructure.Domains[i].Networks[j].LocalInstances[k].InspectJSON = strings.TrimSpace(json)
 						}
-						//if log != "" {
-						//	Infrastructure.Domains[i].Networks[j].LocalInstances[k]. = json
-						//}
+						//TODO: Implement log collection
+						if log != "" {
+							var logsInfo InfrastructureLogsInfo = InfrastructureLogsInfo{
+								Format: "",
+								Logs:   Infrastructure.Domains[i].Networks[j].LocalInstances[k].Logs,
+							}
+							_ = logsInfo.ReadLogFiles()
+							logsInfo.Logs.LogLines = append(logsInfo.Logs.LogLines, strings.Split(log, "\n")...)
+							_ = logsInfo.SaveLogFile()
+							logsInfo.Logs.LogLines = make([]string, 0)
+							Infrastructure.Domains[i].Networks[j].LocalInstances[k].Logs = logsInfo.Logs
+							if ! logsInfo.Exists() {
+								logsInfo.Write()
+							}
+						}
 						return true
 					}
 				}
 				for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CloudInstances); k++ {
 					if Infrastructure.Domains[i].Networks[j].CloudInstances[k].Id == instanceId {
 						if ipAddress != "" {
-							Infrastructure.Domains[i].Networks[j].LocalInstances[k].IPAddress = strings.TrimSpace(ipAddress)
+							Infrastructure.Domains[i].Networks[j].CloudInstances[k].IPAddress = strings.TrimSpace(ipAddress)
 						}
 						if json != "" {
-							Infrastructure.Domains[i].Networks[j].LocalInstances[k].InspectJSON = strings.TrimSpace(json)
+							Infrastructure.Domains[i].Networks[j].CloudInstances[k].InspectJSON = strings.TrimSpace(json)
 						}
-						//if log != "" {
-						//	Infrastructure.Domains[i].Networks[j].LocalInstances[k]. = json
-						//}
+						if log != "" {
+							var logsInfo InfrastructureLogsInfo = InfrastructureLogsInfo{
+								Format: "",
+								Logs:   Infrastructure.Domains[i].Networks[j].CloudInstances[k].Logs,
+							}
+							_ = logsInfo.ReadLogFiles()
+							logsInfo.Logs.LogLines = append(logsInfo.Logs.LogLines, strings.Split(log, "\n")...)
+							_ = logsInfo.SaveLogFile()
+							logsInfo.Logs.LogLines = make([]string, 0)
+							Infrastructure.Domains[i].Networks[j].CloudInstances[k].Logs = logsInfo.Logs
+							if ! logsInfo.Exists() {
+								logsInfo.Write()
+							}
+						}
 						return true
 					}
 				}
@@ -976,6 +1028,26 @@ func FixInfrastructureElementValue(Infrastructure *model.Infrastructure, instanc
 		}
 	}
 	return false
+}
+
+func ExtractInstallations(Infrastructure *model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool) []*model.Installation {
+	var installations []*model.Installation = make([]*model.Installation, 0)
+	for i := 0; i < len(Infrastructure.Domains); i++ {
+		for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
+			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].Installations); k++ {
+				match := false
+				if isCloud && Infrastructure.Domains[i].Networks[j].Installations[k].IsCloud  {
+					match = cloudInstance.Id == Infrastructure.Domains[i].Networks[j].Installations[k].InstanceId
+				} else if ! isCloud && ! Infrastructure.Domains[i].Networks[j].Installations[k].IsCloud  {
+					match = instance.Id == Infrastructure.Domains[i].Networks[j].Installations[k].InstanceId
+				}
+				if match {
+					installations = append(installations, &Infrastructure.Domains[i].Networks[j].Installations[k])
+				}
+			}
+		}
+	}
+	return installations
 }
 
 func DefineDestroyActivityFromCreateOne(activity tasks.ActivityCouple) tasks.ActivityCouple {

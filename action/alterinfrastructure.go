@@ -11,7 +11,40 @@ import (
 	"vmkube/vmio"
 )
 
-func DescribeInstance(instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState) error {
+func DescribeInstallation(installation *model.Installation, instanceName string, padding string) error {
+	utils.PrintlnImportant(fmt.Sprintf("%sInstallation : %s", padding, installation.Id))
+	utils.PrintlnImportant(fmt.Sprintf("%sInstance %s [Id: %s]", padding, instanceName, installation.InstanceId))
+	utils.PrintlnImportant(fmt.Sprintf("%sOn Cloud : %s", padding, BoolToString(installation.IsCloud)))
+	utils.PrintlnImportant(fmt.Sprintf("%sSuccess : %s", padding, BoolToString(installation.Success)))
+	utils.PrintlnImportant(fmt.Sprintf("%sErrors : %s", padding, BoolToString(installation.Errors)))
+	utils.PrintlnInfo(fmt.Sprintf("%sType : %s", padding, model.InstanceInstallationToString(installation.Type)))
+	utils.PrintlnInfo(fmt.Sprintf("%sEnvironment : %s", padding, model.InstanceEnvironmentToString(installation.Environment)))
+	utils.PrintlnInfo(fmt.Sprintf("%sRole : %s", padding, model.InstanceRoleToString(installation.Role)))
+	fmt.Printf("%sLast Execution : %d-%02d-%02d %02d:%02d:%02d\n", padding,
+		installation.LastExecution.Year(), installation.LastExecution.Month(), installation.LastExecution.Day(),
+		installation.LastExecution.Hour(), installation.LastExecution.Minute(), installation.LastExecution.Second())
+	utils.PrintlnInfo(fmt.Sprintf("%sLast Message : %s", padding, installation.LastMessage))
+
+	utils.PrintlnImportant(fmt.Sprintf("%sInstallation Logs : ", padding))
+	var logsInfo InfrastructureLogsInfo = InfrastructureLogsInfo{
+			Format: "",
+			Logs: installation.Logs,
+		}
+	err := logsInfo.ReadLogFiles()
+	if err == nil {
+		for _,line := range logsInfo.Logs.LogLines {
+			utils.PrintlnInfo(fmt.Sprintf("%s  %s", line, padding))
+		}
+		if len(logsInfo.Logs.LogLines) == 0 {
+			utils.PrintlnImportant(fmt.Sprintf("%s  No logs available", padding))
+		}
+	} else {
+		utils.PrintlnImportant(fmt.Sprintf("%s  Unable to read logs", padding))
+	}
+	return  nil
+}
+
+func DescribeInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState) error {
 	if isCloud {
 		utils.PrintlnImportant(fmt.Sprintf("Cloud Instance : %s [Id: %s]", cloudInstance.Name, cloudInstance.Id))
 		utils.PrintlnImportant(fmt.Sprintf("Status : %s", instanceState.String()))
@@ -93,7 +126,42 @@ func DescribeInstance(instance model.LocalInstance, cloudInstance model.CloudIns
 		if len(instance.Options) == 0 {
 			utils.PrintlnImportant("  Options not defined")
 		}
-		utils.PrintlnInfo(fmt.Sprintf("Instance Details : %s", instance.InspectJSON))
+		utils.PrintlnInfo(fmt.Sprintf("Instance Details : \n%s\n", instance.InspectJSON))
+		utils.PrintlnImportant("Instance Logs : ")
+		var logsInfo InfrastructureLogsInfo
+		var  instanceName string = ""
+		if isCloud {
+			logsInfo = InfrastructureLogsInfo{
+				Format: "",
+				Logs: cloudInstance.Logs,
+			}
+			instanceName = cloudInstance.Name
+		} else  {
+			logsInfo = InfrastructureLogsInfo{
+				Format: "",
+				Logs: instance.Logs,
+			}
+			instanceName = instance.Name
+		}
+		err := logsInfo.ReadLogFiles()
+		if err == nil {
+			for _,line := range logsInfo.Logs.LogLines {
+				utils.PrintlnInfo(fmt.Sprintf("  %s", line))
+			}
+			if len(logsInfo.Logs.LogLines) == 0 {
+				utils.PrintlnImportant("  No logs available")
+			}
+		} else {
+			utils.PrintlnImportant("  Unable to read logs")
+		}
+		utils.PrintlnImportant("Installations : ")
+		var  installations []*model.Installation  = ExtractInstallations(&infrastructure, instance, cloudInstance, isCloud)
+		for _,installation := range installations {
+			DescribeInstallation(installation, instanceName, "  ")
+		}
+		if len(installations) == 0 {
+			utils.PrintlnImportant("No installation for instance")
+		}
 	}
 	return nil
 }
@@ -102,7 +170,9 @@ func StartInstance(infrastructure model.Infrastructure, instance model.LocalInst
 	var exclusionIdList []string = make([]string, 0)
 	if isCloud {
 		if cloudInstance.Disabled {
-			return errors.New(fmt.Sprintf("Cloud Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] is disabled!!", cloudInstance.Name, cloudInstance.Id, infrastructure.Name, infrastructure.Id))
+			if cloudInstance.Disabled {
+				return errors.New(fmt.Sprintf("Cloud Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] is disabled!!", cloudInstance.Name, cloudInstance.Id, infrastructure.Name, infrastructure.Id))
+			}
 			if instanceState == procedures.Machine_State_Running {
 				return errors.New(fmt.Sprintf("Cloud Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] already started!!", cloudInstance.Name, cloudInstance.Id, infrastructure.Name, infrastructure.Id))
 			}
@@ -199,7 +269,7 @@ func StopInstance(infrastructure model.Infrastructure, instance model.LocalInsta
 }
 
 func DisableInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState, descriptor model.ProjectsDescriptor) error {
-	var  err error
+	var err error
 
 	if isCloud {
 		if cloudInstance.Disabled {
@@ -281,10 +351,10 @@ func DisableInstance(infrastructure model.Infrastructure, instance model.LocalIn
 }
 
 func EnableInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool) error {
-	var  err error
+	var err error
 
 	if isCloud {
-		if ! cloudInstance.Disabled {
+		if !cloudInstance.Disabled {
 			return errors.New(fmt.Sprintf("Cloud Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] already enabled!!", cloudInstance.Name, cloudInstance.Id, infrastructure.Name, infrastructure.Id))
 		}
 		utils.PrintlnWarning(fmt.Sprintf("Enabling Cloud Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s]", cloudInstance.Name, cloudInstance.Id, infrastructure.Name, infrastructure.Id))
@@ -298,7 +368,7 @@ func EnableInstance(infrastructure model.Infrastructure, instance model.LocalIns
 			}
 		}
 	} else {
-		if ! instance.Disabled {
+		if !instance.Disabled {
 			return errors.New(fmt.Sprintf("Local Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s] already enabled!!", instance.Name, instance.Id, infrastructure.Name, infrastructure.Id))
 		}
 		utils.PrintlnWarning(fmt.Sprintf("Enabling Local Instance '%s' [Id: %s] part of Infrastructure : %s [Id: %s]", instance.Name, instance.Id, infrastructure.Name, infrastructure.Id))

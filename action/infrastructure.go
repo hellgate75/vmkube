@@ -187,7 +187,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 			}
 			return response, errors.New("Unable to execute task")
 		}
-		err = DescribeInstance(instance, cloudInstance, IsCloud, instanceState)
+		err = DescribeInstance(infrastructure, instance, cloudInstance, IsCloud, instanceState)
 		break
 	case Start:
 		var instanceState procedures.MachineState
@@ -1087,6 +1087,10 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 						log := response[2] + response[3]
 						FixInfrastructureElementValue(&infrastructure, instanceId, ipAddress, json, log)
 					}
+				} else if len(response) > 2 {
+					planId := response[0]
+					log := response[1] + "\n" + response[2]
+					FixInfrastructureIntallationLogs(&infrastructure, planId, log)
 				}
 				fixInfraValue--
 			}

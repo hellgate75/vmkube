@@ -42,14 +42,21 @@ func (info *InfrastructureLogsInfo) ReadLogFiles() error {
 
 		UnlockLogFile(info.Logs, i)
 
+		//if err != nil {
+		//	fmt.Printf("%s\n",err)
+		//	return err
+		//}
+
+		//bytes, err = base64.StdEncoding.DecodeString(string(bytes))
 		if err == nil {
-			return err
+			lines := strings.Split(string(bytes), "\n")
+			info.Logs.LogLines = append(info.Logs.LogLines, lines...)
+			i++
+			fileName = baseFolder + string(os.PathSeparator) + ".project-" + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + "-" + strconv.Itoa(i) + ".log"
+			_, err = os.Stat(fileName)
+		} else {
+			break
 		}
-		lines := strings.Split(string(bytes), "\n")
-		info.Logs.LogLines = append(info.Logs.LogLines, lines...)
-		i++
-		fileName = baseFolder + string(os.PathSeparator) + ".project-" + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + "-" + strconv.Itoa(i) + ".log"
-		_, err = os.Stat(fileName)
 	}
 	return nil
 }
@@ -69,10 +76,19 @@ func (info *InfrastructureLogsInfo) SaveLogFile() error {
 		var sliceStart int = i * MAX_LINES_IN_LOG
 		var sliceEnd int = sliceStart + MAX_LINES_IN_LOG
 		for sliceStart < lineLength {
-			data := []byte(strings.Join(info.Logs.LogLines[sliceStart:sliceEnd], "\n"))
 			fileName := baseFolder + string(os.PathSeparator) + ".project-" + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + "-" + strconv.Itoa(i) + ".log"
 			_, err = os.Stat(fileName)
-			if err != nil || lineLength-sliceStart <= MAX_LINES_IN_LOG {
+			if err != nil && lineLength-sliceStart <= MAX_LINES_IN_LOG {
+				data := []byte{}
+				//lines := strings.Join(info.Logs.LogLines[sliceStart:sliceEnd], "\n")
+				lines := info.Logs.LogLines[sliceStart:sliceEnd]
+				for _,line := range lines {
+					// Prevent empty lines
+					if strings.TrimSpace(line) != "" {
+						//lineB64 := base64.StdEncoding.EncodeToString([]byte(line))
+						data = append(data, []byte(line)...)
+					}
+				}
 
 				ifaceLog := IFaceLogStorage{
 					InfraId:   info.Logs.InfraId,
@@ -83,9 +99,9 @@ func (info *InfrastructureLogsInfo) SaveLogFile() error {
 
 				LockLogFile(info.Logs, i)
 
-				if err == nil {
-					model.DeleteIfExists(fileName)
-				}
+				//if err == nil {
+				//	model.DeleteIfExists(fileName)
+				//}
 				err = ioutil.WriteFile(fileName, data, 0777)
 
 				UnlockLogFile(info.Logs, i)
@@ -144,13 +160,26 @@ func (info *InfrastructureLogsInfo) DeleteLogFile() error {
 	return nil
 }
 
+func (info *InfrastructureLogsInfo) Exists() bool {
+	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) + ".data"
+	err := model.MakeFolderIfNotExists(baseFolder)
+	if err != nil {
+		return false
+	}
+	fileName := baseFolder + string(os.PathSeparator) + "." + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + ".infralogs"
+	if _, err = os.Stat(fileName); err != nil {
+		return  false
+	}
+	return  true
+}
+
 func (info *InfrastructureLogsInfo) Read() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) + ".data"
 	err := model.MakeFolderIfNotExists(baseFolder)
 	if err != nil {
 		return err
 	}
-	fileName := baseFolder + string(os.PathSeparator) + "." + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + ".actionindex"
+	fileName := baseFolder + string(os.PathSeparator) + "." + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + ".infralogs"
 	if _, err = os.Stat(fileName); err != nil {
 		info.Logs = model.LogStorage{
 			InfraId:   info.Logs.InfraId,
