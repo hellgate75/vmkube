@@ -51,12 +51,10 @@ Machine Providers:
 
 See [Docker-Machine Drivers](https://docs.docker.com/machine/drivers/)
 
-## Pre-requisites
-
 To compile and run this project you have to check availability of following software:
 * [Go](https://golang.org/dl/) (tested with version 1.8)
 * [Docker](https://www.docker.com/get-docker) and [Docker-Machine](https://docs.docker.com/machine/install-machine/)
-* Test and Utility GOLang packages ([UUID Package](https://github.com/satori/go.uuid) and [Unit Test](https://github.com/stretchr/testify))
+* Test and Utility GOLang packages ([UUID Package](https://github.com/satori/go.uuid), [Unit Test](https://github.com/stretchr/testify)) and [GO SSH Terminal](golang.org/x/crypto/ssh/terminal)
 
 
 ## Architecture
@@ -70,11 +68,17 @@ To compile and run this project you have to check availability of following soft
 
 Go in you `GOPATH\src` folder and type :
 ```sh
+ go get github.com/stretchr/testify
+ go get github.com/satori/go.uuid
+ go get golang.org/x/crypto/ssh/terminal
  git clone https://github.com/hellgate75/vmkube.git
 
 ```
 or simply :
 ```sh
+ go get github.com/stretchr/testify
+ go get github.com/satori/go.uuid
+ go get golang.org/x/crypto/ssh/terminal
  go get github.com/hellgate75/vmkube
 ```
 
