@@ -57,7 +57,7 @@ func (pool *SchedulerPool) Start(callback func()) {
 						pool.State.Pool = append(pool.State.Pool, Task)
 						pool.State.Pool[len(pool.State.Pool)-1].Init(&state)
 						go pool.State.Pool[len(pool.State.Pool)-1].Execute()
-						time.Sleep(1000 * time.Millisecond)
+						time.Sleep(1500 * time.Millisecond)
 					}
 					// Look for completed jobs to remove from Pool
 					var i int = 0
@@ -75,7 +75,7 @@ func (pool *SchedulerPool) Start(callback func()) {
 								pool.State.Pool = pool.State.Pool[:i]
 							}
 							pool.WG.Done()
-							time.Sleep(1 * time.Second)
+							//time.Sleep(1 * time.Second)
 						} else {
 							i++
 						}

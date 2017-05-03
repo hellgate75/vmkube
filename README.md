@@ -106,6 +106,7 @@ install: install the module in go libs
 Alternatively you can execute following commands :
  * `go get github.com/stretchr/testify` to download unit test external package
  * `go get github.com/satori/go.uuid` to download UUID management external package
+ * `go get golang.org/x/crypto/ssh/terminal` to download SSH terminal external package
  * `go build .` to build the project
  * `go test` to run unit and integration test on the project
  * `go run main.go` to execute the project

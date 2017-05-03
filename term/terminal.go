@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"runtime"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -88,6 +87,13 @@ type ScreenSize struct {
 	Col    uint16
 	Xpixel uint16
 	Ypixel uint16
+}
+
+type winsize struct {
+	rows    uint16
+	cols    uint16
+	xpixels uint16
+	ypixels uint16
 }
 
 type ScreenManager struct {
@@ -266,35 +272,47 @@ func (Screen *ScreenManager) Width() int {
 		return -1
 	}
 
-	return int(ws.Col)
+	return int(ws.cols)
 }
 
-func (Screen *ScreenManager) getScreenSize() (*ScreenSize, error) {
-	ws := new(ScreenSize)
-
-	var _TIOCGWINSZ int64
-
-	switch runtime.GOOS {
-	case "linux":
-		_TIOCGWINSZ = 0x5413
-	case "darwin":
-		_TIOCGWINSZ = 1074295912
-	case "windows":
-	default:
-		_TIOCGWINSZ = syscall.TIOCGWINSZ
-	}
-
-	r1, _, errno := syscall.Syscall(syscall.SYS_IOCTL,
-		uintptr(syscall.Stdin),
-		uintptr(_TIOCGWINSZ),
-		uintptr(unsafe.Pointer(ws)),
-	)
-
+func (Screen *ScreenManager) getTermSize(fd uintptr) (*winsize, error) {
+	var sz winsize
+	r1, _, errNo := syscall.Syscall(syscall.SYS_IOCTL,
+		fd, uintptr(syscall.TIOCGWINSZ), uintptr(unsafe.Pointer(&sz)))
 	if int(r1) == -1 {
-		fmt.Println("Error:", os.NewSyscallError("GetWinsize", errno))
-		return nil, os.NewSyscallError("GetWinsize", errno)
+		fmt.Println("Error:", os.NewSyscallError("GetWinsize", errNo))
+		return nil, os.NewSyscallError("GetWinsize", errNo)
 	}
-	return ws, nil
+	return &sz, nil
+}
+
+func (Screen *ScreenManager) getScreenSize() (*winsize, error) {
+	//ws := new(ScreenSize)
+	//
+	//var _TIOCGWINSZ int64
+	//
+	//switch runtime.GOOS {
+	//case "linux":
+	//	_TIOCGWINSZ = 0x5413
+	//case "darwin":
+	//	_TIOCGWINSZ = 1074295912
+	//case "windows":
+	//default:
+	//	_TIOCGWINSZ = syscall.TIOCGWINSZ
+	//}
+	//
+	//r1, _, errno := syscall.Syscall(syscall.SYS_IOCTL,
+	//	uintptr(syscall.Stdin),
+	//	uintptr(_TIOCGWINSZ),
+	//	uintptr(unsafe.Pointer(ws)),
+	//)
+	//
+	//if int(r1) == -1 {
+	//	fmt.Println("Error:", os.NewSyscallError("GetWinsize", errno))
+	//	return nil, os.NewSyscallError("GetWinsize", errno)
+	//}
+	//return ws, nil
+	return Screen.getTermSize(os.Stdout.Fd())
 }
 
 // Get console height
@@ -303,7 +321,7 @@ func (Screen *ScreenManager) Height() int {
 	if err != nil {
 		return -1
 	}
-	return int(ws.Row)
+	return int(ws.rows)
 }
 
 // Get current height. Line count in Screen buffer.
