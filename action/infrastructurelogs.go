@@ -2,7 +2,6 @@ package action
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -24,38 +23,31 @@ func (info *InfrastructureLogsInfo) ReadLogFiles() error {
 		return err
 	}
 
-	var i int = 0
-
-	fileName := baseFolder + string(os.PathSeparator) + ".project-" + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + "-" + strconv.Itoa(i) + ".log"
-	_, err = os.Stat(fileName)
-	for err == nil {
+	logFileName := baseFolder + string(os.PathSeparator) + ".project-" + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + ".log"
+	_, err = os.Stat(logFileName)
+	if err == nil {
 		ifaceLog := IFaceLogStorage{
 			InfraId:   info.Logs.InfraId,
 			ProjectId: info.Logs.ProjectId,
 			ElementId: info.Logs.ProjectId,
 		}
-		ifaceLog.WaitForLogFileUnlock(i)
+		ifaceLog.WaitForLogFileUnlock(0)
 
-		LockLogFile(info.Logs, i)
+		LockLogFile(info.Logs, 0)
 
-		bytes, err := ioutil.ReadFile(fileName)
+		logs, err := zipReadMultiPart(logFileName)
+		
+		if err != nil {
+			return err
+		}
 
-		UnlockLogFile(info.Logs, i)
-
-		//if err != nil {
-		//	fmt.Printf("%s\n",err)
-		//	return err
-		//}
-
-		//bytes, err = base64.StdEncoding.DecodeString(string(bytes))
-		if err == nil {
+		UnlockLogFile(info.Logs, 0)
+		
+		
+		for _,log := range logs {
+			bytes := log.Body
 			lines := strings.Split(string(bytes), "\n")
 			info.Logs.LogLines = append(info.Logs.LogLines, lines...)
-			i++
-			fileName = baseFolder + string(os.PathSeparator) + ".project-" + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + "-" + strconv.Itoa(i) + ".log"
-			_, err = os.Stat(fileName)
-		} else {
-			break
 		}
 	}
 	return nil
@@ -70,45 +62,29 @@ func (info *InfrastructureLogsInfo) SaveLogFile() error {
 	var lineLength int = len(info.Logs.LogLines)
 
 	var split bool = (lineLength > MAX_LINES_IN_LOG)
-
+	
+	logFileName := baseFolder + string(os.PathSeparator) + ".project-" + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + ".log"
+	
+	var logs []CompressorData = make([]CompressorData, 0)
 	if split {
 		var i int = 0
 		var sliceStart int = i * MAX_LINES_IN_LOG
 		var sliceEnd int = sliceStart + MAX_LINES_IN_LOG
 		for sliceStart < lineLength {
-			fileName := baseFolder + string(os.PathSeparator) + ".project-" + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + "-" + strconv.Itoa(i) + ".log"
-			_, err = os.Stat(fileName)
-			if err != nil && lineLength-sliceStart <= MAX_LINES_IN_LOG {
+			if lineLength-sliceStart <= MAX_LINES_IN_LOG {
 				data := []byte{}
-				//lines := strings.Join(info.Logs.LogLines[sliceStart:sliceEnd], "\n")
 				lines := info.Logs.LogLines[sliceStart:sliceEnd]
 				for _,line := range lines {
 					// Prevent empty lines
 					if strings.TrimSpace(line) != "" {
-						//lineB64 := base64.StdEncoding.EncodeToString([]byte(line))
+						line += "\n"
 						data = append(data, []byte(line)...)
 					}
 				}
-
-				ifaceLog := IFaceLogStorage{
-					InfraId:   info.Logs.InfraId,
-					ProjectId: info.Logs.ProjectId,
-					ElementId: info.Logs.ProjectId,
-				}
-				ifaceLog.WaitForLogFileUnlock(i)
-
-				LockLogFile(info.Logs, i)
-
-				//if err == nil {
-				//	model.DeleteIfExists(fileName)
-				//}
-				err = ioutil.WriteFile(fileName, data, 0777)
-
-				UnlockLogFile(info.Logs, i)
-
-				if err != nil {
-					return err
-				}
+				logs = append(logs, CompressorData{
+					Descriptor: strconv.Itoa(i),
+					Body: data,
+				})
 			}
 			i++
 			sliceStart = i * MAX_LINES_IN_LOG
@@ -116,12 +92,33 @@ func (info *InfrastructureLogsInfo) SaveLogFile() error {
 		}
 
 	} else {
-		fileName := baseFolder + string(os.PathSeparator) + ".project-" + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + "-0.log"
-		data := []byte(strings.Join(info.Logs.LogLines, "\n"))
-		err = ioutil.WriteFile(fileName, data, 0777)
+		data := []byte{}
+		lines := info.Logs.LogLines
+		for _,line := range lines {
+			// Prevent empty lines
+			if strings.TrimSpace(line) != "" {
+				line += "\n"
+				data = append(data, []byte(line)...)
+			}
+		}
+		logs = append(logs, CompressorData{
+			Descriptor: "0",
+			Body: data,
+		})
+	}
+	ifaceLog := IFaceLogStorage{
+		InfraId:   info.Logs.InfraId,
+		ProjectId: info.Logs.ProjectId,
+		ElementId: info.Logs.ProjectId,
+	}
+	ifaceLog.WaitForLogFileUnlock(0)
+	LockLogFile(info.Logs, 0)
+	err = zipWriteMultiPart(logFileName, logs)
+	if err != nil {
 		return err
 	}
-	return nil
+	UnlockLogFile(info.Logs, 0)
+	return err
 }
 
 func (info *InfrastructureLogsInfo) DeleteLogFile() error {
@@ -130,32 +127,24 @@ func (info *InfrastructureLogsInfo) DeleteLogFile() error {
 	if err != nil {
 		return err
 	}
-	var i int = 0
-	var errorCount int = 0
-
-	fileName := baseFolder + string(os.PathSeparator) + ".project-" + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + "-" + strconv.Itoa(i) + ".log"
-	_, err = os.Stat(fileName)
-	for err == nil || errorCount < 5 {
-		if err == nil {
-			ifaceLog := IFaceLogStorage{
-				InfraId:   info.Logs.InfraId,
-				ProjectId: info.Logs.ProjectId,
-				ElementId: info.Logs.ProjectId,
-			}
-			ifaceLog.WaitForLogFileUnlock(i)
-
-			LockLogFile(info.Logs, i)
-
-			model.DeleteIfExists(fileName)
-
-			UnlockLogFile(info.Logs, i)
-
-		} else {
-			errorCount++
+	logFileName := baseFolder + string(os.PathSeparator) + ".project-" + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + ".log"
+	_, err = os.Stat(logFileName)
+	if err == nil {
+		ifaceLog := IFaceLogStorage{
+			InfraId:   info.Logs.InfraId,
+			ProjectId: info.Logs.ProjectId,
+			ElementId: info.Logs.ProjectId,
 		}
-		i++
-		fileName = baseFolder + string(os.PathSeparator) + ".project-" + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + "-" + strconv.Itoa(i) + ".log"
-		_, err = os.Stat(fileName)
+		ifaceLog.WaitForLogFileUnlock(0)
+		if err != nil {
+			return err
+		}
+		LockLogFile(info.Logs, 0)
+		
+		model.DeleteIfExists(logFileName)
+		
+		UnlockLogFile(info.Logs, 0)
+		
 	}
 	return nil
 }
@@ -230,7 +219,6 @@ func (info *InfrastructureLogsInfo) Write() error {
 	if _, err := os.Stat(fileName); err == nil {
 		model.DeleteIfExists(fileName)
 	}
-
 	err := emptyLog.Save(fileName)
 
 	UnlockLog(info.Logs)

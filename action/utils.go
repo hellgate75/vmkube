@@ -18,7 +18,6 @@ import (
 	"vmkube/term"
 	"vmkube/utils"
 	"vmkube/vmio"
-	"bytes"
 	"archive/zip"
 	"io"
 	"compress/flate"
@@ -1349,6 +1348,7 @@ func FindInfrastructureCloudInstance(Infrastructure model.Infrastructure, Instan
 }
 
 func RemoveInfrastructureInstanceById(Infrastructure *model.Infrastructure, InstanceId string) error {
+	var found bool = false
 	for i := 0; i < len(Infrastructure.Domains); i++ {
 		for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
 			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].LocalInstances); k++ {
@@ -1356,7 +1356,8 @@ func RemoveInfrastructureInstanceById(Infrastructure *model.Infrastructure, Inst
 					tmp := Infrastructure.Domains[i].Networks[j].LocalInstances[(k + 1):]
 					Infrastructure.Domains[i].Networks[j].LocalInstances = Infrastructure.Domains[i].Networks[j].LocalInstances[:k]
 					Infrastructure.Domains[i].Networks[j].LocalInstances = append(Infrastructure.Domains[i].Networks[j].LocalInstances, tmp...)
-					return nil
+					found = true
+					break
 				}
 			}
 			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CloudInstances); k++ {
@@ -1364,15 +1365,31 @@ func RemoveInfrastructureInstanceById(Infrastructure *model.Infrastructure, Inst
 					tmp := Infrastructure.Domains[i].Networks[j].CloudInstances[(k + 1):]
 					Infrastructure.Domains[i].Networks[j].CloudInstances = Infrastructure.Domains[i].Networks[j].CloudInstances[:k]
 					Infrastructure.Domains[i].Networks[j].CloudInstances = append(Infrastructure.Domains[i].Networks[j].CloudInstances, tmp...)
-					return nil
+					found = true
+					break
+				}
+			}
+			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].Installations); k++ {
+				if Infrastructure.Domains[i].Networks[j].Installations[k].InstanceId == InstanceId {
+					err := DeleteInfrastructureLogs(Infrastructure.Domains[i].Networks[j].Installations[k].Logs)
+					if err != nil {
+						return err
+					}
+					tmp := Infrastructure.Domains[i].Networks[j].Installations[(k + 1):]
+					Infrastructure.Domains[i].Networks[j].Installations = Infrastructure.Domains[i].Networks[j].Installations[:k]
+					Infrastructure.Domains[i].Networks[j].Installations = append(Infrastructure.Domains[i].Networks[j].Installations, tmp...)
 				}
 			}
 		}
+	}
+	if found {
+		return nil
 	}
 	return errors.New(fmt.Sprintf("Instance not Found by UID : %s", InstanceId))
 }
 
 func RemoveProjectMachineById(Infrastructure *model.Project, InstanceId string) error {
+	var found bool = false
 	for i := 0; i < len(Infrastructure.Domains); i++ {
 		for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
 			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].LocalMachines); k++ {
@@ -1380,7 +1397,8 @@ func RemoveProjectMachineById(Infrastructure *model.Project, InstanceId string) 
 					tmp := Infrastructure.Domains[i].Networks[j].LocalMachines[(k + 1):]
 					Infrastructure.Domains[i].Networks[j].LocalMachines = Infrastructure.Domains[i].Networks[j].LocalMachines[:k]
 					Infrastructure.Domains[i].Networks[j].LocalMachines = append(Infrastructure.Domains[i].Networks[j].LocalMachines, tmp...)
-					return nil
+					found = true
+					break
 				}
 			}
 			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].CloudMachines); k++ {
@@ -1388,10 +1406,21 @@ func RemoveProjectMachineById(Infrastructure *model.Project, InstanceId string) 
 					tmp := Infrastructure.Domains[i].Networks[j].CloudMachines[(k + 1):]
 					Infrastructure.Domains[i].Networks[j].CloudMachines = Infrastructure.Domains[i].Networks[j].CloudMachines[:k]
 					Infrastructure.Domains[i].Networks[j].CloudMachines = append(Infrastructure.Domains[i].Networks[j].CloudMachines, tmp...)
-					return nil
+					found = true
+					break
+				}
+			}
+			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].Installations); k++ {
+				if Infrastructure.Domains[i].Networks[j].Installations[k].MachineId == InstanceId {
+					tmp := Infrastructure.Domains[i].Networks[j].Installations[(k + 1):]
+					Infrastructure.Domains[i].Networks[j].Installations = Infrastructure.Domains[i].Networks[j].Installations[:k]
+					Infrastructure.Domains[i].Networks[j].Installations = append(Infrastructure.Domains[i].Networks[j].Installations, tmp...)
 				}
 			}
 		}
+	}
+	if found {
+		return nil
 	}
 	return errors.New(fmt.Sprintf("Machine not Found by UID : %s", InstanceId))
 }
@@ -1401,21 +1430,28 @@ type CompressorData struct {
 	Body						[]byte
 }
 
-func zipBytesWrite(fileName string, data []CompressorData) error {
-	//TODO: Test zip writer
-	buf := new(bytes.Buffer)
-
+func zipWriteMultiPart(fileName string, data []CompressorData) error {
+	zipFile, err := os.Create(fileName)
+	defer zipFile.Close()
+	if err != nil {
+		return err
+	}
+	err = os.Chmod(fileName, 0666)
+	if err != nil {
+		return err
+	}
 	// Create a new zip archive.
-	w := zip.NewWriter(buf)
+	w := zip.NewWriter(zipFile)
 	defer w.Close()
-	w.CreateHeader(createZipHeader(fileName))
 	// Register a custom Deflate compressor.
 	w.RegisterCompressor(zip.Deflate, func(out io.Writer) (io.WriteCloser, error) {
 		return flate.NewWriter(out, flate.BestCompression)
 	})
 
 	for _, file := range data {
-		f, err := w.Create(file.Descriptor)
+		f, err := w.CreateHeader(createZipHeader(file.Descriptor))
+		
+		//f, err := w.Create(file.Descriptor)
 		if err != nil {
 			return  err
 		}
@@ -1423,6 +1459,10 @@ func zipBytesWrite(fileName string, data []CompressorData) error {
 		if err != nil {
 			return  err
 		}
+	}
+	err = w.Flush()
+	if err != nil {
+		return  err
 	}
 	return nil
 }
@@ -1435,8 +1475,7 @@ func createZipHeader(name string) *zip.FileHeader {
 	}
 }
 
-func zipBytesRead(fileName string) ([]CompressorData, error) {
-	//TODO: Test zip reader
+func zipReadMultiPart(fileName string) ([]CompressorData, error) {
 	var unzippedData []CompressorData = make([]CompressorData, 0)
 	r, err := zip.OpenReader(fileName)
 	defer r.Close()
@@ -1454,9 +1493,11 @@ func zipBytesRead(fileName string) ([]CompressorData, error) {
 		for num > 0 {
 			blockSize := 512 * 1024 // 512kb
 			buf := make([]byte, blockSize)
-			num, err := rc.Read(buf)
-			if err==nil && num > 0 {
+			num, err = rc.Read(buf)
+			if (err==nil || err==io.EOF) && num > 0 {
 				bodyData = append(bodyData, buf[:num]...)
+			} else {
+				break
 			}
 		}
 		rc.Close()
@@ -1467,4 +1508,13 @@ func zipBytesRead(fileName string) ([]CompressorData, error) {
 		unzippedData = append(unzippedData, data)
 	}
 	return unzippedData, nil
+}
+
+func zipReadNumParts(fileName string) (int, error) {
+	r, err := zip.OpenReader(fileName)
+	defer r.Close()
+	if err != nil {
+		return  0, err
+	}
+	return len(r.File), nil
 }

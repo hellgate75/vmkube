@@ -493,13 +493,16 @@ func DestroyInstance(infrastructure model.Infrastructure, instance model.LocalIn
 	var exclusionIdList []string = make([]string, 0)
 	var actionCouples []tasks.ActivityCouple = make([]tasks.ActivityCouple, 0)
 	var machineId, instanceId string
+	var instanceLogs model.LogStorage
 	if isCloud {
 		machineId = cloudInstance.MachineId
 		instanceId = cloudInstance.Id
+		instanceLogs = cloudInstance.Logs
 		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{cloudInstance.Id})
 	} else {
 		machineId = instance.MachineId
 		instanceId = instance.Id
+		instanceLogs = instance.Logs
 		exclusionIdList = tasks.GetExclusionListExceptInstanceList(infrastructure, []string{instance.Id})
 	}
 
@@ -537,7 +540,14 @@ func DestroyInstance(infrastructure model.Infrastructure, instance model.LocalIn
 	if len(errorsList) > 0 {
 		return errorsList[0]
 	}
-
+	
+	err = DeleteInfrastructureLogs(instanceLogs)
+	if err != nil {
+		return err
+	}
+	
+	
+			
 	utils.PrintlnWarning(fmt.Sprintf("Overwriting Project : %s [Id: %s]", project.Name, project.Id))
 
 	err = vmio.SaveProject(project)
