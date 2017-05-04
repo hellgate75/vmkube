@@ -18,6 +18,10 @@ import (
 	"vmkube/term"
 	"vmkube/utils"
 	"vmkube/vmio"
+	"bytes"
+	"archive/zip"
+	"io"
+	"compress/flate"
 )
 
 func ParseCommandArguments(args []string) (*CmdArguments, error) {
@@ -1390,4 +1394,77 @@ func RemoveProjectMachineById(Infrastructure *model.Project, InstanceId string) 
 		}
 	}
 	return errors.New(fmt.Sprintf("Machine not Found by UID : %s", InstanceId))
+}
+
+type CompressorData struct {
+	Descriptor			string
+	Body						[]byte
+}
+
+func zipBytesWrite(fileName string, data []CompressorData) error {
+	//TODO: Test zip writer
+	buf := new(bytes.Buffer)
+
+	// Create a new zip archive.
+	w := zip.NewWriter(buf)
+	defer w.Close()
+	w.CreateHeader(createZipHeader(fileName))
+	// Register a custom Deflate compressor.
+	w.RegisterCompressor(zip.Deflate, func(out io.Writer) (io.WriteCloser, error) {
+		return flate.NewWriter(out, flate.BestCompression)
+	})
+
+	for _, file := range data {
+		f, err := w.Create(file.Descriptor)
+		if err != nil {
+			return  err
+		}
+		_, err = f.Write(file.Body)
+		if err != nil {
+			return  err
+		}
+	}
+	return nil
+}
+
+func createZipHeader(name string) *zip.FileHeader {
+	return &zip.FileHeader{
+		Name:   name,
+		Flags:  1 << 11, // use utf8 encoding the file Name
+		Method: zip.Deflate,
+	}
+}
+
+func zipBytesRead(fileName string) ([]CompressorData, error) {
+	//TODO: Test zip reader
+	var unzippedData []CompressorData = make([]CompressorData, 0)
+	r, err := zip.OpenReader(fileName)
+	defer r.Close()
+	if err != nil {
+		return  unzippedData, err
+	}
+	for _, f := range r.File {
+		var bodyData []byte = make([]byte, 0)
+		rc, err := f.Open()
+		if err != nil {
+			rc.Close()
+			return  unzippedData, err
+		}
+		var num int = 1
+		for num > 0 {
+			blockSize := 512 * 1024 // 512kb
+			buf := make([]byte, blockSize)
+			num, err := rc.Read(buf)
+			if err==nil && num > 0 {
+				bodyData = append(bodyData, buf[:num]...)
+			}
+		}
+		rc.Close()
+		data := CompressorData{
+			Descriptor: f.Name,
+			Body: bodyData,
+		}
+		unzippedData = append(unzippedData, data)
+	}
+	return unzippedData, nil
 }
