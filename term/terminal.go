@@ -62,6 +62,12 @@ const MOVE_CURSOR_BACKWARD_COLUMNS = "\033[%dD"
 // Apply bold effect to string
 const APPLY_BOLD_EFFECT = "\033[1m%s\033[0m"
 
+// Hide cursor on screen
+const HIDE_CURSOR_COMMAND = "\033[?25l"
+
+// Show Cursor on Screen
+const SHOW_CURSOR_COMMAND = "\033[?25h"
+
 // List of possible colors
 const (
 	BLACK = iota
@@ -363,12 +369,12 @@ func (Screen *ScreenManager) Println(a ...interface{}) {
 var cursorHidden bool = false
 
 func (Screen *ScreenManager) HideCursor() {
-	Screen.OutStream.WriteString("\033[?25l")
+	Screen.OutStream.WriteString(HIDE_CURSOR_COMMAND)
 	cursorHidden = true
 }
 
 func (Screen *ScreenManager) ShowCursor() {
-	Screen.OutStream.WriteString("\033[?25h")
+	Screen.OutStream.WriteString(SHOW_CURSOR_COMMAND)
 	cursorHidden = false
 }
 

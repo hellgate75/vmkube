@@ -28,6 +28,15 @@ type KeyValueElement struct {
 	Actions int
 }
 
+
+type ProgressBarData struct {
+	Active					bool
+	MaxValues				int
+	BarLen					int
+	AddListener			chan int
+	failureChannel	chan bool
+}
+
 type KeyValueScreenManager struct {
 	Elements      []KeyValueElement
 	CommChannel   chan KeyValueElement
@@ -40,6 +49,7 @@ type KeyValueScreenManager struct {
 	Separator     string
 	BoldValue     bool
 	inited        bool
+	Progress   		*ProgressBarData
 }
 
 func (screenData *KeyValueScreenManager) getElementScreenColor(elem KeyValueElement) int {
@@ -67,6 +77,9 @@ var mutex sync.Mutex
 
 func (screenData *KeyValueScreenManager) drawGrid() {
 	Screen.Clear() // Clear current screen
+	if screenData.Progress != nil {
+		//Screen.ApplyText(Screen.ProgressBar())
+	}
 	if screenData.TextLen == 0 {
 		for _, elem := range screenData.Elements {
 			if len(elem.Name) > screenData.TextLen {
