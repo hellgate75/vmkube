@@ -628,6 +628,7 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 	}
 	pool.Init()
 	var jobIds []string = make([]string, 0)
+	var globalTaskCount int  = 0
 	for i := 0; i < jobsArrayLen; i++ {
 		var jobId = NewUUIDString()
 		jobIds = append(jobIds, jobId)
@@ -650,6 +651,7 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 			Actions: len(actionGroups[i].Activities),
 		}
 		termElements = append(termElements, termElem)
+		globalTaskCount += len(actionGroups[i].Activities)
 	}
 
 	go pool.Start(func() {
@@ -689,19 +691,45 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 		var mutex sync.Mutex
 		var resultsSeparator string = " status: "
 		var screenManager term.KeyValueScreenManager
+		var progressBar term.ProgressBar
+		var progressBarIncreaseChannel chan int = make(chan int)
+		var progressBarFailureChannel chan bool = make(chan bool)
 		if !utils.NO_COLORS {
 			screenManager = term.KeyValueScreenManager{
 				Elements:      termElements,
 				MessageMaxLen: 45,
 				Separator:     resultsSeparator,
 				OffsetCols:    0,
-				OffsetRows:    0,
+				OffsetRows:    1,
 				TextLen:       maxJobNameLen,
 				BoldValue:     false,
 			}
 			screenManager.Init()
 			screenManager.Start()
 			defer screenManager.Stop(false)
+			var Offset int = len(termElements) + 2
+			//screenHeight := term.Screen.Height()
+			//rows := len(termElements)
+			//if rows > screenHeight {
+			//	Offset +=  screenHeight - rows
+			//}
+			progressBar = term.ProgressBar{
+				MaxValues: globalTaskCount,
+				BarSteps: 50,
+				Current: 0,
+				ScreenRow: 0,
+				PostReset: true,
+				ScreenCol: 0,
+				ResetRow: Offset,
+				ResetCol: 0,
+				Prefix: "Overall Progress :",
+				HasCallBack: true,
+				FinalCallBack: func() {
+					term.Screen.MoveCursor(0, Offset)
+				},
+			}
+			progressBar.Start(progressBarIncreaseChannel, progressBarFailureChannel)
+			defer progressBar.Stop()
 		}
 		var pending int = jobsArrayLen
 		var answerScreenIds []string = make([]string, 0)
@@ -837,6 +865,27 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 										keyTerm.Value = term.StrPad(tasks.ConvertSubActivityTaskInString(machineOpsJob.Activity.Task)+"..."+term.Screen.Bold("completed!!"), 35)
 									}
 								}
+								if machineMessage.Error != nil {
+									//defer func() {
+									//	// recover from panic caused by writing to a closed channel
+									//	if r := recover(); r != nil {
+									//	}
+									//}()
+									go func() {
+										var signal bool = true
+										progressBarFailureChannel <- signal
+									}()
+								} else {
+									//defer func() {
+									//	// recover from panic caused by writing to a closed channel
+									//	if r := recover(); r != nil {
+									//	}
+									//}()
+									go func() {
+										var signal int = 1
+										progressBarIncreaseChannel <- signal
+									}()
+								}
 							}
 							screenManager.CommChannel <- keyTerm
 							mutex.Unlock()
@@ -894,6 +943,7 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 								}
 							}
 						}
+
 					}(machineOpsJob)
 				} else {
 					pending = 0
@@ -931,7 +981,6 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 	}()
 	pool.WG.Wait()
 	time.Sleep(2 * time.Second)
-	term.Screen.MoveCursor(len(actionGroups)+1, 0)
 	utils.PrintlnImportant(fmt.Sprintf("Number of executed processes :  %d", answerCounter))
 	if term.Screen.HasCursorHidden() {
 		term.Screen.ShowCursor()

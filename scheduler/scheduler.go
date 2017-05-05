@@ -35,6 +35,7 @@ func (pool *SchedulerPool) Init() {
 }
 
 func (pool *SchedulerPool) Start(callback func()) {
+	//TODO: remove for and activate : signal between objects to reduce CPU clock
 	if !pool.State.Active {
 		pool.State.Active = true
 		var threads = pool.MaxParallel

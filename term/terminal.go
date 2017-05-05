@@ -166,7 +166,7 @@ func (Screen *ScreenManager) Clear() {
 
 // Move cursor to given position
 func (Screen *ScreenManager) MoveCursor(x int, y int) {
-	fmt.Fprintf(Screen.Buffer, MOVE_CURSOR_TO_COORD, x, y)
+	fmt.Fprintf(Screen.Buffer, MOVE_CURSOR_TO_COORD, y, x)
 	if Screen.AutoFlush {
 		Screen.Flush()
 	}
@@ -412,6 +412,22 @@ func StrPad(instr string, capping int) string {
 		if strlen < capping {
 			padding := strings.Repeat(" ", (capping - strlen))
 			return instr + padding
+		} else {
+			val := instr[0:(capping - 2)]
+			val += ".."
+			return val
+		}
+	}
+}
+
+func StrFill(instr string, capping int) string {
+	strlen := len(instr)
+	if strlen == capping {
+		return instr
+	} else {
+		if strlen < capping {
+			padding := strings.Repeat(" ", (capping - strlen))
+			return padding + instr
 		} else {
 			val := instr[0:(capping - 2)]
 			val += ".."

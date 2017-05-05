@@ -29,14 +29,6 @@ type KeyValueElement struct {
 }
 
 
-type ProgressBarData struct {
-	Active					bool
-	MaxValues				int
-	BarLen					int
-	AddListener			chan int
-	failureChannel	chan bool
-}
-
 type KeyValueScreenManager struct {
 	Elements      []KeyValueElement
 	CommChannel   chan KeyValueElement
@@ -49,7 +41,6 @@ type KeyValueScreenManager struct {
 	Separator     string
 	BoldValue     bool
 	inited        bool
-	Progress   		*ProgressBarData
 }
 
 func (screenData *KeyValueScreenManager) getElementScreenColor(elem KeyValueElement) int {
@@ -77,9 +68,6 @@ var mutex sync.Mutex
 
 func (screenData *KeyValueScreenManager) drawGrid() {
 	Screen.Clear() // Clear current screen
-	if screenData.Progress != nil {
-		//Screen.ApplyText(Screen.ProgressBar())
-	}
 	if screenData.TextLen == 0 {
 		for _, elem := range screenData.Elements {
 			if len(elem.Name) > screenData.TextLen {
@@ -87,10 +75,13 @@ func (screenData *KeyValueScreenManager) drawGrid() {
 			}
 		}
 	}
-	screenHeight := Screen.Height()
+	//screenHeight := Screen.Height()
 	rows := len(screenData.Elements)
+	//if rows > screenHeight {
+	//	screenData.OffsetRows += screenHeight - rows
+	//}
 	for i := 0; i < rows; i++ {
-		Screen.MoveCursor(i+screenData.OffsetCols+1, screenData.OffsetRows+1)
+		Screen.MoveCursor(screenData.OffsetCols+1, i+screenData.OffsetRows+1)
 		var text string
 		if screenData.BoldValue {
 			text = Screen.Color(fmt.Sprintf("%s%s%s", StrPad(screenData.Elements[i].Name, screenData.TextLen), screenData.Separator, Screen.Bold(StrPad(screenData.Elements[i].Value, screenData.MessageMaxLen))), screenData.getElementScreenColor(screenData.Elements[i]))
@@ -100,9 +91,6 @@ func (screenData *KeyValueScreenManager) drawGrid() {
 		Screen.Println(text)
 		Screen.Flush()
 	}
-	if rows > screenHeight {
-		screenData.OffsetRows = screenHeight - rows
-	}
 	go func(screenData *KeyValueScreenManager) {
 		for screenData.Active {
 			update := <-screenData.CommChannel
@@ -110,7 +98,7 @@ func (screenData *KeyValueScreenManager) drawGrid() {
 			if index >= 0 {
 				mutex.Lock()
 				screenData.Elements[index] = update
-				Screen.MoveCursor(index+screenData.OffsetCols+1, screenData.OffsetRows+1)
+				Screen.MoveCursor(screenData.OffsetCols+1, index+screenData.OffsetRows+1)
 				var text string
 				if screenData.BoldValue {
 					text = Screen.Color(fmt.Sprintf("%s%s%s", StrPad(screenData.Elements[index].Name, screenData.TextLen), screenData.Separator, Screen.Bold(StrPad(screenData.Elements[index].Value, screenData.MessageMaxLen))), screenData.getElementScreenColor(screenData.Elements[index]))
