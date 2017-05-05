@@ -10,8 +10,8 @@ import (
 func (Screen *ScreenManager) ProgressBar(description string, currentValue, totalValue, numberOfColumns int, failure bool) string {
 	var maxSpace int = len(strconv.Itoa(totalValue))
 	prefix := StrFill(strconv.Itoa(currentValue),maxSpace) + " / " + StrFill(strconv.Itoa(totalValue),maxSpace)
-	bar_start := " ["
-	bar_end := "] "
+	bar_start := " |"
+	bar_end := "|"
 
 	bar_size := numberOfColumns - len(prefix+bar_start+bar_end)
 	amount := int(float32(currentValue) / (float32(totalValue) / float32(bar_size)))
