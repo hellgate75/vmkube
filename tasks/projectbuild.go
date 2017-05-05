@@ -9,42 +9,8 @@ import (
 	"time"
 	"vmkube/model"
 	"vmkube/procedures"
-	"vmkube/term"
 	"vmkube/utils"
 )
-
-type RunnableStruct interface {
-	Start(exitChannel chan bool)
-	Stop()
-	Status() bool
-	IsInterrupted() bool
-	IsError() bool
-	Response() interface{}
-	WaitFor()
-}
-
-const MachineReadOperationTimeout = 900
-
-type MachineOperationsJob struct {
-	Name             string
-	State            bool
-	OutChan          chan *MachineOperationsJob
-	OwnState         term.KeyValueElement
-	Project          model.Project
-	Infra            model.Infrastructure
-	InstanceId       string
-	Activity         ActivityCouple
-	ActivityGroup    ActivityGroup
-	MachineMessage   procedures.MachineMessage
-	Index            int
-	PartOf           int
-	SendStartMessage bool
-	Command          string
-	Machine          string
-	commandPipe      chan procedures.MachineMessage
-	commandChannel   chan *exec.Cmd
-	control          procedures.MachineControlStructure
-}
 
 func (job *MachineOperationsJob) Start(exitChannel chan bool) {
 	if !job.State {

@@ -10,12 +10,12 @@ import (
 
 type SchedulerPool struct {
 	Id          string
-	Tasks       chan tasks.ScheduleTask
+	Tasks       chan tasks.SchedulerTask
 	MaxParallel int
 	WG          sync.WaitGroup
 	KeepAlive   bool
 	PostExecute bool
-	Callback    func(task tasks.ScheduleTask)
+	Callback    func(task tasks.SchedulerTask)
 	State       tasks.SchedulerState
 }
 
@@ -28,21 +28,21 @@ type SchedulerPool struct {
 func (pool *SchedulerPool) Init() {
 	pool.State.Paused = false
 	pool.State.Active = false
-	pool.Tasks = make(chan tasks.ScheduleTask)
+	pool.Tasks = make(chan tasks.SchedulerTask)
 	if pool.KeepAlive {
 		pool.WG.Add(1)
 	}
 }
 
 func (pool *SchedulerPool) Start(callback func()) {
-	//TODO: remove for and activate : signal between objects to reduce CPU clock
+	//TODO: remove cycles and activate : signal between objects to reduce CPU clock
 	if !pool.State.Active {
 		pool.State.Active = true
 		var threads = pool.MaxParallel
 		if threads == 0 {
 			threads = runtime.NumCPU()
 		}
-		var Buffer []tasks.ScheduleTask = make([]tasks.ScheduleTask, 0)
+		var Buffer []tasks.SchedulerTask = make([]tasks.SchedulerTask, 0)
 		pumperExited := false
 		var state state.StateContext = state.NewStateContext()
 
@@ -81,6 +81,8 @@ func (pool *SchedulerPool) Start(callback func()) {
 							i++
 						}
 					}
+				} else {
+					time.Sleep(3 * time.Second)
 				}
 			}
 			pumperExited = true
@@ -93,15 +95,15 @@ func (pool *SchedulerPool) Start(callback func()) {
 			for pool.State.Active {
 				if !pool.State.Paused {
 					Task := <-pool.Tasks
-					if Task.Id != "" {
-						if Task.Id == "<close>" {
-							break
-						} else {
-							Buffer = append(Buffer, Task)
-						}
+					if Task.Id == "<close>" {
+						break
+					} else if Task.Id != "" {
+						Buffer = append(Buffer, Task)
+					} else {
+						time.Sleep(1500 * time.Millisecond)
 					}
 				} else {
-					time.Sleep(1500 * time.Millisecond)
+					time.Sleep(3 * time.Second)
 				}
 			}
 			for !pumperExited {
@@ -170,7 +172,7 @@ func (pool *SchedulerPool) IsJobActive(id string) bool {
 
 func (pool *SchedulerPool) Stop() {
 	pool.State.Active = false
-	pool.Tasks <- tasks.ScheduleTask{
+	pool.Tasks <- tasks.SchedulerTask{
 		Id:   "<close>",
 		Jobs: []tasks.JobProcess{},
 	}

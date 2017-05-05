@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 	"vmkube/model"
+	"vmkube/state"
 )
 
 func ConvertActivityTaskInString(task ActivityTask) string {
@@ -98,4 +99,25 @@ func DumpData(file string, data interface{}, overwrite bool) {
 	mutex.Lock()
 	ioutil.WriteFile(file, []byte(text), 0777)
 	mutex.Unlock()
+}
+
+var TaskMutex sync.RWMutex
+
+func readTaskContextState(state state.StateContext, taskId string) bool {
+	TaskMutex.RLock()
+	IsRegistered := state.HasValue(taskId)
+	TaskMutex.RUnlock()
+	if IsRegistered {
+		defer TaskMutex.RUnlock()
+		TaskMutex.RLock()
+		return state.State(taskId)
+	}
+	return true
+
+}
+
+func writeTaskContextState(state state.StateContext, taskId string, status state.StateReferenceData) {
+	TaskMutex.Lock()
+	defer TaskMutex.Unlock()
+	state.Collect(taskId) <- status
 }

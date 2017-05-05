@@ -1,15 +1,15 @@
 package term
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
-	"fmt"
 	"time"
 )
 
 func (Screen *ScreenManager) ProgressBar(description string, currentValue, totalValue, numberOfColumns int, failure bool) string {
 	var maxSpace int = len(strconv.Itoa(totalValue))
-	prefix := StrFill(strconv.Itoa(currentValue),maxSpace) + " / " + StrFill(strconv.Itoa(totalValue),maxSpace)
+	prefix := StrFill(strconv.Itoa(currentValue), maxSpace) + " / " + StrFill(strconv.Itoa(totalValue), maxSpace)
 	bar_start := " |"
 	bar_end := "|"
 
@@ -24,15 +24,15 @@ func (Screen *ScreenManager) ProgressBar(description string, currentValue, total
 	percentage_suf := ")"
 	if failure {
 		percentage = Screen.Color(percentage, RED)
-	} else  if percString == 100 {
+	} else if percString == 100 {
 		percentage = Screen.Color(percentage, GREEN)
-	} else  {
+	} else {
 		percentage = Screen.Color(percentage, YELLOW)
 	}
 
-var  bar string = ""
+	var bar string = ""
 
-	if ! failure {
+	if !failure {
 		bar = strings.Repeat(Screen.Background(" ", YELLOW), amount) + strings.Repeat(" ", remain)
 	} else {
 		bar = strings.Repeat(Screen.Background(" ", WHITE), amount) + strings.Repeat(Screen.Bold(Screen.Background(" ", RED)), remain)
@@ -54,24 +54,24 @@ func (Screen *ScreenManager) ApplyText(text string, line, col int) {
 const PRGRESS_BAR_MAX_CHANNEL_TIMEOUT = 900
 
 type ProgressBar struct {
-	Running					bool
-	Errors					bool
-	MaxValues				int
-	BarSteps				int
-	Current					int
-	ScreenRow				int
-	ScreenCol				int
-	PostReset				bool
-	ResetRow				int
-	ResetCol				int
-	Prefix					string
-	ClearScreen			bool
-	HideCursor			bool
-	HasCallBack			bool
-	FinalCallBack		func()
+	Running       bool
+	Errors        bool
+	MaxValues     int
+	BarSteps      int
+	Current       int
+	ScreenRow     int
+	ScreenCol     int
+	PostReset     bool
+	ResetRow      int
+	ResetCol      int
+	Prefix        string
+	ClearScreen   bool
+	HideCursor    bool
+	HasCallBack   bool
+	FinalCallBack func()
 }
 
-func (Bar *ProgressBar) Start(IncreaseChannel	chan int, FailureChannel	chan bool ) bool {
+func (Bar *ProgressBar) Start(IncreaseChannel chan int, FailureChannel chan bool) bool {
 	Bar.Running = true
 	Bar.Errors = false
 	if Bar.ClearScreen {
@@ -84,7 +84,7 @@ func (Bar *ProgressBar) Start(IncreaseChannel	chan int, FailureChannel	chan bool
 	go func() {
 		for Bar.Current < Bar.MaxValues && Bar.Running {
 			select {
-			case newValue := <- IncreaseChannel :
+			case newValue := <-IncreaseChannel:
 				go func(newValue int) {
 					mutex.Lock()
 					Bar.Current += newValue
@@ -103,7 +103,7 @@ func (Bar *ProgressBar) Start(IncreaseChannel	chan int, FailureChannel	chan bool
 	go func() {
 		for Bar.Current < Bar.MaxValues && Bar.Running {
 			select {
-			case newValue := <- FailureChannel :
+			case newValue := <-FailureChannel:
 				go func(newValue bool) {
 					mutex.Lock()
 					Bar.Errors = newValue
@@ -119,7 +119,7 @@ func (Bar *ProgressBar) Start(IncreaseChannel	chan int, FailureChannel	chan bool
 		}
 		Bar.Running = false
 	}()
-	return  true
+	return true
 }
 
 func (Bar *ProgressBar) Stop() {

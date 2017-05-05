@@ -388,7 +388,7 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		}
 		return response, errors.New("Unable to execute task")
 	}
-	errorsList := ExecuteInfrastructureActions(infrastructure, deleteActivities, NumThreads, func(task tasks.ScheduleTask) {
+	errorsList := ExecuteInfrastructureActions(infrastructure, deleteActivities, NumThreads, func(task tasks.SchedulerTask) {
 	})
 	if len(errorsList) > 0 {
 		utils.PrintlnError(fmt.Sprintf("Unable to complete Destroy machines process : Errors deleting Infrastructure : %s!!", Name))
@@ -1061,8 +1061,8 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
 
 	var fixInfraValue int = len(actionCouples)
-	errorsList = ExecuteInfrastructureActions(infrastructure, actionCouples, NumThreads, func(task tasks.ScheduleTask) {
-		go func(task tasks.ScheduleTask) {
+	errorsList = ExecuteInfrastructureActions(infrastructure, actionCouples, NumThreads, func(task tasks.SchedulerTask) {
+		go func(task tasks.SchedulerTask) {
 			for i := 0; i < len(task.Jobs); i++ {
 				response := strings.Split(fmt.Sprintf("%s", task.Jobs[i].GetRunnable().Response()), "|")
 				if len(response) > 3 {
@@ -1119,7 +1119,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 		} else {
 			utils.PrintlnImportant("No backup activities, you can not use recovery utils...")
 		}
-		ExecuteInfrastructureActions(infrastructure, rollbackActions, NumThreads, func(task tasks.ScheduleTask) {})
+		ExecuteInfrastructureActions(infrastructure, rollbackActions, NumThreads, func(task tasks.SchedulerTask) {})
 		return response, errors.New("Unable to execute task")
 	}
 
@@ -1280,7 +1280,7 @@ func (request *CmdRequest) StartInfra() (Response, error) {
 		}
 		return response, errors.New("Unable to execute task")
 	}
-	errorsList := ExecuteInfrastructureActions(infrastructure, startMachineActivities, NumThreads, func(task tasks.ScheduleTask) {
+	errorsList := ExecuteInfrastructureActions(infrastructure, startMachineActivities, NumThreads, func(task tasks.SchedulerTask) {
 	})
 	if len(errorsList) > 0 {
 		utils.PrintlnError(fmt.Sprintf("Unable to complete start machines process : Errors starting Infrastructure : %s!!", Name))
@@ -1387,7 +1387,7 @@ func (request *CmdRequest) StopInfra() (Response, error) {
 		}
 		return response, errors.New("Unable to execute task")
 	}
-	errorsList := ExecuteInfrastructureActions(infrastructure, stopMachineActivities, NumThreads, func(task tasks.ScheduleTask) {
+	errorsList := ExecuteInfrastructureActions(infrastructure, stopMachineActivities, NumThreads, func(task tasks.SchedulerTask) {
 	})
 	if len(errorsList) > 0 {
 		utils.PrintlnError(fmt.Sprintf("Unable to complete stop machines process : Errors stopping Infrastructure : %s!!", Name))
@@ -1501,7 +1501,7 @@ func (request *CmdRequest) RestartInfra() (Response, error) {
 		}
 		return response, errors.New("Unable to execute task")
 	}
-	errorsList := ExecuteInfrastructureActions(infrastructure, restartMachineActivities, NumThreads, func(task tasks.ScheduleTask) {
+	errorsList := ExecuteInfrastructureActions(infrastructure, restartMachineActivities, NumThreads, func(task tasks.SchedulerTask) {
 	})
 	if len(errorsList) > 0 {
 		utils.PrintlnError(fmt.Sprintf("Unable to complete restart machines process : Errors restarting Infrastructure : %s!!", Name))

@@ -36,15 +36,14 @@ func (info *InfrastructureLogsInfo) ReadLogFiles() error {
 		LockLogFile(info.Logs, 0)
 
 		logs, err := zipReadMultiPart(logFileName)
-		
+
 		if err != nil {
 			return err
 		}
 
 		UnlockLogFile(info.Logs, 0)
-		
-		
-		for _,log := range logs {
+
+		for _, log := range logs {
 			bytes := log.Body
 			lines := strings.Split(string(bytes), "\n")
 			info.Logs.LogLines = append(info.Logs.LogLines, lines...)
@@ -62,9 +61,9 @@ func (info *InfrastructureLogsInfo) SaveLogFile() error {
 	var lineLength int = len(info.Logs.LogLines)
 
 	var split bool = (lineLength > MAX_LINES_IN_LOG)
-	
+
 	logFileName := baseFolder + string(os.PathSeparator) + ".project-" + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + ".log"
-	
+
 	var logs []CompressorData = make([]CompressorData, 0)
 	if split {
 		var i int = 0
@@ -74,7 +73,7 @@ func (info *InfrastructureLogsInfo) SaveLogFile() error {
 			if lineLength-sliceStart <= MAX_LINES_IN_LOG {
 				data := []byte{}
 				lines := info.Logs.LogLines[sliceStart:sliceEnd]
-				for _,line := range lines {
+				for _, line := range lines {
 					// Prevent empty lines
 					if strings.TrimSpace(line) != "" {
 						line += "\n"
@@ -83,7 +82,7 @@ func (info *InfrastructureLogsInfo) SaveLogFile() error {
 				}
 				logs = append(logs, CompressorData{
 					Descriptor: strconv.Itoa(i),
-					Body: data,
+					Body:       data,
 				})
 			}
 			i++
@@ -94,7 +93,7 @@ func (info *InfrastructureLogsInfo) SaveLogFile() error {
 	} else {
 		data := []byte{}
 		lines := info.Logs.LogLines
-		for _,line := range lines {
+		for _, line := range lines {
 			// Prevent empty lines
 			if strings.TrimSpace(line) != "" {
 				line += "\n"
@@ -103,7 +102,7 @@ func (info *InfrastructureLogsInfo) SaveLogFile() error {
 		}
 		logs = append(logs, CompressorData{
 			Descriptor: "0",
-			Body: data,
+			Body:       data,
 		})
 	}
 	ifaceLog := IFaceLogStorage{
@@ -140,11 +139,11 @@ func (info *InfrastructureLogsInfo) DeleteLogFile() error {
 			return err
 		}
 		LockLogFile(info.Logs, 0)
-		
+
 		model.DeleteIfExists(logFileName)
-		
+
 		UnlockLogFile(info.Logs, 0)
-		
+
 	}
 	return nil
 }
@@ -157,9 +156,9 @@ func (info *InfrastructureLogsInfo) Exists() bool {
 	}
 	fileName := baseFolder + string(os.PathSeparator) + "." + utils.IdToFileFormat(info.Logs.ProjectId) + ".infra-" + utils.IdToFileFormat(info.Logs.InfraId) + ".elem-" + utils.IdToFileFormat(info.Logs.ElementId) + ".infralogs"
 	if _, err = os.Stat(fileName); err != nil {
-		return  false
+		return false
 	}
-	return  true
+	return true
 }
 
 func (info *InfrastructureLogsInfo) Read() error {

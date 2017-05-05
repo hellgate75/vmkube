@@ -28,7 +28,6 @@ type KeyValueElement struct {
 	Actions int
 }
 
-
 type KeyValueScreenManager struct {
 	Elements      []KeyValueElement
 	CommChannel   chan KeyValueElement

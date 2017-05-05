@@ -1,37 +1,9 @@
 package tasks
 
 import (
-	"sync"
 	"time"
 	"vmkube/state"
 )
-
-type SchedulerState struct {
-	Active bool
-	Paused bool
-	Pool   []ScheduleTask
-}
-
-type JobProcess interface {
-	Run()
-	IsRunning() bool
-	IsAsync() bool
-	HasErrors() bool
-	Abort()
-	Init(Sequence int, Global int)
-	WaitFor()
-	GetRunnable() RunnableStruct
-}
-
-type Job struct {
-	Id       string
-	Name     string
-	Runnable RunnableStruct
-	Async    bool
-	Sequence int
-	Of       int
-	State    bool
-}
 
 func (job *Job) Init(Sequence int, Global int) {
 	job.Sequence = Sequence
@@ -64,7 +36,7 @@ func (job *Job) IsRunning() bool {
 	return job.State
 }
 
-func (job *Job) GetRunnable() RunnableStruct {
+func (job *Job) GetRunnable() Runnable {
 	return job.Runnable
 }
 
@@ -75,53 +47,14 @@ func (job *Job) Abort() {
 	job.Runnable.Stop()
 }
 
-type TaskProcess interface {
-	Run()
-	IsRunning() bool
-	Abort()
-	Init(context *state.StateContext)
-	Wait()
-	Deactivate()
-}
-
-type ScheduleTask struct {
-	Id        string
-	Jobs      []JobProcess
-	Active    bool
-	Working   bool
-	LastIndex int
-	State     *state.StateContext
-}
-
-func (task *ScheduleTask) Init(context *state.StateContext) {
+func (task *SchedulerTask) Init(context *state.StateContext) {
 	task.Active = true
 	task.Working = true
 	task.LastIndex = 0
 	task.State = context
 }
 
-var TaskMutex sync.RWMutex
-
-func readTaskContextState(state state.StateContext, taskId string) bool {
-	TaskMutex.RLock()
-	IsRegistered := state.HasValue(taskId)
-	TaskMutex.RUnlock()
-	if IsRegistered {
-		defer TaskMutex.RUnlock()
-		TaskMutex.RLock()
-		return state.State(taskId)
-	}
-	return true
-
-}
-
-func writeTaskContextState(state state.StateContext, taskId string, status state.StateReferenceData) {
-	TaskMutex.Lock()
-	defer TaskMutex.Unlock()
-	state.Collect(taskId) <- status
-}
-
-func (task *ScheduleTask) Deactivate() {
+func (task *SchedulerTask) Deactivate() {
 	task.Active = false
 	task.Working = false
 	task.LastIndex = len(task.Jobs)
@@ -132,7 +65,7 @@ func (task *ScheduleTask) Deactivate() {
 	})
 }
 
-func (task *ScheduleTask) Execute() {
+func (task *SchedulerTask) Execute() {
 	writeTaskContextState(*(task.State), task.Id, state.StateReferenceData{
 		Id:     task.Id,
 		Status: true,
@@ -166,11 +99,11 @@ func (task *ScheduleTask) Execute() {
 	}
 }
 
-func (task *ScheduleTask) IsRunning() bool {
+func (task *SchedulerTask) IsRunning() bool {
 	return readTaskContextState(*(task.State), task.Id)
 }
 
-func (task *ScheduleTask) Abort() {
+func (task *SchedulerTask) Abort() {
 	time.Sleep(1 * time.Second)
 	if task.LastIndex < len(task.Jobs) {
 		for i := task.LastIndex; i < len(task.Jobs); i++ {
@@ -179,7 +112,7 @@ func (task *ScheduleTask) Abort() {
 	}
 	task.Deactivate()
 }
-func (task *ScheduleTask) Wait() {
+func (task *SchedulerTask) Wait() {
 	if task.LastIndex < len(task.Jobs) {
 		for i := task.LastIndex; i < len(task.Jobs); i++ {
 			for task.Jobs[i].IsRunning() {

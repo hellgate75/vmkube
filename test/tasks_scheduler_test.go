@@ -66,7 +66,7 @@ func testJobs(chan1 chan string, chan2 chan string, chan3 chan string) {
 	go pool.Start(func() {
 		pool.WG.Done()
 	})
-	task1 := tasks.ScheduleTask{
+	task1 := tasks.SchedulerTask{
 		Id: action.NewUUIDString(),
 		Jobs: []tasks.JobProcess{
 			tasks.JobProcess(&tasks.Job{
@@ -89,7 +89,7 @@ func testJobs(chan1 chan string, chan2 chan string, chan3 chan string) {
 			}),
 		},
 	}
-	task2 := tasks.ScheduleTask{
+	task2 := tasks.SchedulerTask{
 		Id: action.NewUUIDString(),
 		Jobs: []tasks.JobProcess{
 			tasks.JobProcess(&tasks.Job{
@@ -112,7 +112,7 @@ func testJobs(chan1 chan string, chan2 chan string, chan3 chan string) {
 			}),
 		},
 	}
-	task3 := tasks.ScheduleTask{
+	task3 := tasks.SchedulerTask{
 		Id: action.NewUUIDString(),
 		Jobs: []tasks.JobProcess{
 			tasks.JobProcess(&tasks.Job{

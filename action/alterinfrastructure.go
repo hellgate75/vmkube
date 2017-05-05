@@ -27,12 +27,12 @@ func DescribeInstallation(installation *model.Installation, instanceName string,
 
 	utils.PrintlnImportant(fmt.Sprintf("%sInstallation Logs : ", padding))
 	var logsInfo InfrastructureLogsInfo = InfrastructureLogsInfo{
-			Format: "",
-			Logs: installation.Logs,
-		}
+		Format: "",
+		Logs:   installation.Logs,
+	}
 	err := logsInfo.ReadLogFiles()
 	if err == nil {
-		for _,line := range logsInfo.Logs.LogLines {
+		for _, line := range logsInfo.Logs.LogLines {
 			utils.PrintlnInfo(fmt.Sprintf("%s  %s", line, padding))
 		}
 		if len(logsInfo.Logs.LogLines) == 0 {
@@ -41,7 +41,7 @@ func DescribeInstallation(installation *model.Installation, instanceName string,
 	} else {
 		utils.PrintlnImportant(fmt.Sprintf("%s  Unable to read logs", padding))
 	}
-	return  nil
+	return nil
 }
 
 func DescribeInstance(infrastructure model.Infrastructure, instance model.LocalInstance, cloudInstance model.CloudInstance, isCloud bool, instanceState procedures.MachineState) error {
@@ -129,23 +129,23 @@ func DescribeInstance(infrastructure model.Infrastructure, instance model.LocalI
 		utils.PrintlnInfo(fmt.Sprintf("Instance Details : \n%s\n", instance.InspectJSON))
 		utils.PrintlnImportant("Instance Logs : ")
 		var logsInfo InfrastructureLogsInfo
-		var  instanceName string = ""
+		var instanceName string = ""
 		if isCloud {
 			logsInfo = InfrastructureLogsInfo{
 				Format: "",
-				Logs: cloudInstance.Logs,
+				Logs:   cloudInstance.Logs,
 			}
 			instanceName = cloudInstance.Name
-		} else  {
+		} else {
 			logsInfo = InfrastructureLogsInfo{
 				Format: "",
-				Logs: instance.Logs,
+				Logs:   instance.Logs,
 			}
 			instanceName = instance.Name
 		}
 		err := logsInfo.ReadLogFiles()
 		if err == nil {
-			for _,line := range logsInfo.Logs.LogLines {
+			for _, line := range logsInfo.Logs.LogLines {
 				utils.PrintlnInfo(fmt.Sprintf("  %s", line))
 			}
 			if len(logsInfo.Logs.LogLines) == 0 {
@@ -155,8 +155,8 @@ func DescribeInstance(infrastructure model.Infrastructure, instance model.LocalI
 			utils.PrintlnImportant("  Unable to read logs")
 		}
 		utils.PrintlnImportant("Installations : ")
-		var  installations []*model.Installation  = ExtractInstallations(&infrastructure, instance, cloudInstance, isCloud)
-		for _,installation := range installations {
+		var installations []*model.Installation = ExtractInstallations(&infrastructure, instance, cloudInstance, isCloud)
+		for _, installation := range installations {
 			DescribeInstallation(installation, instanceName, "  ")
 		}
 		if len(installations) == 0 {
@@ -196,7 +196,7 @@ func StartInstance(infrastructure model.Infrastructure, instance model.LocalInst
 	}
 	NumThreads := 1
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
-	errorsList := ExecuteInfrastructureActions(infrastructure, startCouples, NumThreads, func(task tasks.ScheduleTask) {})
+	errorsList := ExecuteInfrastructureActions(infrastructure, startCouples, NumThreads, func(task tasks.SchedulerTask) {})
 	if len(errorsList) > 0 {
 		return errorsList[0]
 	}
@@ -226,7 +226,7 @@ func RestartInstance(infrastructure model.Infrastructure, instance model.LocalIn
 	}
 	NumThreads := 1
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
-	errorsList := ExecuteInfrastructureActions(infrastructure, restartCouples, NumThreads, func(task tasks.ScheduleTask) {})
+	errorsList := ExecuteInfrastructureActions(infrastructure, restartCouples, NumThreads, func(task tasks.SchedulerTask) {})
 	if len(errorsList) > 0 {
 		return errorsList[0]
 	}
@@ -261,7 +261,7 @@ func StopInstance(infrastructure model.Infrastructure, instance model.LocalInsta
 	}
 	NumThreads := 1
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
-	errorsList := ExecuteInfrastructureActions(infrastructure, stopCouples, NumThreads, func(task tasks.ScheduleTask) {})
+	errorsList := ExecuteInfrastructureActions(infrastructure, stopCouples, NumThreads, func(task tasks.SchedulerTask) {})
 	if len(errorsList) > 0 {
 		return errorsList[0]
 	}
@@ -307,7 +307,7 @@ func DisableInstance(infrastructure model.Infrastructure, instance model.LocalIn
 		}
 		NumThreads := 1
 		utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
-		errorsList := ExecuteInfrastructureActions(infrastructure, actionCouples, NumThreads, func(task tasks.ScheduleTask) {})
+		errorsList := ExecuteInfrastructureActions(infrastructure, actionCouples, NumThreads, func(task tasks.SchedulerTask) {})
 
 		if len(errorsList) > 0 {
 			return errorsList[0]
@@ -472,7 +472,7 @@ func RecreateInstance(infrastructure model.Infrastructure, instance model.LocalI
 	}
 	NumThreads := 1
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
-	errorsList := ExecuteInfrastructureActions(infrastructure, actionCouples, NumThreads, func(task tasks.ScheduleTask) {})
+	errorsList := ExecuteInfrastructureActions(infrastructure, actionCouples, NumThreads, func(task tasks.SchedulerTask) {})
 
 	if len(errorsList) > 0 {
 		return errorsList[0]
@@ -535,19 +535,17 @@ func DestroyInstance(infrastructure model.Infrastructure, instance model.LocalIn
 
 	NumThreads := 1
 	utils.PrintlnImportant(fmt.Sprintf("Number of threads assigned to scheduler : %d", NumThreads))
-	errorsList := ExecuteInfrastructureActions(infrastructure, actionCouples, NumThreads, func(task tasks.ScheduleTask) {})
+	errorsList := ExecuteInfrastructureActions(infrastructure, actionCouples, NumThreads, func(task tasks.SchedulerTask) {})
 
 	if len(errorsList) > 0 {
 		return errorsList[0]
 	}
-	
+
 	err = DeleteInfrastructureLogs(instanceLogs)
 	if err != nil {
 		return err
 	}
-	
-	
-			
+
 	utils.PrintlnWarning(fmt.Sprintf("Overwriting Project : %s [Id: %s]", project.Name, project.Id))
 
 	err = vmio.SaveProject(project)

@@ -1670,8 +1670,8 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	var fixInfraValue int = len(actionCouples)
 	utils.PrintlnImportant(fmt.Sprintf("Number of scheduled processes : %d", fixInfraValue))
 
-	errorsList = ExecuteInfrastructureActions(Infrastructure, actionCouples, NumThreads, func(task tasks.ScheduleTask) {
-		go func(task tasks.ScheduleTask) {
+	errorsList = ExecuteInfrastructureActions(Infrastructure, actionCouples, NumThreads, func(task tasks.SchedulerTask) {
+		go func(task tasks.SchedulerTask) {
 			for i := 0; i < len(task.Jobs); i++ {
 				response := strings.Split(fmt.Sprintf("%s", task.Jobs[i].GetRunnable().Response()), "|")
 				if len(response) > 3 {
@@ -1733,7 +1733,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		if !utils.NO_COLORS {
 			time.Sleep(4 * time.Second)
 		}
-		ExecuteInfrastructureActions(Infrastructure, rollbackActions, NumThreads, func(task tasks.ScheduleTask) {})
+		ExecuteInfrastructureActions(Infrastructure, rollbackActions, NumThreads, func(task tasks.SchedulerTask) {})
 		return response, errors.New("Unable to execute task")
 	}
 

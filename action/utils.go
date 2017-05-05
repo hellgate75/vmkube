@@ -1,9 +1,12 @@
 package action
 
 import (
+	"archive/zip"
+	"compress/flate"
 	"errors"
 	"fmt"
 	"github.com/satori/go.uuid"
+	"io"
 	"os"
 	"os/exec"
 	"reflect"
@@ -18,9 +21,6 @@ import (
 	"vmkube/term"
 	"vmkube/utils"
 	"vmkube/vmio"
-	"archive/zip"
-	"io"
-	"compress/flate"
 )
 
 func ParseCommandArguments(args []string) (*CmdArguments, error) {
@@ -35,8 +35,10 @@ func ParseCommandArguments(args []string) (*CmdArguments, error) {
 
 func ParseCommandLine(args []string) (CmdRequest, error) {
 	request := CmdRequest{}
-	arguments, error := ParseCommandArguments(args)
-	if error == nil {
+	var arguments *CmdArguments
+	var err error
+	arguments, err = ParseCommandArguments(args)
+	if err == nil {
 		request.TypeStr = arguments.Cmd
 		request.Type = arguments.CmdType
 		request.SubTypeStr = arguments.SubCmd
@@ -44,7 +46,7 @@ func ParseCommandLine(args []string) (CmdRequest, error) {
 		request.HelpType = arguments.SubCmdHelpType
 		request.Arguments = arguments
 	}
-	return request, error
+	return request, err
 }
 
 func CmdParseElement(value string) (CmdElementType, error) {
@@ -602,12 +604,12 @@ func PrintCommandHelper(command string, subCommand string) {
 	}
 }
 
-func ExecuteInfrastructureActions(infrastructure model.Infrastructure, infrastructureActionCouples []tasks.ActivityCouple, NumThreads int, postTaskCallback func(task tasks.ScheduleTask)) []error {
+func ExecuteInfrastructureActions(infrastructure model.Infrastructure, infrastructureActionCouples []tasks.ActivityCouple, NumThreads int, postTaskCallback func(task tasks.SchedulerTask)) []error {
 	return executeActions(infrastructure, tasks.GroupActivitiesBySubject(infrastructureActionCouples), NumThreads, postTaskCallback)
 
 }
 
-func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.ActivityGroup, NumThreads int, postTaskCallback func(task tasks.ScheduleTask)) []error {
+func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.ActivityGroup, NumThreads int, postTaskCallback func(task tasks.SchedulerTask)) []error {
 
 	var errorsList []error = make([]error, 0)
 	var maxJobNameLen int = 0
@@ -621,14 +623,14 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 		MaxParallel: NumThreads,
 		KeepAlive:   true,
 		PostExecute: true,
-		Callback: func(task tasks.ScheduleTask) {
+		Callback: func(task tasks.SchedulerTask) {
 			//Any completed task come here ....
 			postTaskCallback(task)
 		},
 	}
 	pool.Init()
 	var jobIds []string = make([]string, 0)
-	var globalTaskCount int  = 0
+	var globalTaskCount int = 0
 	for i := 0; i < jobsArrayLen; i++ {
 		var jobId = NewUUIDString()
 		jobIds = append(jobIds, jobId)
@@ -664,7 +666,7 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 				jobs = append(jobs, tasks.JobProcess(&tasks.Job{
 					Id:   jobIds[i],
 					Name: fmt.Sprintf("Process Instance from Project, Machine Group Name: %s Task : %d", actionGroups[i].Name, j),
-					Runnable: tasks.RunnableStruct(&tasks.MachineOperationsJob{
+					Runnable: tasks.Runnable(&tasks.MachineOperationsJob{
 						Name:             fmt.Sprintf("Process Instance from Project, Machine Group Name: %s Task : %d", actionGroups[i].Name, j),
 						Infra:            actionGroups[i].Activities[j].Infra,
 						Project:          actionGroups[i].Activities[j].Project,
@@ -680,7 +682,7 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 					}),
 				}))
 			}
-			pool.Tasks <- tasks.ScheduleTask{
+			pool.Tasks <- tasks.SchedulerTask{
 				Id:   NewUUIDString(),
 				Jobs: jobs,
 			}
@@ -714,15 +716,15 @@ func executeActions(infrastructure model.Infrastructure, actionGroups []tasks.Ac
 			//	Offset +=  screenHeight - rows
 			//}
 			progressBar = term.ProgressBar{
-				MaxValues: globalTaskCount,
-				BarSteps: 50,
-				Current: 0,
-				ScreenRow: 0,
-				PostReset: true,
-				ScreenCol: 0,
-				ResetRow: Offset,
-				ResetCol: 0,
-				Prefix: "Overall Progress :",
+				MaxValues:   globalTaskCount,
+				BarSteps:    50,
+				Current:     0,
+				ScreenRow:   0,
+				PostReset:   true,
+				ScreenCol:   0,
+				ResetRow:    Offset,
+				ResetCol:    0,
+				Prefix:      "Overall Progress :",
 				HasCallBack: true,
 				FinalCallBack: func() {
 					term.Screen.MoveCursor(0, Offset)
@@ -1007,7 +1009,7 @@ func FixInfrastructureIntallationLogs(Infrastructure *model.Infrastructure, plan
 						_ = logsInfo.SaveLogFile()
 						logsInfo.Logs.LogLines = make([]string, 0)
 						Infrastructure.Domains[i].Networks[j].Installations[k].Logs = logsInfo.Logs
-						if ! logsInfo.Exists() {
+						if !logsInfo.Exists() {
 							logsInfo.Write()
 						}
 						return true
@@ -1044,7 +1046,7 @@ func FixInfrastructureElementValue(Infrastructure *model.Infrastructure, instanc
 							_ = logsInfo.SaveLogFile()
 							logsInfo.Logs.LogLines = make([]string, 0)
 							Infrastructure.Domains[i].Networks[j].LocalInstances[k].Logs = logsInfo.Logs
-							if ! logsInfo.Exists() {
+							if !logsInfo.Exists() {
 								logsInfo.Write()
 							}
 						}
@@ -1069,7 +1071,7 @@ func FixInfrastructureElementValue(Infrastructure *model.Infrastructure, instanc
 							_ = logsInfo.SaveLogFile()
 							logsInfo.Logs.LogLines = make([]string, 0)
 							Infrastructure.Domains[i].Networks[j].CloudInstances[k].Logs = logsInfo.Logs
-							if ! logsInfo.Exists() {
+							if !logsInfo.Exists() {
 								logsInfo.Write()
 							}
 						}
@@ -1088,9 +1090,9 @@ func ExtractInstallations(Infrastructure *model.Infrastructure, instance model.L
 		for j := 0; j < len(Infrastructure.Domains[i].Networks); j++ {
 			for k := 0; k < len(Infrastructure.Domains[i].Networks[j].Installations); k++ {
 				match := false
-				if isCloud && Infrastructure.Domains[i].Networks[j].Installations[k].IsCloud  {
+				if isCloud && Infrastructure.Domains[i].Networks[j].Installations[k].IsCloud {
 					match = cloudInstance.Id == Infrastructure.Domains[i].Networks[j].Installations[k].InstanceId
-				} else if ! isCloud && ! Infrastructure.Domains[i].Networks[j].Installations[k].IsCloud  {
+				} else if !isCloud && !Infrastructure.Domains[i].Networks[j].Installations[k].IsCloud {
 					match = instance.Id == Infrastructure.Domains[i].Networks[j].Installations[k].InstanceId
 				}
 				if match {
@@ -1475,8 +1477,8 @@ func RemoveProjectMachineById(Infrastructure *model.Project, InstanceId string) 
 }
 
 type CompressorData struct {
-	Descriptor			string
-	Body						[]byte
+	Descriptor string
+	Body       []byte
 }
 
 func zipWriteMultiPart(fileName string, data []CompressorData) error {
@@ -1499,19 +1501,19 @@ func zipWriteMultiPart(fileName string, data []CompressorData) error {
 
 	for _, file := range data {
 		f, err := w.CreateHeader(createZipHeader(file.Descriptor))
-		
+
 		//f, err := w.Create(file.Descriptor)
 		if err != nil {
-			return  err
+			return err
 		}
 		_, err = f.Write(file.Body)
 		if err != nil {
-			return  err
+			return err
 		}
 	}
 	err = w.Flush()
 	if err != nil {
-		return  err
+		return err
 	}
 	return nil
 }
@@ -1529,21 +1531,21 @@ func zipReadMultiPart(fileName string) ([]CompressorData, error) {
 	r, err := zip.OpenReader(fileName)
 	defer r.Close()
 	if err != nil {
-		return  unzippedData, err
+		return unzippedData, err
 	}
 	for _, f := range r.File {
 		var bodyData []byte = make([]byte, 0)
 		rc, err := f.Open()
 		if err != nil {
 			rc.Close()
-			return  unzippedData, err
+			return unzippedData, err
 		}
 		var num int = 1
 		for num > 0 {
 			blockSize := 512 * 1024 // 512kb
 			buf := make([]byte, blockSize)
 			num, err = rc.Read(buf)
-			if (err==nil || err==io.EOF) && num > 0 {
+			if (err == nil || err == io.EOF) && num > 0 {
 				bodyData = append(bodyData, buf[:num]...)
 			} else {
 				break
@@ -1552,7 +1554,7 @@ func zipReadMultiPart(fileName string) ([]CompressorData, error) {
 		rc.Close()
 		data := CompressorData{
 			Descriptor: f.Name,
-			Body: bodyData,
+			Body:       bodyData,
 		}
 		unzippedData = append(unzippedData, data)
 	}
@@ -1563,7 +1565,7 @@ func zipReadNumParts(fileName string) (int, error) {
 	r, err := zip.OpenReader(fileName)
 	defer r.Close()
 	if err != nil {
-		return  0, err
+		return 0, err
 	}
 	return len(r.File), nil
 }
