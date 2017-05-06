@@ -13,6 +13,7 @@ import (
 	"strings"
 	"syscall"
 	"vmkube/term"
+	"gopkg.in/yaml.v2"
 )
 
 func StrPad(instr string, capping int) string {
@@ -264,6 +265,14 @@ func GetJSONFromObj(m interface{}, prettify bool) []byte {
 	return bytes
 }
 
+func GetYAMLFromObj(m interface{}) []byte {
+	bytes, err := yaml.Marshal(m)
+	if err != nil {
+		return []byte{}
+	}
+	return bytes
+}
+
 func GetXMLFromObj(m interface{}, prettify bool) []byte {
 	if prettify {
 		bytes, err := xml.MarshalIndent(m, "", "  ")
@@ -312,6 +321,11 @@ func GetXMLFromElem(m interface{}, prettify bool) ([]byte, error) {
 	}
 	return xml.Marshal(m)
 }
+
+func GetYAMLFromElem(m interface{}) ([]byte, error) {
+	return yaml.Marshal(m)
+}
+
 
 func ToMap(m interface{}) map[string]interface{} {
 	var inInterface interface{}

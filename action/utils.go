@@ -51,7 +51,7 @@ func ParseCommandLine(args []string) (CmdRequest, error) {
 
 func CmdParseElement(value string) (CmdElementType, error) {
 	switch CorrectInput(value) {
-	case "machine":
+	case "local-machine":
 		return LMachine, nil
 	case "cloud-machine":
 		return CLMachine, nil
@@ -64,7 +64,7 @@ func CmdParseElement(value string) (CmdElementType, error) {
 	case "plan":
 		return SPlan, nil
 	default:
-		return NoElement, errors.New("Element '" + value + "' is not an infratructure element. Available ones : Machine, Cloud-Machine, Network, Domain, Plan, Project")
+		return NoElement, errors.New("Element '" + value + "' is not an infratructure element. Available ones : Local-Machine, Cloud-Machine, Network, Domain, Plan, Project")
 
 	}
 }

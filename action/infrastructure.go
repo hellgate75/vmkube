@@ -1610,6 +1610,8 @@ func (request *CmdRequest) StatusInfra() (Response, error) {
 		var err error
 		if "json" == Format {
 			bytesArray, err = utils.GetJSONFromElem(infrastructure, true)
+		} else if "yaml" == Format {
+			bytesArray, err = utils.GetYAMLFromElem(infrastructure)
 		} else if "xml" == Format {
 			bytesArray, err = utils.GetXMLFromElem(infrastructure, true)
 		} else {

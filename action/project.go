@@ -482,7 +482,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 	}
 
 	if Sample && request.SubType != Open && request.SubType != Close {
-		if CorrectInput(SampleFormat) != "json" && CorrectInput(SampleFormat) != "xml" {
+		if CorrectInput(SampleFormat) != "json" && CorrectInput(SampleFormat) != "xml" && CorrectInput(SampleFormat) != "yaml" {
 			response := Response{
 				Status:  false,
 				Message: "Sample Format '" + SampleFormat + "' not supported!!",
@@ -492,6 +492,8 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 		if ElementType == SProject {
 			if CorrectInput(SampleFormat) == "json" {
 				fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.ProjectSample, true))
+			} else if CorrectInput(SampleFormat) == "yaml" {
+				fmt.Printf("%s\n", utils.GetYAMLFromObj(vmio.ProjectSample))
 			} else {
 				fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.ProjectSample, true))
 			}
@@ -500,6 +502,8 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			case SDomain:
 				if CorrectInput(SampleFormat) == "json" {
 					fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.DomainSample, true))
+				} else if CorrectInput(SampleFormat) == "yaml" {
+					fmt.Printf("%s\n", utils.GetYAMLFromObj(vmio.DomainSample))
 				} else {
 					fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.DomainSample, true))
 				}
@@ -507,13 +511,17 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			case SNetwork:
 				if CorrectInput(SampleFormat) == "json" {
 					fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.NetworkSample, true))
-				} else {
+				} else if CorrectInput(SampleFormat) == "yaml" {
+					fmt.Printf("%s\n", utils.GetYAMLFromObj(vmio.NetworkSample))
+				}  else {
 					fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.NetworkSample, true))
 				}
 				break
 			case LMachine:
 				if CorrectInput(SampleFormat) == "json" {
 					fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.MachineSample, true))
+				} else if CorrectInput(SampleFormat) == "yaml" {
+					fmt.Printf("%s\n", utils.GetYAMLFromObj(vmio.MachineSample))
 				} else {
 					fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.MachineSample, true))
 				}
@@ -521,6 +529,8 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			case CLMachine:
 				if CorrectInput(SampleFormat) == "json" {
 					fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.CloudMachineSample, true))
+				} else if CorrectInput(SampleFormat) == "yaml" {
+					fmt.Printf("%s\n", utils.GetYAMLFromObj(vmio.CloudMachineSample))
 				} else {
 					fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.CloudMachineSample, true))
 				}
@@ -528,6 +538,8 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			default:
 				if CorrectInput(SampleFormat) == "json" {
 					fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.InstallationPlanSample, true))
+				} else if CorrectInput(SampleFormat) == "yaml" {
+					fmt.Printf("%s\n", utils.GetYAMLFromObj(vmio.InstallationPlanSample))
 				} else {
 					fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.InstallationPlanSample, true))
 				}
@@ -940,12 +952,25 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 				Status:  false}, nil
 		} else {
 			if Sample != "" {
-				if "json" == Sample || "xml" == Sample {
+				if "json" == Sample || "xml" == Sample || "yaml" == Sample {
 					defines := vmio.ListProjectTypeDefines()
 					for _, define := range defines {
 						if define.Name == TypeVal {
 							if "json" == Sample {
 								bytes, err := utils.GetJSONFromElem(define.Sample, true)
+								if err != nil {
+									utils.PrintlnError(fmt.Sprintf("Error: Output format '%s' not provided", Sample))
+									PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+									return Response{
+										Message: "",
+										Status:  true}, nil
+								}
+								fmt.Fprintf(os.Stdout, "%s\n", bytes)
+								return Response{
+									Message: "",
+									Status:  true}, nil
+							} else if "yaml" == Sample {
+								bytes, err := utils.GetYAMLFromElem(define.Sample)
 								if err != nil {
 									utils.PrintlnError(fmt.Sprintf("Error: Output format '%s' not provided", Sample))
 									PrintCommandHelper(request.TypeStr, request.SubTypeStr)
@@ -973,7 +998,7 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 							}
 						}
 					}
-					utils.PrintlnError(fmt.Sprintf("Project Type '%s' not provided", TypeVal))
+					utils.PrintlnError(fmt.Sprintf("Element Type '%s' not provided", TypeVal))
 					PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 					return Response{
 						Message: "",
@@ -996,14 +1021,14 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 								Message: "",
 								Status:  true}, nil
 						}
-						utils.PrintlnError(fmt.Sprintf("Project Type '%s' not provided", TypeVal))
+						utils.PrintlnError(fmt.Sprintf("Element Type '%s' not provided", TypeVal))
 						PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 						return Response{
 							Message: "",
 							Status:  true}, nil
 					}
 				}
-				utils.PrintlnError(fmt.Sprintf("Project Type '%s' not provided", TypeVal))
+				utils.PrintlnError(fmt.Sprintf("Element Type '%s' not provided", TypeVal))
 				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
 			}
 			return Response{
@@ -1284,6 +1309,8 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 		var err error
 		if "json" == Format {
 			bytesArray, err = utils.GetJSONFromElem(project, true)
+		} else if "yaml" == Format {
+			bytesArray, err = utils.GetYAMLFromElem(project)
 		} else if "xml" == Format {
 			bytesArray, err = utils.GetXMLFromElem(project, true)
 		} else {
@@ -1867,7 +1894,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			return response, errors.New("Unable to execute task")
 		}
 	} else {
-		if CorrectInput(SampleFormat) != "json" && CorrectInput(SampleFormat) != "xml" {
+		if CorrectInput(SampleFormat) != "json" && CorrectInput(SampleFormat) != "xml" && CorrectInput(SampleFormat) != "yaml" {
 			response := Response{
 				Status:  false,
 				Message: "Sample Format '" + SampleFormat + "' not supported!!",
@@ -1877,7 +1904,9 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 		if FullImport || ElementType == SProject {
 			if CorrectInput(SampleFormat) == "json" {
 				fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.ProjectSample, true))
-			} else {
+			} else if CorrectInput(SampleFormat) == "yaml" {
+				fmt.Printf("%s\n", utils.GetYAMLFromObj(vmio.ProjectSample))
+			} else  {
 				fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.ProjectSample, true))
 			}
 		} else if ElementType != NoElement {
@@ -1885,6 +1914,8 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			case SDomain:
 				if CorrectInput(SampleFormat) == "json" {
 					fmt.Printf("%s\n", utils.GetJSONFromObj(ImportDomainSample, true))
+				} else if CorrectInput(SampleFormat) == "yaml" {
+					fmt.Printf("%s\n", utils.GetYAMLFromObj(ImportDomainSample))
 				} else {
 					fmt.Printf("%s\n", utils.GetXMLFromObj(ImportDomainSample, true))
 				}
@@ -1892,6 +1923,8 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			case SNetwork:
 				if CorrectInput(SampleFormat) == "json" {
 					fmt.Printf("%s\n", utils.GetJSONFromObj(ImportNetworkSample, true))
+				} else if CorrectInput(SampleFormat) == "yaml" {
+					fmt.Printf("%s\n", utils.GetYAMLFromObj(ImportNetworkSample))
 				} else {
 					fmt.Printf("%s\n", utils.GetXMLFromObj(ImportNetworkSample, true))
 				}
@@ -1899,6 +1932,8 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			case LMachine:
 				if CorrectInput(SampleFormat) == "json" {
 					fmt.Printf("%s\n", utils.GetJSONFromObj(ImportLocalMachineSample, true))
+				} else if CorrectInput(SampleFormat) == "yaml" {
+					fmt.Printf("%s\n", utils.GetYAMLFromObj(ImportLocalMachineSample))
 				} else {
 					fmt.Printf("%s\n", utils.GetXMLFromObj(ImportLocalMachineSample, true))
 				}
@@ -1906,6 +1941,8 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			case CLMachine:
 				if CorrectInput(SampleFormat) == "json" {
 					fmt.Printf("%s\n", utils.GetJSONFromObj(ImportCloudMachineSample, true))
+				} else if CorrectInput(SampleFormat) == "yaml" {
+					fmt.Printf("%s\n", utils.GetYAMLFromObj(ImportCloudMachineSample))
 				} else {
 					fmt.Printf("%s\n", utils.GetXMLFromObj(ImportCloudMachineSample, true))
 				}
@@ -1913,6 +1950,8 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			default:
 				if CorrectInput(SampleFormat) == "json" {
 					fmt.Printf("%s\n", utils.GetJSONFromObj(ImportPlansSample, true))
+				} else if CorrectInput(SampleFormat) == "yaml" {
+					fmt.Printf("%s\n", utils.GetYAMLFromObj(ImportPlansSample))
 				} else {
 					fmt.Printf("%s\n", utils.GetXMLFromObj(ImportPlansSample, true))
 				}

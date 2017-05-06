@@ -695,7 +695,7 @@ func InitHelpers() {
 		},
 		HelperOption{
 			Option:      "format",
-			Type:        "<text: json|xml>",
+			Type:        "<text: json|xml|yaml>",
 			Description: "Format used to show details on screen (default: json)",
 			Mandatory:   false,
 		},
@@ -723,7 +723,7 @@ func InitHelpers() {
 		},
 		HelperOption{
 			Option:      "format",
-			Type:        "<text: json|xml>",
+			Type:        "<text: json|xml|yaml>",
 			Description: "Format used to show details on screen (default: json)",
 			Mandatory:   false,
 		},
@@ -751,7 +751,7 @@ func InitHelpers() {
 		},
 		HelperOption{
 			Option:      "format",
-			Type:        "<text: json|xml>",
+			Type:        "<text: json|xml|yaml>",
 			Description: "Format used to define the project (default: json)",
 			Mandatory:   false,
 		},
@@ -864,12 +864,12 @@ func InitHelpers() {
 		HelperOption{
 			Option:      "elem-type",
 			Type:        "<text>",
-			Description: "Type of entity to require field information (allowed: Machine, Cloud-Machine, Network, Domain,...)",
+			Description: "Type of entity to require field information (allowed: Machine, Local-Machine, Cloud-Machine, Network, Domain,...)",
 			Mandatory:   false,
 		},
 		HelperOption{
 			Option:      "sample",
-			Type:        "<text: json|xml>",
+			Type:        "<text: json|xml|yaml>",
 			Description: "Print a sample schema for a specified element type",
 			Mandatory:   false,
 		},
@@ -921,14 +921,14 @@ func InitHelpers() {
 		},
 		HelperOption{
 			Option:      "format",
-			Type:        "<text: json|xml>",
+			Type:        "<text: json|xml|yaml>",
 			Description: "Format used to define the infrastructure element (default: json)",
 			Mandatory:   false,
 		},
 		HelperOption{
 			Option:      "elem-type",
 			Type:        "<text>",
-			Description: "Type of entity to create/modify/delete in the project (allowed: Machine, Cloud-Machine, Network, Domain,...)",
+			Description: "Type of entity to create/modify/delete in the project (allowed: cs, Cloud-Machine, Network, Domain,...)",
 			Mandatory:   true,
 		},
 		HelperOption{
@@ -946,7 +946,7 @@ func InitHelpers() {
 		HelperOption{
 			Option:      "anchor-elem-type",
 			Type:        "<text>",
-			Description: "Type of anchor entity for new element to create in the project (allowed: Machine, Cloud-Machine, Network, Domain,...)",
+			Description: "Type of anchor entity for new element to create in the project (allowed: Local-Machine, Cloud-Machine, Network, Domain,...)",
 			Mandatory:   false,
 		},
 		HelperOption{
@@ -981,7 +981,7 @@ func InitHelpers() {
 		},
 		HelperOption{
 			Option:      "sample-format",
-			Type:        "<text: json|xml>",
+			Type:        "<text: json|xml|yaml>",
 			Description: "Output format for the required sample input format instead of alter project (default: json, valid if full-export = false)",
 			Mandatory:   false,
 		},
@@ -1043,7 +1043,7 @@ func InitHelpers() {
 		},
 		HelperOption{
 			Option:      "format",
-			Type:        "<text: json|xml>",
+			Type:        "<text: json|xml|yaml>",
 			Description: "Format used to import project (default: json)",
 			Mandatory:   false,
 		},
@@ -1056,7 +1056,7 @@ func InitHelpers() {
 		HelperOption{
 			Option:      "elem-type",
 			Type:        "<text>",
-			Description: "Type of entity top level in the import (allowed: Machine, Cloud-Machine, Network, Domain,... valid if full-export = false)",
+			Description: "Type of entity top level in the import (allowed: Local-Machine, Cloud-Machine, Network, Domain,... valid if full-export = false)",
 			Mandatory:   false,
 		},
 		HelperOption{
@@ -1067,7 +1067,7 @@ func InitHelpers() {
 		},
 		HelperOption{
 			Option:      "sample-format",
-			Type:        "<text: json|xml>",
+			Type:        "<text: json|xml|yaml>",
 			Description: "Output format for the required sample import instead of import (default: json, valid if full-export = false)",
 			Mandatory:   false,
 		},
@@ -1119,7 +1119,7 @@ func InitHelpers() {
 		},
 		HelperOption{
 			Option:      "format",
-			Type:        "<text: json|xml>",
+			Type:        "<text: json|xml|yaml>",
 			Description: "Format used to export project (default: json)",
 			Mandatory:   false,
 		},
@@ -1132,7 +1132,7 @@ func InitHelpers() {
 		HelperOption{
 			Option:      "elem-type",
 			Type:        "<text>",
-			Description: "Type of entity top level in the export (allowed: Machine, Cloud-Machine, Network, Domain,... valid if full-export = false)",
+			Description: "Type of entity top level in the export (allowed: Local-Machine, Cloud-Machine, Network, Domain,... valid if full-export = false)",
 			Mandatory:   false,
 		},
 		HelperOption{

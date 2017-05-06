@@ -120,7 +120,7 @@ var ProjectSample model.ProjectImport = model.ProjectImport{
 func ListProjectTypeDefines() DefineList {
 	defineList := make(DefineList, 0)
 	defineList = append(defineList, TypeDefine{
-		Name:        "Machine",
+		Name:        "Local-Machine",
 		Description: "Machine Element describes Instance configuration for local scope",
 		Type:        MachineElement,
 		Fields:      []TypeDefineField{},
