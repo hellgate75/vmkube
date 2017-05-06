@@ -54,7 +54,7 @@ See [Docker-Machine Drivers](https://docs.docker.com/machine/drivers/)
 To compile and run this project you have to check availability of following software:
 * [Go](https://golang.org/dl/) (tested with version 1.8)
 * [Docker](https://www.docker.com/get-docker) and [Docker-Machine](https://docs.docker.com/machine/install-machine/)
-* Test and Utility GOLang packages ([UUID Package](https://github.com/satori/go.uuid), [Unit Test](https://github.com/stretchr/testify)) and [GO SSH Terminal](golang.org/x/crypto/ssh/terminal)
+* Test and Utility GOLang packages ([UUID Package](https://github.com/satori/go.uuid), [Unit Test](https://github.com/stretchr/testify)) and [GO SSH Terminal](http://golang.org/x/crypto/ssh/terminal), [YAML Parser](http://gopkg.in/yaml.v2)
 
 
 ## Architecture
@@ -66,11 +66,12 @@ To compile and run this project you have to check availability of following soft
 
 ## Checkout and test this repository
 
-Go in you `GOPATH\src` folder and type :
+Go in you `GOPATH/src` folder and type :
 ```sh
  go get github.com/stretchr/testify
  go get github.com/satori/go.uuid
  go get golang.org/x/crypto/ssh/terminal
+ go get gopkg.in/yaml.v2
  git clone https://github.com/hellgate75/vmkube.git
 
 ```
@@ -79,6 +80,7 @@ or simply :
  go get github.com/stretchr/testify
  go get github.com/satori/go.uuid
  go get golang.org/x/crypto/ssh/terminal
+ go get gopkg.in/yaml.v2
  go get github.com/hellgate75/vmkube
 ```
 
@@ -107,6 +109,7 @@ Alternatively you can execute following commands :
  * `go get github.com/stretchr/testify` to download unit test external package
  * `go get github.com/satori/go.uuid` to download UUID management external package
  * `go get golang.org/x/crypto/ssh/terminal` to download SSH terminal external package
+ * `go get gopkg.in/yaml.v2` to download YAML parser
  * `go build .` to build the project
  * `go test` to run unit and integration test on the project
  * `go run main.go` to execute the project
