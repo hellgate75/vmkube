@@ -65,6 +65,8 @@ func (info *ProjectRollbackSegmentInfo) Delete() error {
 func (info *ProjectRollbackSegmentInfo) Export(prettify bool) ([]byte, error) {
 	if "json" == info.Format {
 		return utils.GetJSONFromElem(info.Index, prettify)
+	} else if "yaml" == info.Format {
+		return utils.GetYAMLFromElem(info.Index)
 	} else if "xml" == info.Format {
 		return utils.GetXMLFromElem(info.Index, prettify)
 	} else {

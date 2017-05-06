@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"vmkube/utils"
+	"gopkg.in/yaml.v2"
 )
 
 func (element *ProjectImport) Validate() []error {
@@ -43,6 +44,8 @@ func (element *ProjectImport) Import(file string, format string) error {
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
+	} else if format == "yaml" {
+		err = yaml.Unmarshal(byteArray, &element)
 	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}
@@ -114,6 +117,8 @@ func (element *Project) Import(file string, format string) error {
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
+	} else if format == "yaml" {
+		err = yaml.Unmarshal(byteArray, &element)
 	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}
@@ -195,6 +200,8 @@ func (element *Infrastructure) Import(file string, format string) error {
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
+	} else if format == "yaml" {
+		err = yaml.Unmarshal(byteArray, &element)
 	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}

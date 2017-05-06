@@ -261,6 +261,8 @@ func (info *InfrastructureLogsInfo) Export(prettify bool) ([]byte, error) {
 	}
 	if "json" == info.Format {
 		return utils.GetJSONFromElem(emptyLog, prettify)
+	} else if "yaml" == info.Format {
+		return utils.GetYAMLFromElem(emptyLog)
 	} else if "xml" == info.Format {
 		return utils.GetXMLFromElem(emptyLog, prettify)
 	} else {

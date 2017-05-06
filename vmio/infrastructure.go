@@ -55,6 +55,8 @@ func (info *InfrastructureInfo) Import(file string, format string) error {
 func (info *InfrastructureInfo) Export(prettify bool) ([]byte, error) {
 	if "json" == info.Format {
 		return utils.GetJSONFromElem(info.Infra, prettify)
+	} else if "yaml" == info.Format {
+		return utils.GetYAMLFromElem(info.Infra)
 	} else if "xml" == info.Format {
 		return utils.GetXMLFromElem(info.Infra, prettify)
 	} else {

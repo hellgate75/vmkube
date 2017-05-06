@@ -50,6 +50,8 @@ func (info *ProjectInfo) Import(file string, format string) error {
 func (info *ProjectInfo) Export(prettify bool) ([]byte, error) {
 	if "json" == info.Format {
 		return utils.GetJSONFromElem(info.Project, prettify)
+	} else if "yaml" == info.Format {
+		return utils.GetYAMLFromElem(info.Project)
 	} else if "xml" == info.Format {
 		return utils.GetXMLFromElem(info.Project, prettify)
 	} else {

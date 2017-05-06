@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"vmkube/utils"
+	"gopkg.in/yaml.v2"
 )
 
 func (element *InstanceState) Validate() []error {
@@ -60,6 +61,8 @@ func (element *InstanceState) Import(file string, format string) error {
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
+	} else if format == "yaml" {
+		err = yaml.Unmarshal(byteArray, &element)
 	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}
@@ -137,6 +140,8 @@ func (element *NetworkState) Import(file string, format string) error {
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
+	} else if format == "yaml" {
+		err = yaml.Unmarshal(byteArray, &element)
 	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}
@@ -214,6 +219,8 @@ func (element *DomainState) Import(file string, format string) error {
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
+	} else if format == "yaml" {
+		err = yaml.Unmarshal(byteArray, &element)
 	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}
@@ -288,6 +295,8 @@ func (element *State) Import(file string, format string) error {
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
+	} else if format == "yaml" {
+		err = yaml.Unmarshal(byteArray, &element)
 	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}

@@ -58,6 +58,8 @@ func (info *ProjectActionIndexInfo) Delete() error {
 func (info *ProjectActionIndexInfo) Export(prettify bool) ([]byte, error) {
 	if "json" == info.Format {
 		return utils.GetJSONFromElem(info.Index, prettify)
+	} else if "yaml" == info.Format {
+		return utils.GetYAMLFromElem(info.Index)
 	} else if "xml" == info.Format {
 		return utils.GetXMLFromElem(info.Index, prettify)
 	} else {

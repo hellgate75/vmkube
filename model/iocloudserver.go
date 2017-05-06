@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"vmkube/utils"
+	"gopkg.in/yaml.v2"
 )
 
 func (element *CloudInstance) Validate() []error {
@@ -60,6 +61,8 @@ func (element *CloudInstance) Import(file string, format string) error {
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
+	} else if format == "yaml" {
+		err = yaml.Unmarshal(byteArray, &element)
 	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}
@@ -140,6 +143,8 @@ func (element *CloudMachine) Import(file string, format string) error {
 	}
 	if format == "json" {
 		err = json.Unmarshal(byteArray, &element)
+	} else if format == "yaml" {
+		err = yaml.Unmarshal(byteArray, &element)
 	} else {
 		err = xml.Unmarshal(byteArray, &element)
 	}
