@@ -23,8 +23,6 @@ import (
 	"vmkube/vmio"
 )
 
-
-
 func CorrectInput(input string) string {
 	return strings.TrimSpace(strings.ToLower(input))
 }
@@ -1448,7 +1446,7 @@ func zipReadNumParts(fileName string) (int, error) {
 	}
 	return len(r.File), nil
 }
-func PrintCommandHelper(command string, subCommand string, recoverHelpersFunc func()([]CommandHelper)) {
+func PrintCommandHelper(command string, subCommand string, recoverHelpersFunc func() []CommandHelper) {
 	helper := RecoverCommandHelper(command, recoverHelpersFunc)
 	fmt.Fprintln(os.Stdout, "Help: vmkube", helper.LineHelp)
 	fmt.Fprintln(os.Stdout, "Action:", helper.Description)
@@ -1496,7 +1494,6 @@ func PrintCommandHelper(command string, subCommand string, recoverHelpersFunc fu
 	}
 }
 
-
 func CmdParseOption(key string, options []SubCommandHelper) (string, int, error) {
 	if len(key) > 0 {
 		if strings.Index(key, "--") == 0 {
@@ -1516,7 +1513,7 @@ func CmdParseOption(key string, options []SubCommandHelper) (string, int, error)
 	}
 }
 
-func RecoverCommandHelper(helpCommand string, recoverHelpersFunc func()([]CommandHelper)) CommandHelper {
+func RecoverCommandHelper(helpCommand string, recoverHelpersFunc func() []CommandHelper) CommandHelper {
 	helperCommands := recoverHelpersFunc()
 	for _, helper := range helperCommands {
 		if strings.ToLower(helper.Command) == strings.ToLower(helpCommand) {

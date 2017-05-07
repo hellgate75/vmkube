@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"time"
 	"vmkube/model"
 	"vmkube/utils"
-	"gopkg.in/yaml.v2"
 )
 
 var SegmentIndexSize int = 30

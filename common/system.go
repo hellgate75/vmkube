@@ -145,7 +145,7 @@ type CmdParser interface {
 	Parse(args []string) bool
 }
 
-func (ArgCmd *CmdArguments) Parse(args []string, recoverHelpersFunc func()([]CommandHelper)) bool {
+func (ArgCmd *CmdArguments) Parse(args []string, recoverHelpersFunc func() []CommandHelper) bool {
 	if len(args) > 0 {
 		command, error := utils.CmdParse(args[0])
 		if error == nil {

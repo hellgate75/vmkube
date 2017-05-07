@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 	"vmkube/action"
+	"vmkube/common"
 	"vmkube/term"
 	"vmkube/utils"
-	"vmkube/common"
 )
 
 func init() {

@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"vmkube/utils"
-	"gopkg.in/yaml.v2"
 )
 
 func (element *CloudInstance) Validate() []error {

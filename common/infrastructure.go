@@ -15,20 +15,20 @@ import (
 )
 
 type InfrastructureActions interface {
-	CheckInfra(recoverHelpersFunc func()([]CommandHelper)) bool
-	CreateInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	AlterInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	DeleteInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	StartInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	StopInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	RestartInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	ListInfras(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	StatusInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	BackupInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	RecoverInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	CheckInfra(recoverHelpersFunc func() []CommandHelper) bool
+	CreateInfra(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	AlterInfra(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	DeleteInfra(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	StartInfra(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	StopInfra(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	RestartInfra(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	ListInfras(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	StatusInfra(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	BackupInfra(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	RecoverInfra(recoverHelpersFunc func() []CommandHelper) (Response, error)
 }
 
-func (request *CmdRequest) CheckInfra(recoverHelpersFunc func()([]CommandHelper)) bool {
+func (request *CmdRequest) CheckInfra(recoverHelpersFunc func() []CommandHelper) bool {
 	if len(request.Arguments.Helper.Options) > 0 {
 		correctness := true
 		for _, option := range request.Arguments.Helper.Options {
@@ -54,7 +54,7 @@ func (request *CmdRequest) CheckInfra(recoverHelpersFunc func()([]CommandHelper)
 	return true
 }
 
-func (request *CmdRequest) CreateInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) CreateInfra(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	response := Response{
 		Status:  false,
 		Message: "Not Implemented",
@@ -62,7 +62,7 @@ func (request *CmdRequest) CreateInfra(recoverHelpersFunc func()([]CommandHelper
 	return response, errors.New("Unable to execute task")
 }
 
-func (request *CmdRequest) AlterInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) AlterInfra(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	Name := ""
 	InstanceId := ""
 	InstanceName := ""
@@ -303,7 +303,7 @@ func (request *CmdRequest) AlterInfra(recoverHelpersFunc func()([]CommandHelper)
 	return response, nil
 }
 
-func (request *CmdRequest) DeleteInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) DeleteInfra(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	Name := ""
 	Force := false
 	Threads := 1
@@ -542,7 +542,7 @@ func (request *CmdRequest) DeleteInfra(recoverHelpersFunc func()([]CommandHelper
 	return response, nil
 }
 
-func (request *CmdRequest) BackupInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) BackupInfra(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	Name := ""
 	File := ""
 	utils.NO_COLORS = false
@@ -614,7 +614,7 @@ func (request *CmdRequest) BackupInfra(recoverHelpersFunc func()([]CommandHelper
 	return response, nil
 }
 
-func (request *CmdRequest) RecoverInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) RecoverInfra(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	Name := ""
 	File := ""
 	Override := false
@@ -1189,7 +1189,7 @@ func (request *CmdRequest) RecoverInfra(recoverHelpersFunc func()([]CommandHelpe
 	return response, nil
 }
 
-func (request *CmdRequest) StartInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) StartInfra(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	Name := ""
 	Force := false
 	Threads := 1
@@ -1303,7 +1303,7 @@ func (request *CmdRequest) StartInfra(recoverHelpersFunc func()([]CommandHelper)
 	return response, nil
 }
 
-func (request *CmdRequest) StopInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) StopInfra(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	Name := ""
 	Force := false
 	Threads := 1
@@ -1410,7 +1410,7 @@ func (request *CmdRequest) StopInfra(recoverHelpersFunc func()([]CommandHelper))
 	return response, nil
 }
 
-func (request *CmdRequest) RestartInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) RestartInfra(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	Name := ""
 	Force := false
 	Threads := 1
@@ -1524,7 +1524,7 @@ func (request *CmdRequest) RestartInfra(recoverHelpersFunc func()([]CommandHelpe
 	return response, nil
 }
 
-func (request *CmdRequest) ListInfras(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) ListInfras(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	utils.NO_COLORS = false
 	for _, option := range request.Arguments.Options {
 		if "no-colors" == CorrectInput(option[0]) {
@@ -1563,7 +1563,7 @@ func (request *CmdRequest) ListInfras(recoverHelpersFunc func()([]CommandHelper)
 	return response, nil
 }
 
-func (request *CmdRequest) StatusInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) StatusInfra(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	Name := ""
 	Format := "json"
 	Details := false

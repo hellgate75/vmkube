@@ -35,11 +35,11 @@ type CommandHelper struct {
 	Options           []HelperOption      `json:"Options" xml:"Options" mandatory:"yes" descr:"Required Command" type:"tlist of HelperOption objects"`
 }
 
-func (Helper *CommandHelper) HasOption(value string) bool  {
-	for _,option := range Helper.Options {
+func (Helper *CommandHelper) HasOption(value string) bool {
+	for _, option := range Helper.Options {
 		if CorrectInput(option.Option) == CorrectInput(value) ||
-			CorrectInput(option.Short) == CorrectInput(value)  {
-			return  true
+			CorrectInput(option.Short) == CorrectInput(value) {
+			return true
 		}
 	}
 	return false
@@ -52,29 +52,29 @@ type SubCommandHelper struct {
 
 type HelperOption struct {
 	Option      string `json:"Option" xml:"Option" mandatory:"yes" descr:"Defined Option" type:"text"`
-	Short      	string `json:"Short" xml:"Short" mandatory:"no" descr:"Defined Short Option" type:"text"`
+	Short       string `json:"Short" xml:"Short" mandatory:"no" descr:"Defined Short Option" type:"text"`
 	Type        string `json:"Type" xml:"Type" mandatory:"yes" descr:"Defined Option Type Desription" type:"text"`
 	Description string `json:"Description" xml:"Description" mandatory:"yes" descr:"Defined Option Desription" type:"text"`
 	Mandatory   bool   `json:"Mandatory" xml:"Mandatory" mandatory:"yes" descr:"Describe a Mandatory option" type:"boolean"`
 }
 
-func (Option *HelperOption) Match(value string) bool  {
+func (Option *HelperOption) Match(value string) bool {
 	if CorrectInput(Option.Option) == CorrectInput(value) ||
-		CorrectInput(Option.Short) == CorrectInput(value)  {
-		return  true
+		CorrectInput(Option.Short) == CorrectInput(value) {
+		return true
 	}
 	return false
 }
 
-func (Option *HelperOption) Equals(option HelperOption) bool  {
+func (Option *HelperOption) Equals(option HelperOption) bool {
 	if CorrectInput(Option.Option) == CorrectInput(Option.Option) ||
-		CorrectInput(Option.Short) == CorrectInput(Option.Short)  {
-		return  true
+		CorrectInput(Option.Short) == CorrectInput(Option.Short) {
+		return true
 	}
 	return false
 }
 
-func ParseCommandArguments(args []string, recoverHelpersFunc func()([]CommandHelper)) (*CmdArguments, error) {
+func ParseCommandArguments(args []string, recoverHelpersFunc func() []CommandHelper) (*CmdArguments, error) {
 	arguments := CmdArguments{}
 	success := arguments.Parse(args[1:], recoverHelpersFunc)
 	if success {
@@ -84,7 +84,7 @@ func ParseCommandArguments(args []string, recoverHelpersFunc func()([]CommandHel
 	}
 }
 
-func ParseCommandLine(args []string, recoverHelpersFunc func()([]CommandHelper)) (CmdRequest, error) {
+func ParseCommandLine(args []string, recoverHelpersFunc func() []CommandHelper) (CmdRequest, error) {
 	request := CmdRequest{}
 	var arguments *CmdArguments
 	var err error

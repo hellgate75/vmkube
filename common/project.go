@@ -15,19 +15,19 @@ import (
 )
 
 type ProjectActions interface {
-	CheckProject(recoverHelpersFunc func()([]CommandHelper)) bool
-	CreateProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	AlterProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	InfoProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	DeleteProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	ListProjects(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	StatusProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	BuildProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	ImportProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
-	ExportProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	CheckProject(recoverHelpersFunc func() []CommandHelper) bool
+	CreateProject(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	AlterProject(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	InfoProject(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	DeleteProject(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	ListProjects(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	StatusProject(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	BuildProject(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	ImportProject(recoverHelpersFunc func() []CommandHelper) (Response, error)
+	ExportProject(recoverHelpersFunc func() []CommandHelper) (Response, error)
 }
 
-func (request *CmdRequest) CheckProject(recoverHelpersFunc func()([]CommandHelper)) bool {
+func (request *CmdRequest) CheckProject(recoverHelpersFunc func() []CommandHelper) bool {
 	if len(request.Arguments.Helper.Options) > 0 {
 		correctness := true
 		for _, option := range request.Arguments.Helper.Options {
@@ -53,7 +53,7 @@ func (request *CmdRequest) CheckProject(recoverHelpersFunc func()([]CommandHelpe
 	return true
 }
 
-func (request *CmdRequest) CreateProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) CreateProject(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	InputFile := ""
@@ -393,7 +393,7 @@ func (request *CmdRequest) CreateProject(recoverHelpersFunc func()([]CommandHelp
 	return response, nil
 }
 
-func (request *CmdRequest) AlterProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) AlterProject(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	File := ""
@@ -513,7 +513,7 @@ func (request *CmdRequest) AlterProject(recoverHelpersFunc func()([]CommandHelpe
 					fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.NetworkSample, true))
 				} else if CorrectInput(SampleFormat) == "yaml" {
 					fmt.Printf("%s\n", utils.GetYAMLFromObj(vmio.NetworkSample))
-				}  else {
+				} else {
 					fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.NetworkSample, true))
 				}
 				break
@@ -924,7 +924,7 @@ func (request *CmdRequest) AlterProject(recoverHelpersFunc func()([]CommandHelpe
 
 }
 
-func (request *CmdRequest) InfoProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) InfoProject(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	utils.NO_COLORS = false
 	if request.SubType == List {
 		//List of elements
@@ -946,7 +946,7 @@ func (request *CmdRequest) InfoProject(recoverHelpersFunc func()([]CommandHelper
 			}
 		}
 		if TypeVal == "" {
-			PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
+			PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 			return Response{
 				Message: "Element Type not provided",
 				Status:  false}, nil
@@ -960,7 +960,7 @@ func (request *CmdRequest) InfoProject(recoverHelpersFunc func()([]CommandHelper
 								bytes, err := utils.GetJSONFromElem(define.Sample, true)
 								if err != nil {
 									utils.PrintlnError(fmt.Sprintf("Error: Output format '%s' not provided", Sample))
-									PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
+									PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 									return Response{
 										Message: "",
 										Status:  true}, nil
@@ -973,7 +973,7 @@ func (request *CmdRequest) InfoProject(recoverHelpersFunc func()([]CommandHelper
 								bytes, err := utils.GetYAMLFromElem(define.Sample)
 								if err != nil {
 									utils.PrintlnError(fmt.Sprintf("Error: Output format '%s' not provided", Sample))
-									PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
+									PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 									return Response{
 										Message: "",
 										Status:  true}, nil
@@ -986,7 +986,7 @@ func (request *CmdRequest) InfoProject(recoverHelpersFunc func()([]CommandHelper
 								bytes, err := utils.GetXMLFromElem(define.Sample, true)
 								if err != nil {
 									utils.PrintlnError(fmt.Sprintf("Error: Output format '%s' not provided", Sample))
-									PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
+									PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 									return Response{
 										Message: "",
 										Status:  true}, nil
@@ -999,13 +999,13 @@ func (request *CmdRequest) InfoProject(recoverHelpersFunc func()([]CommandHelper
 						}
 					}
 					utils.PrintlnError(fmt.Sprintf("Element Type '%s' not provided", TypeVal))
-					PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
+					PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 					return Response{
 						Message: "",
 						Status:  true}, nil
 				}
 				utils.PrintlnError(fmt.Sprintf("Error: Output format '%s' not provided", Sample))
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
+				PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 				return Response{
 					Message: "",
 					Status:  true}, nil
@@ -1022,14 +1022,14 @@ func (request *CmdRequest) InfoProject(recoverHelpersFunc func()([]CommandHelper
 								Status:  true}, nil
 						}
 						utils.PrintlnError(fmt.Sprintf("Element Type '%s' not provided", TypeVal))
-						PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
+						PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 						return Response{
 							Message: "",
 							Status:  true}, nil
 					}
 				}
 				utils.PrintlnError(fmt.Sprintf("Element Type '%s' not provided", TypeVal))
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
+				PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 			}
 			return Response{
 				Message: "",
@@ -1040,7 +1040,7 @@ func (request *CmdRequest) InfoProject(recoverHelpersFunc func()([]CommandHelper
 	return response, nil
 }
 
-func (request *CmdRequest) DeleteProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) DeleteProject(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	Force := false
@@ -1218,7 +1218,7 @@ func (request *CmdRequest) DeleteProject(recoverHelpersFunc func()([]CommandHelp
 	return response, nil
 }
 
-func (request *CmdRequest) ListProjects(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) ListProjects(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	utils.NO_COLORS = false
 	for _, option := range request.Arguments.Options {
 		if "no-colors" == CorrectInput(option[0]) {
@@ -1261,7 +1261,7 @@ func (request *CmdRequest) ListProjects(recoverHelpersFunc func()([]CommandHelpe
 	return response, nil
 }
 
-func (request *CmdRequest) StatusProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) StatusProject(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	Details := false
@@ -1278,7 +1278,7 @@ func (request *CmdRequest) StatusProject(recoverHelpersFunc func()([]CommandHelp
 		}
 	}
 	if Name == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 		return Response{
 			Message: "Project Name not provided",
 			Status:  false}, errors.New("Unable to execute task")
@@ -1398,7 +1398,7 @@ func (request *CmdRequest) StatusProject(recoverHelpersFunc func()([]CommandHelp
 	}, nil
 }
 
-func (request *CmdRequest) BuildProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) BuildProject(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	Name := ""
 	InfraName := ""
 	Backup := false
@@ -1430,13 +1430,13 @@ func (request *CmdRequest) BuildProject(recoverHelpersFunc func()([]CommandHelpe
 		}
 	}
 	if Name == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 		return Response{
 			Message: "Project Name not provided",
 			Status:  false}, errors.New("Unable to execute task")
 	}
 	if InfraName == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 		return Response{
 			Message: "Infrastructure Name not provided",
 			Status:  false,
@@ -1824,7 +1824,7 @@ func (request *CmdRequest) BuildProject(recoverHelpersFunc func()([]CommandHelpe
 	return response, nil
 }
 
-func (request *CmdRequest) ImportProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) ImportProject(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	File := ""
@@ -1906,7 +1906,7 @@ func (request *CmdRequest) ImportProject(recoverHelpersFunc func()([]CommandHelp
 				fmt.Printf("%s\n", utils.GetJSONFromObj(vmio.ProjectSample, true))
 			} else if CorrectInput(SampleFormat) == "yaml" {
 				fmt.Printf("%s\n", utils.GetYAMLFromObj(vmio.ProjectSample))
-			} else  {
+			} else {
 				fmt.Printf("%s\n", utils.GetXMLFromObj(vmio.ProjectSample, true))
 			}
 		} else if ElementType != NoElement {
@@ -2620,7 +2620,7 @@ func (request *CmdRequest) ImportProject(recoverHelpersFunc func()([]CommandHelp
 	return response, nil
 }
 
-func (request *CmdRequest) ExportProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
+func (request *CmdRequest) ExportProject(recoverHelpersFunc func() []CommandHelper) (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	File := ""

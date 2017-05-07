@@ -2,9 +2,9 @@ package action
 
 import (
 	"fmt"
+	"vmkube/common"
 	"vmkube/term"
 	"vmkube/utils"
-	"vmkube/common"
 )
 
 func ExecuteRequest(request common.CmdRequest) bool {

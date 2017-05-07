@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -13,7 +14,6 @@ import (
 	"strings"
 	"syscall"
 	"vmkube/term"
-	"gopkg.in/yaml.v2"
 )
 
 func StrPad(instr string, capping int) string {
@@ -325,7 +325,6 @@ func GetXMLFromElem(m interface{}, prettify bool) ([]byte, error) {
 func GetYAMLFromElem(m interface{}) ([]byte, error) {
 	return yaml.Marshal(m)
 }
-
 
 func ToMap(m interface{}) map[string]interface{} {
 	var inInterface interface{}
