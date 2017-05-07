@@ -1,4 +1,4 @@
-package action
+package common
 
 import (
 	"errors"
@@ -15,18 +15,20 @@ import (
 )
 
 type InfrastructureActions interface {
-	CheckInfra() bool
-	CreateInfra() (Response, error)
-	AlterInfra() (Response, error)
-	DeleteInfra() (Response, error)
-	StartInfra() (Response, error)
-	StopInfra() (Response, error)
-	RestartInfra() (Response, error)
-	ListInfras() (Response, error)
-	StatusInfra() (Response, error)
+	CheckInfra(recoverHelpersFunc func()([]CommandHelper)) bool
+	CreateInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	AlterInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	DeleteInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	StartInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	StopInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	RestartInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	ListInfras(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	StatusInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	BackupInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	RecoverInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
 }
 
-func (request *CmdRequest) CheckInfra() bool {
+func (request *CmdRequest) CheckInfra(recoverHelpersFunc func()([]CommandHelper)) bool {
 	if len(request.Arguments.Helper.Options) > 0 {
 		correctness := true
 		for _, option := range request.Arguments.Helper.Options {
@@ -52,7 +54,7 @@ func (request *CmdRequest) CheckInfra() bool {
 	return true
 }
 
-func (request *CmdRequest) CreateInfra() (Response, error) {
+func (request *CmdRequest) CreateInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	response := Response{
 		Status:  false,
 		Message: "Not Implemented",
@@ -60,7 +62,7 @@ func (request *CmdRequest) CreateInfra() (Response, error) {
 	return response, errors.New("Unable to execute task")
 }
 
-func (request *CmdRequest) AlterInfra() (Response, error) {
+func (request *CmdRequest) AlterInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	Name := ""
 	InstanceId := ""
 	InstanceName := ""
@@ -83,7 +85,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 		}
 	}
 	if Name == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 		return Response{
 			Message: "Infrastrcuture Name not provided",
 			Status:  false}, errors.New("Unable to execute task")
@@ -131,7 +133,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 	}
 
 	if InstanceId == "" && InstanceName == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 		return Response{
 			Message: "Instance Unique Identifier or Name not provided",
 			Status:  false}, errors.New("Unable to execute task")
@@ -301,7 +303,7 @@ func (request *CmdRequest) AlterInfra() (Response, error) {
 	return response, nil
 }
 
-func (request *CmdRequest) DeleteInfra() (Response, error) {
+func (request *CmdRequest) DeleteInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	Name := ""
 	Force := false
 	Threads := 1
@@ -321,7 +323,7 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 		}
 	}
 	if Name == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 		return Response{
 			Message: "Infrastrcuture Name not provided",
 			Status:  false}, errors.New("Unable to execute task")
@@ -540,7 +542,7 @@ func (request *CmdRequest) DeleteInfra() (Response, error) {
 	return response, nil
 }
 
-func (request *CmdRequest) BackupInfra() (Response, error) {
+func (request *CmdRequest) BackupInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	Name := ""
 	File := ""
 	utils.NO_COLORS = false
@@ -554,13 +556,13 @@ func (request *CmdRequest) BackupInfra() (Response, error) {
 		}
 	}
 	if Name == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 		return Response{
 			Message: "Infrastrcuture Name field not provided",
 			Status:  false}, errors.New("Unable to execute task")
 	}
 	if File == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 		return Response{
 			Message: "File Path field not provided",
 			Status:  false}, errors.New("Unable to execute task")
@@ -612,7 +614,7 @@ func (request *CmdRequest) BackupInfra() (Response, error) {
 	return response, nil
 }
 
-func (request *CmdRequest) RecoverInfra() (Response, error) {
+func (request *CmdRequest) RecoverInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	Name := ""
 	File := ""
 	Override := false
@@ -647,13 +649,13 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 		}
 	}
 	if Name == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 		return Response{
 			Message: "Infrastrcuture Name field not provided",
 			Status:  false}, errors.New("Unable to execute task")
 	}
 	if File == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 		return Response{
 			Message: "File Path field not provided",
 			Status:  false}, errors.New("Unable to execute task")
@@ -737,7 +739,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 
 	if existsProject {
 		if ProjectName == "" {
-			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 			return Response{
 				Message: "Project Name field not provided, mandatory when we have an exiting one with same name",
 				Status:  false,
@@ -881,7 +883,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 		if !FoundForce {
 			request.Arguments.Options = append(request.Arguments.Options, []string{"force", "true"})
 		}
-		resp, err := request.DeleteProject()
+		resp, err := request.DeleteProject(recoverHelpersFunc)
 		if err != nil {
 			return resp, err
 		}
@@ -951,7 +953,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 		if !FoundForce {
 			request.Arguments.Options = append(request.Arguments.Options, []string{"force", "true"})
 		}
-		resp, err := request.DeleteProject()
+		resp, err := request.DeleteProject(recoverHelpersFunc)
 		if err != nil {
 			return resp, err
 		}
@@ -1187,7 +1189,7 @@ func (request *CmdRequest) RecoverInfra() (Response, error) {
 	return response, nil
 }
 
-func (request *CmdRequest) StartInfra() (Response, error) {
+func (request *CmdRequest) StartInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	Name := ""
 	Force := false
 	Threads := 1
@@ -1207,7 +1209,7 @@ func (request *CmdRequest) StartInfra() (Response, error) {
 		}
 	}
 	if Name == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 		return Response{
 			Message: "Infrastrcuture Name not provided",
 			Status:  false}, errors.New("Unable to execute task")
@@ -1301,7 +1303,7 @@ func (request *CmdRequest) StartInfra() (Response, error) {
 	return response, nil
 }
 
-func (request *CmdRequest) StopInfra() (Response, error) {
+func (request *CmdRequest) StopInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	Name := ""
 	Force := false
 	Threads := 1
@@ -1321,7 +1323,7 @@ func (request *CmdRequest) StopInfra() (Response, error) {
 		}
 	}
 	if Name == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 		return Response{
 			Message: "Infrastrcuture Name not provided",
 			Status:  false}, errors.New("Unable to execute task")
@@ -1408,7 +1410,7 @@ func (request *CmdRequest) StopInfra() (Response, error) {
 	return response, nil
 }
 
-func (request *CmdRequest) RestartInfra() (Response, error) {
+func (request *CmdRequest) RestartInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	Name := ""
 	Force := false
 	Threads := 1
@@ -1428,7 +1430,7 @@ func (request *CmdRequest) RestartInfra() (Response, error) {
 		}
 	}
 	if Name == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 		return Response{
 			Message: "Infrastrcuture Name not provided",
 			Status:  false}, errors.New("Unable to execute task")
@@ -1522,7 +1524,7 @@ func (request *CmdRequest) RestartInfra() (Response, error) {
 	return response, nil
 }
 
-func (request *CmdRequest) ListInfras() (Response, error) {
+func (request *CmdRequest) ListInfras(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	utils.NO_COLORS = false
 	for _, option := range request.Arguments.Options {
 		if "no-colors" == CorrectInput(option[0]) {
@@ -1561,7 +1563,7 @@ func (request *CmdRequest) ListInfras() (Response, error) {
 	return response, nil
 }
 
-func (request *CmdRequest) StatusInfra() (Response, error) {
+func (request *CmdRequest) StatusInfra(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	Name := ""
 	Format := "json"
 	Details := false
@@ -1578,7 +1580,7 @@ func (request *CmdRequest) StatusInfra() (Response, error) {
 		}
 	}
 	if Name == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 		return Response{
 			Message: "Infrastrcuture Name not provided",
 			Status:  false}, errors.New("Unable to execute task")

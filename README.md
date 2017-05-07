@@ -127,6 +127,7 @@ The help is available executing :
 Import / Alter Project Commands provides a sample for the expected imput format. Import and Export of components is provided in following file formats:
 * JSON - standard JSON language
 * XML - Untagged and un-described XML format (Pure XML tag sequence, no XML definition or version is accepted).
+* YAML - standard YAML format.
 
 In this release the command list is composed by following keys :
 * `help` : Show generic commands help

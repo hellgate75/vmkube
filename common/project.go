@@ -1,4 +1,4 @@
-package action
+package common
 
 import (
 	"errors"
@@ -15,19 +15,19 @@ import (
 )
 
 type ProjectActions interface {
-	CheckProject() bool
-	CreateProject() (Response, error)
-	AlterProject() (Response, error)
-	InfoProject() (Response, error)
-	DeleteProject() (Response, error)
-	ListProjects() (Response, error)
-	StatusProject() (Response, error)
-	BuildProject() (Response, error)
-	ImportProject() (Response, error)
-	ExportProject() (Response, error)
+	CheckProject(recoverHelpersFunc func()([]CommandHelper)) bool
+	CreateProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	AlterProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	InfoProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	DeleteProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	ListProjects(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	StatusProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	BuildProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	ImportProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
+	ExportProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error)
 }
 
-func (request *CmdRequest) CheckProject() bool {
+func (request *CmdRequest) CheckProject(recoverHelpersFunc func()([]CommandHelper)) bool {
 	if len(request.Arguments.Helper.Options) > 0 {
 		correctness := true
 		for _, option := range request.Arguments.Helper.Options {
@@ -53,7 +53,7 @@ func (request *CmdRequest) CheckProject() bool {
 	return true
 }
 
-func (request *CmdRequest) CreateProject() (Response, error) {
+func (request *CmdRequest) CreateProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	InputFile := ""
@@ -83,7 +83,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		}
 	}
 	if Name == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr, recoverHelpersFunc)
 		return Response{
 			Message: "Project Name not provided",
 			Status:  false}, errors.New("Unable to execute task")
@@ -249,7 +249,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 		request.TypeStr = "delete-infra"
 		request.SubType = NoSubCommand
 		request.SubTypeStr = ""
-		response, err := request.DeleteInfra()
+		response, err := request.DeleteInfra(recoverHelpersFunc)
 		if err != nil {
 			return response, err
 		}
@@ -271,7 +271,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			}
 		}
 		request.Arguments.Options = append(request.Arguments.Options, []string{"skip-indexes", "true"})
-		response, err := request.DeleteProject()
+		response, err := request.DeleteProject(recoverHelpersFunc)
 		if err != nil {
 			return response, err
 		}
@@ -300,7 +300,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			request.TypeStr = "delete-infra"
 			request.SubType = NoSubCommand
 			request.SubTypeStr = ""
-			response, err := request.DeleteInfra()
+			response, err := request.DeleteInfra(recoverHelpersFunc)
 			if err != nil {
 				return response, err
 			}
@@ -349,7 +349,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 			Message: err.Error(),
 		}
 		request.Arguments.Options = append(request.Arguments.Options, []string{"skip-indexes", "true"})
-		response2, err := request.DeleteProject()
+		response2, err := request.DeleteProject(recoverHelpersFunc)
 		if err != nil {
 			return response2, err
 		}
@@ -383,7 +383,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 
 	if existsInfrastructure {
 		request.Arguments.Options = append(request.Arguments.Options, []string{"rebuild", "true"})
-		request.BuildProject()
+		request.BuildProject(recoverHelpersFunc)
 	}
 
 	response := Response{
@@ -393,7 +393,7 @@ func (request *CmdRequest) CreateProject() (Response, error) {
 	return response, nil
 }
 
-func (request *CmdRequest) AlterProject() (Response, error) {
+func (request *CmdRequest) AlterProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	File := ""
@@ -832,7 +832,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 			request.TypeStr = "delete-infra"
 			request.SubType = NoSubCommand
 			request.SubTypeStr = ""
-			response, err := request.DeleteInfra()
+			response, err := request.DeleteInfra(recoverHelpersFunc)
 			if err != nil {
 				return response, err
 			}
@@ -868,7 +868,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 
 	if existsInfrastructure {
 		request.Arguments.Options = append(request.Arguments.Options, []string{"rebuild", "true"})
-		request.BuildProject()
+		request.BuildProject(recoverHelpersFunc)
 	}
 
 	if existsProject {
@@ -902,7 +902,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 				Message: err.Error(),
 			}
 			request.Arguments.Options = append(request.Arguments.Options, []string{"skip-indexes", "true"})
-			response2, err := request.DeleteProject()
+			response2, err := request.DeleteProject(recoverHelpersFunc)
 			if err != nil {
 				return response2, err
 			}
@@ -912,7 +912,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 
 	if existsInfrastructure && OverrideInfra {
 		request.Arguments.Options = append(request.Arguments.Options, []string{"rebuild", "true"})
-		request.BuildProject()
+		request.BuildProject(recoverHelpersFunc)
 	}
 
 	utils.PrintlnSuccess("Alter Project : Command Executed correctly!!")
@@ -924,7 +924,7 @@ func (request *CmdRequest) AlterProject() (Response, error) {
 
 }
 
-func (request *CmdRequest) InfoProject() (Response, error) {
+func (request *CmdRequest) InfoProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	utils.NO_COLORS = false
 	if request.SubType == List {
 		//List of elements
@@ -946,7 +946,7 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 			}
 		}
 		if TypeVal == "" {
-			PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
 			return Response{
 				Message: "Element Type not provided",
 				Status:  false}, nil
@@ -960,7 +960,7 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 								bytes, err := utils.GetJSONFromElem(define.Sample, true)
 								if err != nil {
 									utils.PrintlnError(fmt.Sprintf("Error: Output format '%s' not provided", Sample))
-									PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+									PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
 									return Response{
 										Message: "",
 										Status:  true}, nil
@@ -973,7 +973,7 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 								bytes, err := utils.GetYAMLFromElem(define.Sample)
 								if err != nil {
 									utils.PrintlnError(fmt.Sprintf("Error: Output format '%s' not provided", Sample))
-									PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+									PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
 									return Response{
 										Message: "",
 										Status:  true}, nil
@@ -986,7 +986,7 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 								bytes, err := utils.GetXMLFromElem(define.Sample, true)
 								if err != nil {
 									utils.PrintlnError(fmt.Sprintf("Error: Output format '%s' not provided", Sample))
-									PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+									PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
 									return Response{
 										Message: "",
 										Status:  true}, nil
@@ -999,13 +999,13 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 						}
 					}
 					utils.PrintlnError(fmt.Sprintf("Element Type '%s' not provided", TypeVal))
-					PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+					PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
 					return Response{
 						Message: "",
 						Status:  true}, nil
 				}
 				utils.PrintlnError(fmt.Sprintf("Error: Output format '%s' not provided", Sample))
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+				PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
 				return Response{
 					Message: "",
 					Status:  true}, nil
@@ -1022,14 +1022,14 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 								Status:  true}, nil
 						}
 						utils.PrintlnError(fmt.Sprintf("Element Type '%s' not provided", TypeVal))
-						PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+						PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
 						return Response{
 							Message: "",
 							Status:  true}, nil
 					}
 				}
 				utils.PrintlnError(fmt.Sprintf("Element Type '%s' not provided", TypeVal))
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+				PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
 			}
 			return Response{
 				Message: "",
@@ -1040,7 +1040,7 @@ func (request *CmdRequest) InfoProject() (Response, error) {
 	return response, nil
 }
 
-func (request *CmdRequest) DeleteProject() (Response, error) {
+func (request *CmdRequest) DeleteProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	Force := false
@@ -1106,7 +1106,7 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 		request.TypeStr = "delete-infra"
 		request.SubType = NoSubCommand
 		request.SubTypeStr = ""
-		resp, err := request.DeleteInfra()
+		resp, err := request.DeleteInfra(recoverHelpersFunc)
 		if err != nil {
 			return resp, err
 		}
@@ -1218,7 +1218,7 @@ func (request *CmdRequest) DeleteProject() (Response, error) {
 	return response, nil
 }
 
-func (request *CmdRequest) ListProjects() (Response, error) {
+func (request *CmdRequest) ListProjects(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	utils.NO_COLORS = false
 	for _, option := range request.Arguments.Options {
 		if "no-colors" == CorrectInput(option[0]) {
@@ -1261,7 +1261,7 @@ func (request *CmdRequest) ListProjects() (Response, error) {
 	return response, nil
 }
 
-func (request *CmdRequest) StatusProject() (Response, error) {
+func (request *CmdRequest) StatusProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	Details := false
@@ -1278,7 +1278,7 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 		}
 	}
 	if Name == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
 		return Response{
 			Message: "Project Name not provided",
 			Status:  false}, errors.New("Unable to execute task")
@@ -1398,7 +1398,7 @@ func (request *CmdRequest) StatusProject() (Response, error) {
 	}, nil
 }
 
-func (request *CmdRequest) BuildProject() (Response, error) {
+func (request *CmdRequest) BuildProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	Name := ""
 	InfraName := ""
 	Backup := false
@@ -1430,13 +1430,13 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		}
 	}
 	if Name == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
 		return Response{
 			Message: "Project Name not provided",
 			Status:  false}, errors.New("Unable to execute task")
 	}
 	if InfraName == "" {
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		PrintCommandHelper(request.TypeStr, request.SubTypeStr,recoverHelpersFunc)
 		return Response{
 			Message: "Infrastructure Name not provided",
 			Status:  false,
@@ -1555,7 +1555,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		request.TypeStr = "delete-infra"
 		request.SubType = NoSubCommand
 		request.SubTypeStr = ""
-		response, err := request.DeleteInfra()
+		response, err := request.DeleteInfra(recoverHelpersFunc)
 		if err != nil {
 			return response, err
 		}
@@ -1682,7 +1682,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 		actionCouples = append(actionCouples, ipAddressCouples...)
 		actionCouples = append(actionCouples, stopCouples...)
 		actionCouples = append(actionCouples, extendsDiskCouples...)
-		request.StopInfra()
+		request.StopInfra(recoverHelpersFunc)
 	}
 
 	utils.PrintlnImportant("Now Proceding with machine creation ...!!")
@@ -1824,7 +1824,7 @@ func (request *CmdRequest) BuildProject() (Response, error) {
 	return response, nil
 }
 
-func (request *CmdRequest) ImportProject() (Response, error) {
+func (request *CmdRequest) ImportProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	File := ""
@@ -2089,7 +2089,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			}
 
 			request.Arguments.Options = append(request.Arguments.Options, []string{"skip-indexes", "true"})
-			response, err := request.DeleteProject()
+			response, err := request.DeleteProject(recoverHelpersFunc)
 			if err != nil {
 				return response, err
 			}
@@ -2140,7 +2140,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 			request.TypeStr = "delete-infra"
 			request.SubType = NoSubCommand
 			request.SubTypeStr = ""
-			response, err := request.DeleteInfra()
+			response, err := request.DeleteInfra(recoverHelpersFunc)
 			if err != nil {
 				return response, err
 			}
@@ -2182,7 +2182,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 				Status:  false,
 				Message: err.Error(),
 			}
-			request.DeleteProject()
+			request.DeleteProject(recoverHelpersFunc)
 
 			return response, errors.New("Unable to execute task")
 		}
@@ -2610,7 +2610,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 
 	if existsInfrastructure && OverrideInfra {
 		request.Arguments.Options = append(request.Arguments.Options, []string{"rebuild", "true"})
-		request.BuildProject()
+		request.BuildProject(recoverHelpersFunc)
 	}
 
 	response := Response{
@@ -2620,7 +2620,7 @@ func (request *CmdRequest) ImportProject() (Response, error) {
 	return response, nil
 }
 
-func (request *CmdRequest) ExportProject() (Response, error) {
+func (request *CmdRequest) ExportProject(recoverHelpersFunc func()([]CommandHelper)) (Response, error) {
 	utils.NO_COLORS = false
 	Name := ""
 	File := ""

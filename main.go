@@ -5,19 +5,20 @@ import (
 	"vmkube/action"
 	"vmkube/term"
 	"vmkube/utils"
+	"vmkube/common"
 )
 
 func init() {
 	if len(os.Args) == 0 {
 		println("Error: No arguments for command")
-		action.PrintCommandHelper("help", "help")
+		common.PrintCommandHelper("help", "help", action.GetArgumentHelpers)
 		os.Exit(1)
 	}
 	action.InitHelpers()
 }
 
 func main() {
-	request, error := action.ParseCommandLine(os.Args)
+	request, error := common.ParseCommandLine(os.Args, action.GetArgumentHelpers)
 	if error == nil {
 		response := action.ExecuteRequest(request)
 		if response {

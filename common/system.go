@@ -1,4 +1,4 @@
-package action
+package common
 
 import (
 	"fmt"
@@ -145,7 +145,7 @@ type CmdParser interface {
 	Parse(args []string) bool
 }
 
-func (ArgCmd *CmdArguments) Parse(args []string) bool {
+func (ArgCmd *CmdArguments) Parse(args []string, recoverHelpersFunc func()([]CommandHelper)) bool {
 	if len(args) > 0 {
 		command, error := utils.CmdParse(args[0])
 		if error == nil {
@@ -155,7 +155,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 		}
 		ArgCmd.Cmd = command
 		if error == nil {
-			helper := RecoverCommandHelper(command)
+			helper := RecoverCommandHelper(command, recoverHelpersFunc)
 			ArgCmd.Helper = helper
 			ArgCmd.Cmd = helper.Command
 			ArgCmd.CmdType = helper.CmdType
@@ -199,7 +199,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 													utils.PrintlnBoldError(fmt.Sprintf("Details: %s", error.Error()))
 												}
 												time.Sleep(100 * time.Millisecond)
-												PrintCommandHelper(command, SubCommand)
+												PrintCommandHelper(command, SubCommand, recoverHelpersFunc)
 												return false
 											}
 										}
@@ -212,7 +212,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 									passed = false
 									utils.PrintlnBoldError(fmt.Sprintf("Error: Uncomplete option %s for Command %s and Sub-Command %s", option, command, SubCommand))
 									time.Sleep(100 * time.Millisecond)
-									PrintCommandHelper(command, SubCommand)
+									PrintCommandHelper(command, SubCommand, recoverHelpersFunc)
 									return false
 								}
 							}
@@ -228,14 +228,14 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 						} else {
 							utils.PrintlnBoldError("Error: One or more options parse failed!!")
 							time.Sleep(100 * time.Millisecond)
-							PrintCommandHelper(command, SubCommand)
+							PrintCommandHelper(command, SubCommand, recoverHelpersFunc)
 							return false
 						}
 					}
 				} else {
 					utils.PrintlnBoldError(fmt.Sprintln("Error:", error))
 					time.Sleep(100 * time.Millisecond)
-					PrintCommandHelper(command, SubCommand)
+					PrintCommandHelper(command, SubCommand, recoverHelpersFunc)
 					return false
 				}
 				return true
@@ -262,7 +262,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 											utils.PrintlnBoldError(fmt.Sprintf("Details: %s", error.Error()))
 										}
 										time.Sleep(100 * time.Millisecond)
-										PrintCommandHelper(command, "")
+										PrintCommandHelper(command, "", recoverHelpersFunc)
 										return false
 									}
 								}
@@ -275,7 +275,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 							passed = false
 							utils.PrintlnBoldError(fmt.Sprintln("Error: Uncomplete option", option[index], "for Command", command))
 							time.Sleep(100 * time.Millisecond)
-							PrintCommandHelper(command, "")
+							PrintCommandHelper(command, "", recoverHelpersFunc)
 						}
 					}
 					if passed {
@@ -290,7 +290,7 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 					} else {
 						utils.PrintlnBoldError("Error: One or more options parse failed!!")
 						time.Sleep(100 * time.Millisecond)
-						PrintCommandHelper(command, "")
+						PrintCommandHelper(command, "", recoverHelpersFunc)
 						return false
 					}
 				}
@@ -304,21 +304,21 @@ func (ArgCmd *CmdArguments) Parse(args []string) bool {
 			} else if len(args) >= 1 {
 				utils.PrintlnBoldError("Error: Unable to parse Sub-Command...")
 				time.Sleep(100 * time.Millisecond)
-				PrintCommandHelper(command, "")
+				PrintCommandHelper(command, "", recoverHelpersFunc)
 			} else {
 				utils.PrintlnBoldError("Error: Unable to parse any parameter...")
 				time.Sleep(100 * time.Millisecond)
-				PrintCommandHelper(command, "")
+				PrintCommandHelper(command, "", recoverHelpersFunc)
 			}
 		} else {
 			utils.PrintlnBoldError(fmt.Sprintf("Error: Unable to parse command = %s\n", args[0]))
 			time.Sleep(100 * time.Millisecond)
-			PrintCommandHelper("help", "")
+			PrintCommandHelper("help", "", recoverHelpersFunc)
 		}
 	} else {
 		utils.PrintlnBoldError(fmt.Sprintf("Error: Insufficient arguments = %d\n", len(args)))
 		time.Sleep(100 * time.Millisecond)
-		PrintCommandHelper("help", "")
+		PrintCommandHelper("help", "", recoverHelpersFunc)
 	}
 	return false
 }

@@ -1,4 +1,4 @@
-package action
+package common
 
 import (
 	"errors"
@@ -7,30 +7,23 @@ import (
 	"vmkube/utils"
 )
 
-type ProjectRollbackSegmentInfo struct {
+type ProjectActionIndexInfo struct {
 	Format string
-	Index  RollBackSegment
+	Index  ProjectActionIndex
 }
 
-func (info *ProjectRollbackSegmentInfo) Read() error {
+func (info *ProjectActionIndexInfo) Read() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) + ".data"
 	err := model.MakeFolderIfNotExists(baseFolder)
 	if err != nil {
 		return err
 	}
-	fileName := baseFolder + string(os.PathSeparator) + "." + utils.IdToFileFormat(info.Index.ProjectId) + "." + info.Index.Index.Index.Value + ".rollbacksegment"
+	fileName := baseFolder + string(os.PathSeparator) + "." + utils.IdToFileFormat(info.Index.ProjectId) + ".actionindex"
 	if _, err = os.Stat(fileName); err != nil {
-		index := utils.Index{}
-		index.New(SegmentIndexSize)
-		info.Index = RollBackSegment{
+		info.Index = ProjectActionIndex{
 			Id:        model.NewUUIDString(),
 			ProjectId: info.Index.ProjectId,
-			Size:      0,
-			Index: RollBackSegmentIndex{
-				Id:    model.NewUUIDString(),
-				Index: index,
-			},
-			Storage: []ActionStorage{},
+			Actions:   []ActionDescriptor{},
 		}
 		return nil
 	}
@@ -38,23 +31,23 @@ func (info *ProjectRollbackSegmentInfo) Read() error {
 	return err
 }
 
-func (info *ProjectRollbackSegmentInfo) Write() error {
+func (info *ProjectActionIndexInfo) Write() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) + ".data"
 	model.MakeFolderIfNotExists(baseFolder)
-	fileName := baseFolder + string(os.PathSeparator) + "." + utils.IdToFileFormat(info.Index.ProjectId) + "." + info.Index.Index.Index.Value + ".rollbacksegment"
+	fileName := baseFolder + string(os.PathSeparator) + "." + utils.IdToFileFormat(info.Index.ProjectId) + ".actionindex"
 	err := info.Index.Save(fileName)
 	return err
 }
 
-func (info *ProjectRollbackSegmentInfo) Import(file string, format string) error {
+func (info *ProjectActionIndexInfo) Import(file string, format string) error {
 	err := info.Index.Import(file, format)
 	return err
 }
 
-func (info *ProjectRollbackSegmentInfo) Delete() error {
+func (info *ProjectActionIndexInfo) Delete() error {
 	baseFolder := model.VMBaseFolder() + string(os.PathSeparator) + ".data"
 	model.MakeFolderIfNotExists(baseFolder)
-	fileName := baseFolder + string(os.PathSeparator) + "." + utils.IdToFileFormat(info.Index.ProjectId) + "." + info.Index.Index.Index.Value + ".rollbacksegment"
+	fileName := baseFolder + string(os.PathSeparator) + "." + utils.IdToFileFormat(info.Index.ProjectId) + ".actionindex"
 	_, err := os.Stat(fileName)
 	if err == nil {
 		return model.DeleteIfExists(fileName)
@@ -62,7 +55,7 @@ func (info *ProjectRollbackSegmentInfo) Delete() error {
 	return nil
 }
 
-func (info *ProjectRollbackSegmentInfo) Export(prettify bool) ([]byte, error) {
+func (info *ProjectActionIndexInfo) Export(prettify bool) ([]byte, error) {
 	if "json" == info.Format {
 		return utils.GetJSONFromElem(info.Index, prettify)
 	} else if "yaml" == info.Format {

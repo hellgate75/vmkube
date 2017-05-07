@@ -1,4 +1,4 @@
-package action
+package common
 
 import (
 	"archive/zip"
@@ -23,51 +23,7 @@ import (
 	"vmkube/vmio"
 )
 
-func ParseCommandArguments(args []string) (*CmdArguments, error) {
-	arguments := CmdArguments{}
-	success := arguments.Parse(args[1:])
-	if success {
-		return &arguments, nil
-	} else {
-		return &arguments, errors.New("Unable to Parse Command Line")
-	}
-}
 
-func ParseCommandLine(args []string) (CmdRequest, error) {
-	request := CmdRequest{}
-	var arguments *CmdArguments
-	var err error
-	arguments, err = ParseCommandArguments(args)
-	if err == nil {
-		request.TypeStr = arguments.Cmd
-		request.Type = arguments.CmdType
-		request.SubTypeStr = arguments.SubCmd
-		request.SubType = arguments.SubCmdType
-		request.HelpType = arguments.SubCmdHelpType
-		request.Arguments = arguments
-	}
-	return request, err
-}
-
-func CmdParseElement(value string) (CmdElementType, error) {
-	switch CorrectInput(value) {
-	case "local-machine":
-		return LMachine, nil
-	case "cloud-machine":
-		return CLMachine, nil
-	case "network":
-		return SNetwork, nil
-	case "domain":
-		return SDomain, nil
-	case "project":
-		return SProject, nil
-	case "plan":
-		return SPlan, nil
-	default:
-		return NoElement, errors.New("Element '" + value + "' is not an infratructure element. Available ones : Local-Machine, Cloud-Machine, Network, Domain, Plan, Project")
-
-	}
-}
 
 func CorrectInput(input string) string {
 	return strings.TrimSpace(strings.ToLower(input))
@@ -523,85 +479,8 @@ func UpdateIndexWithInfrastructure(infrastructure model.Infrastructure) error {
 	return err
 }
 
-func CmdParseOption(key string, options []SubCommandHelper) (string, int, error) {
-	if len(key) > 0 {
-		if strings.Index(key, "--") == 0 {
-			return key, -1, errors.New("Invalid Argument (wrong characters: --) : " + key)
-		} else if strings.Index(key, "-") == 0 {
-			return key, -1, errors.New("Invalid Argument (wrong character: -) : " + key)
-		} else {
-			for index, opts := range options {
-				if CorrectInput(key) == CorrectInput(opts.Command) {
-					return CorrectInput(key), index, nil
-				}
-			}
-			return key, -1, errors.New("Invalid Argument : " + key)
-		}
-	} else {
-		return key, -1, errors.New("Unable to parse Agument : " + key)
-	}
-}
-
-func RecoverCommandHelper(helpCommand string) CommandHelper {
-	helperCommands := GetArgumentHelpers()
-	for _, helper := range helperCommands {
-		if strings.ToLower(helper.Command) == strings.ToLower(helpCommand) {
-			return helper
-		}
-	}
-	return helperCommands[0]
-}
-
 func NewUUIDString() string {
 	return uuid.NewV4().String()
-}
-
-func PrintCommandHelper(command string, subCommand string) {
-	helper := RecoverCommandHelper(command)
-	fmt.Fprintln(os.Stdout, "Help: vmkube", helper.LineHelp)
-	fmt.Fprintln(os.Stdout, "Action:", helper.Description)
-	found := false
-	if "" != strings.TrimSpace(strings.ToLower(subCommand)) && "help" != strings.TrimSpace(strings.ToLower(subCommand)) {
-		fmt.Fprintln(os.Stdout, "Selected Sub-Command: "+subCommand)
-		for _, option := range helper.SubCommands {
-			fmt.Fprintf(os.Stdout, "%s        %s\n", utils.StrPad(option.Command, 50), option.Description)
-			found = true
-		}
-		if !found {
-			fmt.Fprintln(os.Stdout, "Sub-Command Not found!!")
-			if "help" != strings.TrimSpace(strings.ToLower(command)) {
-				fmt.Fprintln(os.Stdout, "Please type: vmkube", "help", command, "for full Sub-Command List")
-			} else {
-				fmt.Fprintln(os.Stdout, "Please type: vmkube", "help", "COMMAND", "for full Sub-Command List")
-			}
-		}
-	} else {
-		found = true
-		if len(helper.SubCommands) > 0 {
-			if len(helper.SubCmdTypes) > 0 {
-				fmt.Fprintln(os.Stdout, "Sub-Commands:")
-			} else {
-				fmt.Fprintln(os.Stdout, "Commands:")
-			}
-		}
-		for _, option := range helper.SubCommands {
-			fmt.Fprintf(os.Stdout, "%s        %s\n", utils.StrPad(option.Command, 55), option.Description)
-		}
-	}
-	if found {
-		if len(helper.Options) > 0 {
-			fmt.Fprintln(os.Stdout, "Options:")
-		}
-		for _, option := range helper.Options {
-			validity := "optional"
-			if option.Mandatory {
-				validity = "mandatory"
-			}
-			fmt.Fprintf(os.Stdout, "--%s  %s  %s  %s\n", utils.StrPad(option.Option, 20), utils.StrPad(option.Type, 25), utils.StrPad(validity, 10), option.Description)
-		}
-	} else {
-		fmt.Fprintln(os.Stdout, "Unable to complete help support ...")
-	}
 }
 
 func ExecuteInfrastructureActions(infrastructure model.Infrastructure, infrastructureActionCouples []tasks.ActivityCouple, NumThreads int, postTaskCallback func(task tasks.SchedulerTask)) []error {
@@ -1568,4 +1447,81 @@ func zipReadNumParts(fileName string) (int, error) {
 		return 0, err
 	}
 	return len(r.File), nil
+}
+func PrintCommandHelper(command string, subCommand string, recoverHelpersFunc func()([]CommandHelper)) {
+	helper := RecoverCommandHelper(command, recoverHelpersFunc)
+	fmt.Fprintln(os.Stdout, "Help: vmkube", helper.LineHelp)
+	fmt.Fprintln(os.Stdout, "Action:", helper.Description)
+	found := false
+	if "" != strings.TrimSpace(strings.ToLower(subCommand)) && "help" != strings.TrimSpace(strings.ToLower(subCommand)) {
+		fmt.Fprintln(os.Stdout, "Selected Sub-Command: "+subCommand)
+		for _, option := range helper.SubCommands {
+			fmt.Fprintf(os.Stdout, "%s        %s\n", utils.StrPad(option.Command, 50), option.Description)
+			found = true
+		}
+		if !found {
+			fmt.Fprintln(os.Stdout, "Sub-Command Not found!!")
+			if "help" != strings.TrimSpace(strings.ToLower(command)) {
+				fmt.Fprintln(os.Stdout, "Please type: vmkube", "help", command, "for full Sub-Command List")
+			} else {
+				fmt.Fprintln(os.Stdout, "Please type: vmkube", "help", "COMMAND", "for full Sub-Command List")
+			}
+		}
+	} else {
+		found = true
+		if len(helper.SubCommands) > 0 {
+			if len(helper.SubCmdTypes) > 0 {
+				fmt.Fprintln(os.Stdout, "Sub-Commands:")
+			} else {
+				fmt.Fprintln(os.Stdout, "Commands:")
+			}
+		}
+		for _, option := range helper.SubCommands {
+			fmt.Fprintf(os.Stdout, "%s        %s\n", utils.StrPad(option.Command, 55), option.Description)
+		}
+	}
+	if found {
+		if len(helper.Options) > 0 {
+			fmt.Fprintln(os.Stdout, "Options:")
+		}
+		for _, option := range helper.Options {
+			validity := "optional"
+			if option.Mandatory {
+				validity = "mandatory"
+			}
+			fmt.Fprintf(os.Stdout, "--%s  %s  %s  %s\n", utils.StrPad(option.Option, 20), utils.StrPad(option.Type, 25), utils.StrPad(validity, 10), option.Description)
+		}
+	} else {
+		fmt.Fprintln(os.Stdout, "Unable to complete help support ...")
+	}
+}
+
+
+func CmdParseOption(key string, options []SubCommandHelper) (string, int, error) {
+	if len(key) > 0 {
+		if strings.Index(key, "--") == 0 {
+			return key, -1, errors.New("Invalid Argument (wrong characters: --) : " + key)
+		} else if strings.Index(key, "-") == 0 {
+			return key, -1, errors.New("Invalid Argument (wrong character: -) : " + key)
+		} else {
+			for index, opts := range options {
+				if CorrectInput(key) == CorrectInput(opts.Command) {
+					return CorrectInput(key), index, nil
+				}
+			}
+			return key, -1, errors.New("Invalid Argument : " + key)
+		}
+	} else {
+		return key, -1, errors.New("Unable to parse Agument : " + key)
+	}
+}
+
+func RecoverCommandHelper(helpCommand string, recoverHelpersFunc func()([]CommandHelper)) CommandHelper {
+	helperCommands := recoverHelpersFunc()
+	for _, helper := range helperCommands {
+		if strings.ToLower(helper.Command) == strings.ToLower(helpCommand) {
+			return helper
+		}
+	}
+	return helperCommands[0]
 }

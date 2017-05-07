@@ -4,29 +4,30 @@ import (
 	"fmt"
 	"vmkube/term"
 	"vmkube/utils"
+	"vmkube/common"
 )
 
-func ExecuteRequest(request CmdRequest) bool {
+func ExecuteRequest(request common.CmdRequest) bool {
 	switch request.Type {
-	case NoCommand:
+	case common.NoCommand:
 		{
-			if request.HelpType != NoCommand {
-				PrintCommandHelper(request.SubTypeStr, "")
+			if request.HelpType != common.NoCommand {
+				common.PrintCommandHelper(request.SubTypeStr, "", GetArgumentHelpers)
 				if !utils.NO_COLORS {
 					term.Screen.ShowCursor()
 				}
 			} else {
-				PrintCommandHelper("", "")
+				common.PrintCommandHelper("", "", GetArgumentHelpers)
 			}
 			return true
 		}
-	case StartInfrastructure:
+	case common.StartInfrastructure:
 		{
-			if !request.CheckInfra() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckInfra(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.StartInfra()
+				response, error := request.StartInfra(GetArgumentHelpers)
 				if !response.Status {
 					term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 					term.Screen.Flush()
@@ -37,13 +38,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case StopInfrastructure:
+	case common.StopInfrastructure:
 		{
-			if !request.CheckInfra() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckInfra(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.StopInfra()
+				response, error := request.StopInfra(GetArgumentHelpers)
 				if !response.Status {
 					term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 					term.Screen.Flush()
@@ -54,13 +55,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case RestartInfrastructure:
+	case common.RestartInfrastructure:
 		{
-			if !request.CheckInfra() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckInfra(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.RestartInfra()
+				response, error := request.RestartInfra(GetArgumentHelpers)
 				if !response.Status {
 					term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 					term.Screen.Flush()
@@ -71,13 +72,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case DestroyInfrastructure:
+	case common.DestroyInfrastructure:
 		{
-			if !request.CheckInfra() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckInfra(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.DeleteInfra()
+				response, error := request.DeleteInfra(GetArgumentHelpers)
 				if !response.Status {
 					term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 					term.Screen.Flush()
@@ -88,13 +89,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case AlterInfrastructure:
+	case common.AlterInfrastructure:
 		{
-			if !request.CheckInfra() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckInfra(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.AlterInfra()
+				response, error := request.AlterInfra(GetArgumentHelpers)
 				if !response.Status {
 					utils.PrintlnBoldError(fmt.Sprintf("Error: %s, clause: %s", error, response.Message))
 					term.Screen.Flush()
@@ -105,13 +106,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case BackupInfrastructure:
+	case common.BackupInfrastructure:
 		{
-			if !request.CheckInfra() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckInfra(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.BackupInfra()
+				response, error := request.BackupInfra(GetArgumentHelpers)
 				if !response.Status {
 					term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 					term.Screen.Flush()
@@ -122,13 +123,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case RecoverInfrastructure:
+	case common.RecoverInfrastructure:
 		{
-			if !request.CheckInfra() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckInfra(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.RecoverInfra()
+				response, error := request.RecoverInfra(GetArgumentHelpers)
 				if !response.Status {
 					term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 					term.Screen.Flush()
@@ -139,13 +140,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case ListInfrastructure:
+	case common.ListInfrastructure:
 		{
-			if !request.CheckInfra() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckInfra(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.StatusInfra()
+				response, error := request.StatusInfra(GetArgumentHelpers)
 				if !response.Status {
 					term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 					term.Screen.Flush()
@@ -156,13 +157,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case ListInfrastructures:
+	case common.ListInfrastructures:
 		{
-			if !request.CheckInfra() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckInfra(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.ListInfras()
+				response, error := request.ListInfras(GetArgumentHelpers)
 				if !response.Status {
 					term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 					term.Screen.Flush()
@@ -173,13 +174,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case ListConfigs:
+	case common.ListConfigs:
 		{
-			if !request.CheckProject() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckProject(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.ListProjects()
+				response, error := request.ListProjects(GetArgumentHelpers)
 				if !response.Status {
 					term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 					term.Screen.Flush()
@@ -190,13 +191,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case StatusConfig:
+	case common.StatusConfig:
 		{
-			if !request.CheckProject() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckProject(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.StatusProject()
+				response, error := request.StatusProject(GetArgumentHelpers)
 				if !response.Status {
 					term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 					term.Screen.Flush()
@@ -207,13 +208,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case BuildConfig:
+	case common.BuildConfig:
 		{
-			if !request.CheckProject() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckProject(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.BuildProject()
+				response, error := request.BuildProject(GetArgumentHelpers)
 				if !response.Status {
 					term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 					term.Screen.Flush()
@@ -224,13 +225,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case ImportConfig:
+	case common.ImportConfig:
 		{
-			if !request.CheckProject() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckProject(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.ImportProject()
+				response, error := request.ImportProject(GetArgumentHelpers)
 				if !response.Status {
 					term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 					term.Screen.Flush()
@@ -241,13 +242,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case ExportConfig:
+	case common.ExportConfig:
 		{
-			if !request.CheckProject() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckProject(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.ExportProject()
+				response, error := request.ExportProject(GetArgumentHelpers)
 				if !response.Status {
 					term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 					term.Screen.Flush()
@@ -258,13 +259,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case DefineConfig:
+	case common.DefineConfig:
 		{
-			if !request.CheckProject() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckProject(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.CreateProject()
+				response, error := request.CreateProject(GetArgumentHelpers)
 				if !response.Status {
 					term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 					term.Screen.Flush()
@@ -275,13 +276,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case DeleteConfig:
+	case common.DeleteConfig:
 		{
-			if !request.CheckProject() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckProject(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.DeleteProject()
+				response, error := request.DeleteProject(GetArgumentHelpers)
 				if !response.Status {
 					term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 					term.Screen.Flush()
@@ -292,13 +293,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case AlterConfig:
+	case common.AlterConfig:
 		{
-			if !request.CheckProject() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckProject(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				response, error := request.AlterProject()
+				response, error := request.AlterProject(GetArgumentHelpers)
 				if !response.Status {
 					term.Screen.Println(term.Screen.Color(fmt.Sprintf("Error: %s, clause: %s", error, response.Message), term.RED))
 					term.Screen.Flush()
@@ -309,13 +310,13 @@ func ExecuteRequest(request CmdRequest) bool {
 				return error == nil
 			}
 		}
-	case InfoConfig:
+	case common.InfoConfig:
 		{
-			if !request.CheckProject() {
-				PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+			if !request.CheckProject(GetArgumentHelpers) {
+				common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 				return false
 			} else {
-				request.InfoProject()
+				request.InfoProject(GetArgumentHelpers)
 			}
 			if !utils.NO_COLORS {
 				term.Screen.ShowCursor()
@@ -323,7 +324,7 @@ func ExecuteRequest(request CmdRequest) bool {
 			return true
 		}
 	default:
-		PrintCommandHelper(request.TypeStr, request.SubTypeStr)
+		common.PrintCommandHelper(request.TypeStr, request.SubTypeStr, GetArgumentHelpers)
 	}
 	return false
 }
