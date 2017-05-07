@@ -124,7 +124,7 @@ The help is available executing :
 * `vmkube help` General Help
 * `vmkube help [command]` Detailed Command syntax helper
 
-Import / Alter Project Commands provides a sample for the expected imput format. Import and Export of components is provided in following file formats:
+Import / Alter Project Commands provides a sample for the expected input format. Import and Export of components is provided in following file formats:
 * JSON - standard JSON language
 * XML - Untagged and un-described XML format (Pure XML tag sequence, no XML definition or version is accepted).
 * YAML - standard YAML format.
