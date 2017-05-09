@@ -114,6 +114,7 @@ Alternatively you can execute following commands :
  * `go test` to run unit and integration test on the project
  * `go run main.go` to execute the project
  * `go build --buildmode exe .` to create an executable command
+ * `go install` to install the executable command
 
 
 ## Execution

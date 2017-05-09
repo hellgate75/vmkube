@@ -51,6 +51,7 @@ func (ssh *SSHCommander) Procedure(commands ...string) ([]string, error) {
 	cmd := exec.Command("ssh", args...)
 	reader, err := cmd.StdoutPipe()
 	scanner := bufio.NewScanner(reader)
+	defer reader.Close()
 	err = scanner.Err()
 	if err == nil {
 		for _, command := range commands {
