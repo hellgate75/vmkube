@@ -1,0 +1,23 @@
+language: go
+
+# Don't build other branches that are being used for PRs.
+# Currently only the master branch is used in this repo.
+branches:
+  only:
+    - master
+
+go:
+ - 1.7.0
+ - master
+
+install:
+ - go get github.com/stretchr/testify
+ - go get github.com/satori/go.uuid
+ - go get golang.org/x/crypto/ssh/terminal
+ - go get gopkg.in/yaml.v2
+
+script:
+ - dep ensure -update -v
+ - travis_wait 20 go test -p 10 -timeout 20m -v ./test/...
+ - go tool vet .
+ - go build -buildmode exe -pkgdir ./vendor .
