@@ -2,6 +2,8 @@
 
 # Go Virtual Machine Kube (vmkube)
 
+<p align="center"><img src="https://travis-ci.org/hellgate75/vmkube.svg?branch=master" alt="trevis-ci" width="98" height="20" />&nbsp;<a href="https://travis-ci.org/hellgate75/vmkube">Check last build on Travis-CI</a></p><br/>
+
 Go-Lang Virtual Machine environment manager. This package allow to define projects and build infrastructures on local or remote cloud providers
 
 
@@ -13,7 +15,7 @@ Go-Lang Virtual Machine environment manager. This package allow to define projec
 One of following :
 * [VMWare Fusion](https://my.vmware.com/en/web/vmware/info/slug/desktop_end_user_computing/vmware_fusion/8_0)
 * [VMWare Workstation Player](https://my.vmware.com/en/web/vmware/free#desktop_end_user_computing/vmware_workstation_player/12_0)
-* [Virtual Box](https://www.virtualbox.org/wiki/Downloads) (VMWare Utilities on mac : `brew install vagrant-vmware-fusion`, on windows/linux: [VDDK65](https://my.vmware.com/group/vmware/get-download?downloadGroup=VDDK65)) 
+* [Virtual Box](https://www.virtualbox.org/wiki/Downloads) (VMWare Utilities on mac : `brew install vagrant-vmware-fusion`, on windows/linux: [VDDK65](https://my.vmware.com/group/vmware/get-download?downloadGroup=VDDK65))
 * Microsoft [Hyper-V](https://www.manageengine.com/free-hyper-v-configuration/documents.html)
 * Any of the cloud provider [supported by docker](https://docs.docker.com/machine/drivers/)
 
@@ -21,10 +23,10 @@ In order to define machine OSs, you can use any of the [supported ISOs](https://
 
 ## Goals
 
-Define a virtual machine remote/local manager based on docker-machine drivers. It defines a smart and simple command-line/web interface to manage environments. 
-It provides features to define project and deployment plans for infrastructures and applications. 
+Define a virtual machine remote/local manager based on docker-machine drivers. It defines a smart and simple command-line/web interface to manage environments.
+It provides features to define project and deployment plans for infrastructures and applications.
 Domain, Network and Host management level and hierarchy are main concepts in the VMKube philosophy.
-WMKube provides development and deployment environments: You have to define an initial project, you can manager the networks, domains, hosts and a staging phase. 
+WMKube provides development and deployment environments: You have to define an initial project, you can manager the networks, domains, hosts and a staging phase.
 When you close the project, you are ready to delete it or, alternatively, to build and run the infrastructure.
 
 ## What is provided?
@@ -121,7 +123,7 @@ Alternatively you can execute following commands :
 
 The tool provides an help section, describing commands, sub-commands and has a nested help level for commands details.
 
-The help is available executing : 
+The help is available executing :
 * `vmkube help` General Help
 * `vmkube help [command]` Detailed Command syntax helper
 
