@@ -7,17 +7,21 @@ branches:
     - master
 
 go:
- - 1.7.0
- - master
+ - 1.8.1
+ - 1.8.3
 
 install:
+ - go get -u github.com/golang/dep/cmd/dep
+ - go get -u github.com/golang/go/src/cmd/gofmt
  - go get github.com/stretchr/testify
  - go get github.com/satori/go.uuid
  - go get golang.org/x/crypto/ssh/terminal
  - go get gopkg.in/yaml.v2
 
 script:
+ - go vet .
+ - go fmt .
+ - gofmt -e -s -w .
  - dep ensure -update -v
- - travis_wait 20 go test -p 10 -timeout 20m -v ./test/...
- - go tool vet .
+ - travis_wait 20 go test -p 10 -timeout 20m -v -cover -covermode atomic ./test/...
  - go build -buildmode exe -pkgdir ./vendor .
