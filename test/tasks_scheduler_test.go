@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"testing"
 	"time"
-	"github.com/hellgate75/vmkube/action"
 	"github.com/hellgate75/vmkube/scheduler"
 	"github.com/hellgate75/vmkube/tasks"
+	"github.com/hellgate75/vmkube/common"
 )
 
 /*
@@ -58,7 +58,7 @@ func (job TestJob) WaitFor() {
 
 func testJobs(chan1 chan string, chan2 chan string, chan3 chan string) {
 	pool := scheduler.SchedulerPool{
-		Id:          action.NewUUIDString(),
+		Id:          common.NewUUIDString(),
 		MaxParallel: 2,
 		KeepAlive:   false,
 	}
@@ -67,10 +67,10 @@ func testJobs(chan1 chan string, chan2 chan string, chan3 chan string) {
 		pool.WG.Done()
 	})
 	task1 := tasks.SchedulerTask{
-		Id: action.NewUUIDString(),
+		Id: common.NewUUIDString(),
 		Jobs: []tasks.JobProcess{
 			tasks.JobProcess(&tasks.Job{
-				Id:   action.NewUUIDString(),
+				Id:   common.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
 					Name:    "Job 1",
@@ -79,7 +79,7 @@ func testJobs(chan1 chan string, chan2 chan string, chan3 chan string) {
 				},
 			}),
 			tasks.JobProcess(&tasks.Job{
-				Id:   action.NewUUIDString(),
+				Id:   common.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
 					Name:    "Job 2",
@@ -90,10 +90,10 @@ func testJobs(chan1 chan string, chan2 chan string, chan3 chan string) {
 		},
 	}
 	task2 := tasks.SchedulerTask{
-		Id: action.NewUUIDString(),
+		Id: common.NewUUIDString(),
 		Jobs: []tasks.JobProcess{
 			tasks.JobProcess(&tasks.Job{
-				Id:   action.NewUUIDString(),
+				Id:   common.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
 					Name:    "Job 3",
@@ -102,7 +102,7 @@ func testJobs(chan1 chan string, chan2 chan string, chan3 chan string) {
 				},
 			}),
 			tasks.JobProcess(&tasks.Job{
-				Id:   action.NewUUIDString(),
+				Id:   common.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
 					Name:    "Job 4",
@@ -113,10 +113,10 @@ func testJobs(chan1 chan string, chan2 chan string, chan3 chan string) {
 		},
 	}
 	task3 := tasks.SchedulerTask{
-		Id: action.NewUUIDString(),
+		Id: common.NewUUIDString(),
 		Jobs: []tasks.JobProcess{
 			tasks.JobProcess(&tasks.Job{
-				Id:   action.NewUUIDString(),
+				Id:   common.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
 					Name:    "Job 5",
@@ -125,7 +125,7 @@ func testJobs(chan1 chan string, chan2 chan string, chan3 chan string) {
 				},
 			}),
 			tasks.JobProcess(&tasks.Job{
-				Id:   action.NewUUIDString(),
+				Id:   common.NewUUIDString(),
 				Name: "TestJob1",
 				Runnable: TestJob{
 					Name:    "Job 6",
@@ -137,12 +137,13 @@ func testJobs(chan1 chan string, chan2 chan string, chan3 chan string) {
 	}
 	pool.WG.Add(1)
 	go func() {
+		pool.Start(func() {} )
 		pool.Tasks <- task1
 		pool.Tasks <- task2
 		pool.Tasks <- task3
 	}()
 	go func(pool *scheduler.SchedulerPool) {
-		time.Sleep(3 * time.Second)
+		time.Sleep(10 * time.Second)
 		pool.Stop()
 	}(&pool)
 	pool.WG.Wait()

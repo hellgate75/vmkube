@@ -1,4 +1,4 @@
-package main
+package nuterm
 
 import (
 	"fmt"
@@ -38,11 +38,11 @@ func main() {
 		manager.CommChannel <- elems[i]
 		time.Sleep(2 * time.Second)
 		if i%2 == 0 {
-			elems[i].Value = term.ScreenBold("success!")
+			elems[i].Value = term.Screen.Bold("success!")
 			elems[i].State = term.StateColorGreen
 			manager.CommChannel <- elems[i]
 		} else {
-			elems[i].Value = term.ScreenBold("failed!")
+			elems[i].Value = term.Screen.Bold("failed!")
 			elems[i].State = term.StateColorRed
 			manager.CommChannel <- elems[i]
 		}
