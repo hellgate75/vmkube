@@ -22,10 +22,10 @@ memo = "37e48c83fa9727856ec48cc5d61735ab089aca4f90048949fd5d5e9dd3161de3"
   branch = "master"
   name = "github.com/stretchr/testify"
   packages = ["assert"]
-  revision = "4d4bfba8f1d1027c4fdbe371823030df51419987"
+  revision = "05e8a0eda380579888eb53c394909df027f06991"
 
 [[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b"
+  revision = "3b4ad1db5b2a649883ff3782f5f9f6fb52be71af"

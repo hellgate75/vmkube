@@ -13,10 +13,7 @@ go:
 install:
  - go get -u github.com/golang/dep/cmd/dep
  - go get -u github.com/golang/go/src/cmd/gofmt
- - go get github.com/stretchr/testify
- - go get github.com/satori/go.uuid
  - go get golang.org/x/crypto/ssh/terminal
- - go get gopkg.in/yaml.v2
 
 script:
  - go vet .
