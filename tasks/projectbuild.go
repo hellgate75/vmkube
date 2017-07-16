@@ -7,9 +7,9 @@ import (
 	"sort"
 	"strings"
 	"time"
-	"vmkube/model"
-	"vmkube/procedures"
-	"vmkube/utils"
+	"github.com/hellgate75/vmkube/model"
+	"github.com/hellgate75/vmkube/procedures"
+	"github.com/hellgate75/vmkube/utils"
 )
 
 func (job *MachineOperationsJob) Start(exitChannel chan bool) {

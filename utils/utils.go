@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-	"vmkube/term"
+	"github.com/hellgate75/vmkube/term"
 )
 
 func StrPad(instr string, capping int) string {

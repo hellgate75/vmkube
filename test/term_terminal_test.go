@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
-	"vmkube/term"
-	"vmkube/utils"
+	"github.com/hellgate75/vmkube/term"
+	"github.com/hellgate75/vmkube/utils"
 )
 
 var TermBuffer *utils.ByteStream = utils.NewByteStream([]byte{})

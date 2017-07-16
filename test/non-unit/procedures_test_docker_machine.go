@@ -6,8 +6,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"vmkube/model"
-	"vmkube/procedures"
+	"github.com/hellgate75/vmkube/model"
+	"github.com/hellgate75/vmkube/procedures"
 )
 
 var Machine1 model.LocalMachine = model.LocalMachine{

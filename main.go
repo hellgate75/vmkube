@@ -2,10 +2,10 @@ package main
 
 import (
 	"os"
-	"vmkube/action"
-	"vmkube/common"
-	"vmkube/term"
-	"vmkube/utils"
+	"github.com/hellgate75/vmkube/action"
+	"github.com/hellgate75/vmkube/common"
+	"github.com/hellgate75/vmkube/term"
+	"github.com/hellgate75/vmkube/utils"
 )
 
 func init() {

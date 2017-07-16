@@ -5,7 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
-	"vmkube/utils"
+	"github.com/hellgate75/vmkube/utils"
 )
 
 var (

@@ -5,8 +5,8 @@ import (
 	"encoding/xml"
 	"errors"
 	"io/ioutil"
-	"vmkube/model"
-	"vmkube/vmio"
+	"github.com/hellgate75/vmkube/model"
+	"github.com/hellgate75/vmkube/vmio"
 )
 
 type ExportImportDomains struct {

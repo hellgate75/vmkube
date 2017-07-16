@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"vmkube/model"
+	"github.com/hellgate75/vmkube/model"
 )
 
 var mutex sync.RWMutex

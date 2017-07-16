@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"vmkube/utils"
+	"github.com/hellgate75/vmkube/utils"
 )
 
 func ExistsFile(file string) bool {

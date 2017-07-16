@@ -5,8 +5,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"vmkube/model"
-	"vmkube/utils"
+	"github.com/hellgate75/vmkube/model"
+	"github.com/hellgate75/vmkube/utils"
 )
 
 const MAX_LINES_IN_LOG = 2000

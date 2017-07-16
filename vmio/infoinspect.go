@@ -1,7 +1,7 @@
 package vmio
 
 import (
-	"vmkube/model"
+	"github.com/hellgate75/vmkube/model"
 )
 
 type ProjectItem int

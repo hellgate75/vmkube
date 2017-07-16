@@ -3,7 +3,7 @@ package vmio
 import (
 	"sync"
 	"time"
-	"vmkube/model"
+	"github.com/hellgate75/vmkube/model"
 )
 
 type IFaceIndex model.ProjectsIndex

@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"vmkube/model"
-	"vmkube/procedures"
-	"vmkube/tasks"
-	"vmkube/utils"
-	"vmkube/vmio"
+	"github.com/hellgate75/vmkube/model"
+	"github.com/hellgate75/vmkube/procedures"
+	"github.com/hellgate75/vmkube/tasks"
+	"github.com/hellgate75/vmkube/utils"
+	"github.com/hellgate75/vmkube/vmio"
 )
 
 func DescribeInstallation(installation *model.Installation, instanceName string, padding string) error {

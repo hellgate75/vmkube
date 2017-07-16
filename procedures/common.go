@@ -6,7 +6,7 @@ import (
 	"io"
 	"os/exec"
 	"strings"
-	"vmkube/model"
+	"github.com/hellgate75/vmkube/model"
 )
 
 func DownloadISO(machineType string, version string) (string, string, error) {

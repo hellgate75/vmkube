@@ -2,8 +2,8 @@ package vmio
 
 import (
 	"errors"
-	"vmkube/model"
-	"vmkube/utils"
+	"github.com/hellgate75/vmkube/model"
+	"github.com/hellgate75/vmkube/utils"
 )
 
 type ProjectImportInfo struct {

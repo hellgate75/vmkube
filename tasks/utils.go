@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"vmkube/model"
-	"vmkube/state"
+	"github.com/hellgate75/vmkube/model"
+	"github.com/hellgate75/vmkube/state"
 )
 
 func ConvertActivityTaskInString(task ActivityTask) string {

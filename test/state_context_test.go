@@ -4,7 +4,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
-	"vmkube/state"
+	"github.com/hellgate75/vmkube/state"
 )
 
 func TestNewStateContext(t *testing.T) {

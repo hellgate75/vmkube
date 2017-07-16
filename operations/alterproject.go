@@ -3,9 +3,9 @@ package operations
 import (
 	"errors"
 	"fmt"
-	"vmkube/model"
-	"vmkube/utils"
-	"vmkube/vmio"
+	"github.com/hellgate75/vmkube/model"
+	"github.com/hellgate75/vmkube/utils"
+	"github.com/hellgate75/vmkube/vmio"
 )
 
 type CmdElementTypeDesc int

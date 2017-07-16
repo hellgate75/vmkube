@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"vmkube/utils"
+	"github.com/hellgate75/vmkube/utils"
 )
 
 type Response struct {

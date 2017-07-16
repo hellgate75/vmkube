@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"testing"
 	"time"
-	"vmkube/action"
-	"vmkube/scheduler"
-	"vmkube/tasks"
+	"github.com/hellgate75/vmkube/action"
+	"github.com/hellgate75/vmkube/scheduler"
+	"github.com/hellgate75/vmkube/tasks"
 )
 
 /*

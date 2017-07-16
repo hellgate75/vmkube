@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/satori/go.uuid"
 	"time"
-	"vmkube/term"
+	"github.com/hellgate75/vmkube/term"
 )
 
 func NewUUIDString() string {

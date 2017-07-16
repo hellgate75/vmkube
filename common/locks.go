@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
-	"vmkube/model"
+	"github.com/hellgate75/vmkube/model"
 )
 
 type IFaceProjectActionIndex ProjectActionIndex

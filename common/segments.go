@@ -7,8 +7,8 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"time"
-	"vmkube/model"
-	"vmkube/utils"
+	"github.com/hellgate75/vmkube/model"
+	"github.com/hellgate75/vmkube/utils"
 )
 
 var SegmentIndexSize int = 30

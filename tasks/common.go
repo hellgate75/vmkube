@@ -2,10 +2,10 @@ package tasks
 
 import (
 	"os/exec"
-	"vmkube/model"
-	"vmkube/procedures"
-	"vmkube/state"
-	"vmkube/term"
+	"github.com/hellgate75/vmkube/model"
+	"github.com/hellgate75/vmkube/procedures"
+	"github.com/hellgate75/vmkube/state"
+	"github.com/hellgate75/vmkube/term"
 )
 
 type TaskSignal struct {

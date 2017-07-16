@@ -2,7 +2,7 @@ package tasks
 
 import (
 	"time"
-	"vmkube/state"
+	"github.com/hellgate75/vmkube/state"
 )
 
 func (job *Job) Init(Sequence int, Global int) {

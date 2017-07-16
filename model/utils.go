@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"strings"
 	"time"
-	"vmkube/utils"
+	"github.com/hellgate75/vmkube/utils"
 )
 
 const TagMandatoryName = "mandatory"

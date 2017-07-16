@@ -5,8 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"vmkube/model"
-	"vmkube/utils"
+	"github.com/hellgate75/vmkube/model"
+	"github.com/hellgate75/vmkube/utils"
 )
 
 func DockerMachineDefineCloudMachineCommand(machine model.CloudMachine) []string {

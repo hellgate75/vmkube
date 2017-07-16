@@ -1,6 +1,6 @@
 package action
 
-import "vmkube/common"
+import "github.com/hellgate75/vmkube/common"
 
 var (
 	HelpCommand common.CommandHelper = common.CommandHelper{

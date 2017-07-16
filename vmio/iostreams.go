@@ -2,7 +2,7 @@ package vmio
 
 import (
 	"io/ioutil"
-	"vmkube/model"
+	"github.com/hellgate75/vmkube/model"
 )
 
 func SaveIndex(index model.ProjectsIndex) error {

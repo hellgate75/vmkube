@@ -1,7 +1,7 @@
 package common
 
 import (
-	"vmkube/model"
+	"github.com/hellgate75/vmkube/model"
 )
 
 func SaveProjectActionIndex(index ProjectActionIndex) error {

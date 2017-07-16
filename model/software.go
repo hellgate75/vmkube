@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/user"
-	"vmkube/utils"
+	"github.com/hellgate75/vmkube/utils"
 )
 
 type MachineISO struct {

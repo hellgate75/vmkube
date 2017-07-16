@@ -6,7 +6,7 @@ import (
 	"errors"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"vmkube/utils"
+	"github.com/hellgate75/vmkube/utils"
 )
 
 func (element *CloudInstance) Validate() []error {

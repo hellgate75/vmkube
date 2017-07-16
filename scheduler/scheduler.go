@@ -4,8 +4,8 @@ import (
 	"runtime"
 	"sync"
 	"time"
-	"vmkube/state"
-	"vmkube/tasks"
+	"github.com/hellgate75/vmkube/state"
+	"github.com/hellgate75/vmkube/tasks"
 )
 
 type SchedulerPool struct {

@@ -7,11 +7,11 @@ import (
 	"runtime"
 	"strings"
 	"time"
-	"vmkube/model"
-	"vmkube/operations"
-	"vmkube/tasks"
-	"vmkube/utils"
-	"vmkube/vmio"
+	"github.com/hellgate75/vmkube/model"
+	"github.com/hellgate75/vmkube/operations"
+	"github.com/hellgate75/vmkube/tasks"
+	"github.com/hellgate75/vmkube/utils"
+	"github.com/hellgate75/vmkube/vmio"
 )
 
 type ProjectActions interface {
