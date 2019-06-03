@@ -17,10 +17,9 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	"strings"
-	"syscall"
-	"unsafe"
 )
 
 // Reset all custom styles
@@ -282,13 +281,20 @@ func (Screen *ScreenManager) Width() int {
 }
 
 func (Screen *ScreenManager) getTermSize(fd uintptr) (*winsize, error) {
-	var sz winsize
-	r1, _, errNo := syscall.Syscall(syscall.SYS_IOCTL,
-		fd, uintptr(syscall.TIOCGWINSZ), uintptr(unsafe.Pointer(&sz)))
-	if int(r1) == -1 {
-		fmt.Println("Error:", os.NewSyscallError("GetWinsize", errNo))
-		return nil, os.NewSyscallError("GetWinsize", errNo)
+	w, h, err := terminal.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		return nil, err
 	}
+	var sz winsize = winsize{
+		cols: uint16(w),
+		rows: uint16(h),
+	}
+	//	r1, _, errNo := syscall.Syscall(syscall.SYS_IOCTL,
+	//		fd, uintptr(syscall.TIOCGWINSZ), uintptr(unsafe.Pointer(&sz)))
+	//	if int(r1) == -1 {
+	//		fmt.Println("Error:", os.NewSyscallError("GetWinsize", errNo))
+	//		return nil, os.NewSyscallError("GetWinsize", errNo)
+	//	}
 	return &sz, nil
 }
 

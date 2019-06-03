@@ -7,8 +7,9 @@ branches:
     - master
 
 go:
- - 1.8.1
- - 1.8.3
+ - 1.10
+ - 1.11
+ - 1.12
 
 install:
  - go get -u github.com/golang/dep/cmd/dep

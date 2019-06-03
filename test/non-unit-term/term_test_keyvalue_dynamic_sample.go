@@ -2,13 +2,14 @@ package nuterm
 
 import (
 	"fmt"
+	"github.com/hellgate75/vmkube/term"
 	"github.com/satori/go.uuid"
 	"time"
-	"github.com/hellgate75/vmkube/term"
 )
 
 func NewUUIDString() string {
-	return uuid.NewV4().String()
+	uuid, _ := uuid.NewV4()
+	return fmt.Sprintf("%v", uuid)
 }
 
 func main() {

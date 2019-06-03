@@ -9,7 +9,7 @@ Go-Lang Virtual Machine environment manager. This package allow to define projec
 
 ## Prerequisites
 
-* [Go](https://golang.org/dl/) (tested with version 1.8)
+* [Go](https://golang.org/dl/) (tested with version 1.12)
 * [Docker](https://www.docker.com/get-docker) and [Docker-Machine](https://docs.docker.com/machine/install-machine/)
 
 One of following :

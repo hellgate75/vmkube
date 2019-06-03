@@ -2,12 +2,12 @@ package model
 
 import (
 	"fmt"
+	"github.com/hellgate75/vmkube/utils"
 	"github.com/satori/go.uuid"
 	"os"
 	"reflect"
 	"strings"
 	"time"
-	"github.com/hellgate75/vmkube/utils"
 )
 
 const TagMandatoryName = "mandatory"
@@ -15,7 +15,8 @@ const TagDescName = "descr"
 const TagTypeName = "type"
 
 func NewUUIDString() string {
-	return uuid.NewV4().String()
+	uuid, _ := uuid.NewV4()
+	return fmt.Sprintf("%v", uuid)
 }
 
 func ProjectFromImport(imported ProjectImport) Project {

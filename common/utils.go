@@ -5,7 +5,13 @@ import (
 	"compress/flate"
 	"errors"
 	"fmt"
-	"github.com/satori/go.uuid"
+	"github.com/hellgate75/vmkube/model"
+	"github.com/hellgate75/vmkube/procedures"
+	"github.com/hellgate75/vmkube/scheduler"
+	"github.com/hellgate75/vmkube/tasks"
+	"github.com/hellgate75/vmkube/term"
+	"github.com/hellgate75/vmkube/utils"
+	"github.com/hellgate75/vmkube/vmio"
 	"io"
 	"os"
 	"os/exec"
@@ -14,13 +20,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"github.com/hellgate75/vmkube/model"
-	"github.com/hellgate75/vmkube/procedures"
-	"github.com/hellgate75/vmkube/scheduler"
-	"github.com/hellgate75/vmkube/tasks"
-	"github.com/hellgate75/vmkube/term"
-	"github.com/hellgate75/vmkube/utils"
-	"github.com/hellgate75/vmkube/vmio"
 )
 
 func CorrectInput(input string) string {
@@ -478,7 +477,7 @@ func UpdateIndexWithInfrastructure(infrastructure model.Infrastructure) error {
 }
 
 func NewUUIDString() string {
-	return uuid.NewV4().String()
+	return model.NewUUIDString()
 }
 
 func ExecuteInfrastructureActions(infrastructure model.Infrastructure, infrastructureActionCouples []tasks.ActivityCouple, NumThreads int, postTaskCallback func(task tasks.SchedulerTask)) []error {
