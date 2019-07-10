@@ -22,3 +22,4 @@ script:
  - gofmt -e -s -w .
  - travis_wait 20 go test -p 10 -timeout 20m -v -cover -covermode atomic ./test/...
  - go build -buildmode exe -pkgdir ./vendor .
+ - echo "Buld complete!!"
