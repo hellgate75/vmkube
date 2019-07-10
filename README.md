@@ -152,6 +152,10 @@ In this release the command list is composed by following keys :
 * `import-project` : Import project from existing configuration
 * `export-project` : Export existing project configuration
 
+
+## Author
+[Fabrizio Torelli](https://ie.linkedin.com/in/fabriziotorelli) is Cloud/System Architect working in the IT sector since 1999.
+
 ## License
 
 Licensed under the [MIT](/LICENSE) License (the "License");
