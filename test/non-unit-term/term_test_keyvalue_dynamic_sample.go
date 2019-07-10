@@ -8,7 +8,7 @@ import (
 )
 
 func NewUUIDString() string {
-	uuid, _ := uuid.NewV4()
+	uuid := uuid.NewV4()
 	return fmt.Sprintf("%v", uuid)
 }
 
